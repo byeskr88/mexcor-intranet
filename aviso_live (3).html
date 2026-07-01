@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AVISO 탭 — 구글 시트 연동</title>
+<style>
+  :root{
+    --bg:#f5f4f0;--surface:#fff;--surface-1:#f1efe8;
+    --border:#e2e0d8;--text:#1f1e1c;--text-secondary:#5f5e5a;
+    --success:#1D9E75;--success-bg:#E1F5EE;--success-text:#085041;
+    --warning:#BA7517;--warning-bg:#FAEEDA;--warning-text:#854F0B;
+    --danger:#A32D2D;--danger-bg:#FCEBEB;--danger-text:#791F1F;
+    --radius:8px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;padding:24px;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Apple SD Gothic Neo",sans-serif;color:var(--text);}
+  .wrap{max-width:1100px;margin:0 auto;background:var(--surface);border:0.5px solid var(--border);border-radius:12px;padding:20px;}
+  h1{font-size:17px;font-weight:500;margin:0 0 4px;}
+  .sub{font-size:12px;color:var(--text-secondary);margin:0 0 16px;}
+  .status{padding:10px 14px;border-radius:var(--radius);font-size:13px;margin-bottom:16px;}
+  .status.loading{background:var(--surface-1);color:var(--text-secondary);}
+  .status.success{background:var(--success-bg);color:var(--success-text);}
+  .status.error{background:var(--danger-bg);color:var(--danger-text);}
+  .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+  .card{background:var(--surface-1);border-radius:var(--radius);padding:12px;}
+  .card .lbl{font-size:11px;color:var(--text-secondary);margin:0 0 4px;}
+  .card .val{font-size:20px;font-weight:500;margin:0;}
+  .filterbar{display:flex;gap:6px;margin-bottom:12px;}
+  .filterbar button{padding:5px 12px;font-size:12px;border:0.5px solid var(--border);background:transparent;border-radius:var(--radius);cursor:pointer;font-family:inherit;}
+  .filterbar button.active{background:var(--surface-1);font-weight:500;}
+  .tbl-wrap{overflow-x:auto;border:0.5px solid var(--border);border-radius:var(--radius);}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  th{text-align:left;font-size:11px;color:var(--text-secondary);font-weight:400;padding:8px;background:var(--surface-1);border-bottom:0.5px solid var(--border);white-space:nowrap;}
+  td{padding:8px;border-bottom:0.5px solid var(--border);vertical-align:top;}
+  tr.ok td{background:#fafff8;}
+  tr.proceso td{background:#fffbf0;}
+  .badge{font-size:11px;padding:2px 7px;border-radius:var(--radius);display:inline-block;}
+  .badge.ok{background:var(--success-bg);color:var(--success-text);}
+  .badge.proceso{background:var(--warning-bg);color:var(--warning-text);}
+  .remark{font-size:11px;color:var(--text-secondary);max-width:180px;word-break:break-word;}
+  .num{text-align:right;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>AVISO 탭 — 구글 시트 실시간 연동</h1>
+  <p class="sub" id="lastUpdate">데이터 불러오는 중...</p>
+  <div class="status loading" id="statusBox">구글 시트에서 데이터를 불러오는 중...</div>
+
+  <div class="summary" id="summaryBox" style="display:none;">
+    <div class="card"><p class="lbl">전체 PEDIDO</p><p class="val" id="totalCount">-</p></div>
+    <div class="card"><p class="lbl">OK</p><p class="val" id="okCount" style="color:var(--success);">-</p></div>
+    <div class="card"><p class="lbl">진행중(PROCESO)</p><p class="val" id="procesoCount" style="color:var(--warning);">-</p></div>
+    <div class="card"><p class="lbl">비용합계 총액</p><p class="val" id="totalCost" style="font-size:15px;">-</p></div>
+  </div>
+
+  <div class="filterbar" id="filterbar" style="display:none;">
+    <button class="active" onclick="filterData('all',this)">전체</button>
+    <button onclick="filterData('OK',this)">OK</button>
+    <button onclick="filterData('PROCESO',this)">진행중</button>
+  </div>
+
+  <div class="tbl-wrap" id="tableWrap" style="display:none;">
+    <table>
+      <thead>
+        <tr>
+          <th>PEDIDO</th><th>NO</th><th>FOLIO PRESENTACION</th>
+          <th>FOLIO TRAMITE</th><th>ESTATUS</th><th>FECHA SOLICITUD</th>
+          <th>DIAS DICT.</th><th>DESCARGA TERMINAL</th><th>DIAS TERMINAL</th>
+          <th>CONT. QTY</th><th class="num">ALMACENAJE</th>
+          <th class="num">DEMORAS</th><th class="num">PAGO AVISO</th>
+          <th class="num">TOTAL</th><th>REMARK</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRfv4TFloZqAVKyJXAoGCjP5xec3MvPGjTagc1btjwQzKXvICTmREywHrT1wNSl_6JN7vA_gsY2w8kB/pub?gid=0&single=true&output=csv';
+let allRows = [];
+
+function parseCSV(text){
+  const lines = text.replace(/\r/g,'').split('\n');
+  const headers = splitCSVLine(lines[0]);
+  return lines.slice(1).filter(l=>l.trim()).map(line=>{
+    const vals = splitCSVLine(line);
+    const obj={};
+    headers.forEach((h,i)=>obj[h.trim()]=(vals[i]||'').trim());
+    return obj;
+  });
+}
+
+function splitCSVLine(line){
+  const result=[];
+  let cur='', inQ=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(c==='"'){ inQ=!inQ; }
+    else if(c===','&&!inQ){ result.push(cur); cur=''; }
+    else cur+=c;
+  }
+  result.push(cur);
+  return result;
+}
+
+function fmt(v){ return (v!==null&&v!==undefined&&v!=='') ? v : '-'; }
+function fmtNum(v){
+  const n=parseFloat(String(v).replace(/,/g,''));
+  if(isNaN(n)||n===0) return '-';
+  return '$'+n.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+}
+
+async function loadData(){
+  try{
+    const res = await fetch(CSV_URL);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const text = await res.text();
+    allRows = parseCSV(text).filter(r=>r['PEDIDO']&&r['PEDIDO']!=='-'&&r['PEDIDO']!=='PEDIDO');
+
+    const pedidos=[...new Set(allRows.map(r=>r['PEDIDO']))];
+    const okP=[...new Set(allRows.filter(r=>r['ESTATUS']==='OK').map(r=>r['PEDIDO']))].length;
+    const proP=[...new Set(allRows.filter(r=>r['ESTATUS']==='PROCESO').map(r=>r['PEDIDO']))].length;
+    const totalCost=allRows.reduce((s,r)=>{
+      const n=parseFloat((r['BIENES_TOTAL']||'0').replace(/,/g,''));
+      return s+(isNaN(n)?0:n);
+    },0);
+
+    document.getElementById('totalCount').textContent=pedidos.length+'건';
+    document.getElementById('okCount').textContent=okP+'건';
+    document.getElementById('procesoCount').textContent=proP+'건';
+    document.getElementById('totalCost').textContent='$'+totalCost.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+    document.getElementById('summaryBox').style.display='grid';
+    document.getElementById('filterbar').style.display='flex';
+    document.getElementById('tableWrap').style.display='block';
+    document.getElementById('statusBox').className='status success';
+    document.getElementById('statusBox').textContent='✓ 구글 시트 연동 성공 — '+allRows.length+'행 불러옴';
+    document.getElementById('lastUpdate').textContent='최종 업데이트: '+new Date().toLocaleString('ko-KR');
+    renderTable(allRows);
+  } catch(e){
+    document.getElementById('statusBox').className='status error';
+    document.getElementById('statusBox').textContent='❌ 연동 실패 — '+e.message;
+  }
+}
+
+function renderTable(rows){
+  document.getElementById('tableBody').innerHTML=rows.map(r=>`
+    <tr class="${(r['ESTATUS']||'').toLowerCase()}">
+      <td>${fmt(r['PEDIDO'])}</td>
+      <td>${fmt(r['NO'])}</td>
+      <td>${fmt(r['FOLIO_PRESENTACION'])}</td>
+      <td style="font-size:10px;">${fmt(r['FOLIO_TRAMITE'])}</td>
+      <td><span class="badge ${(r['ESTATUS']||'').toLowerCase()}">${fmt(r['ESTATUS'])}</span></td>
+      <td>${fmt(r['FECHA_SOLICITUD'])}</td>
+      <td>${fmt(r['DIAS_DICTAMINACION'])}</td>
+      <td>${fmt(r['DESCARGA_TERMINAL'])}</td>
+      <td>${fmt(r['DIAS_TERMINAL'])}</td>
+      <td>${fmt(r['CONTAINER_QTY'])}</td>
+      <td class="num">${fmtNum(r['ALMACENAJE'])}</td>
+      <td class="num">${fmtNum(r['DEMORAS'])}</td>
+      <td class="num">${fmtNum(r['PAGO_AVISO'])}</td>
+      <td class="num">${fmtNum(r['BIENES_TOTAL'])}</td>
+      <td class="remark">${fmt(r['REMARK'])}</td>
+    </tr>`).join('');
+}
+
+function filterData(val,btn){
+  document.querySelectorAll('.filterbar button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTable(val==='all'?allRows:allRows.filter(r=>r['ESTATUS']===val));
+}
+
+loadData();
+</script>
+</body>
+</html>
