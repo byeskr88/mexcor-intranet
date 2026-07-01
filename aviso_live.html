@@ -13,8 +13,8 @@
     --radius:8px;
   }
   *{box-sizing:border-box;}
-  body{margin:0;padding:24px;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Apple SD Gothic Neo",sans-serif;color:var(--text);}
-  .wrap{max-width:1100px;margin:0 auto;background:var(--surface);border:0.5px solid var(--border);border-radius:12px;padding:20px;}
+  body{margin:0;padding:20px;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Apple SD Gothic Neo",sans-serif;color:var(--text);}
+  .wrap{max-width:100%;margin:0 auto;background:var(--surface);border:0.5px solid var(--border);border-radius:12px;padding:20px;}
   h1{font-size:17px;font-weight:500;margin:0 0 4px;}
   .sub{font-size:12px;color:var(--text-secondary);margin:0 0 16px;}
   .status{padding:10px 14px;border-radius:var(--radius);font-size:13px;margin-bottom:16px;}
@@ -28,13 +28,32 @@
   .filterbar{display:flex;gap:6px;margin-bottom:12px;}
   .filterbar button{padding:5px 12px;font-size:12px;border:0.5px solid var(--border);background:transparent;border-radius:var(--radius);cursor:pointer;font-family:inherit;}
   .filterbar button.active{background:var(--surface-1);font-weight:500;}
-  .tbl-wrap{overflow-x:auto;border:0.5px solid var(--border);border-radius:var(--radius);}
-  table{width:100%;border-collapse:collapse;font-size:12px;}
-  th{text-align:left;font-size:11px;color:var(--text-secondary);font-weight:400;padding:8px;background:var(--surface-1);border-bottom:0.5px solid var(--border);white-space:nowrap;position:sticky;top:0;}
-  td{padding:7px 8px;border-bottom:0.5px solid var(--border);vertical-align:middle;white-space:nowrap;}
-  td.remark{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;font-size:11px;color:var(--text-secondary);}
+  .tbl-wrap{border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;}
+  col.c-pedido{width:14%;}
+  col.c-no{width:4%;}
+  col.c-fp{width:9%;}
+  col.c-ft{width:18%;}
+  col.c-est{width:7%;}
+  col.c-fecha{width:8%;}
+  col.c-dias{width:6%;}
+  col.c-desc{width:7%;}
+  col.c-dterm{width:5%;}
+  col.c-qty{width:4%;}
+  col.c-alm{width:6%;}
+  col.c-dem{width:5%;}
+  col.c-pago{width:5%;}
+  col.c-total{width:6%;}
+  col.c-rem{width:auto;}
+  th{text-align:left;font-size:11px;color:var(--text-secondary);font-weight:500;padding:8px 6px;background:var(--surface-1);border-bottom:0.5px solid var(--border);white-space:nowrap;overflow:hidden;}
+  td{padding:7px 6px;border-bottom:0.5px solid var(--border);vertical-align:middle;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+  td.remark{font-size:11px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  td.merged{color:transparent;border-bottom:none;background:inherit;}
   tr.ok td{background:#fafff8;}
+  tr.ok td.merged{background:#fafff8;}
   tr.proceso td{background:#fffbf0;}
+  tr.proceso td.merged{background:#fffbf0;}
+  tr.group-end td{border-bottom:1.5px solid var(--border);}
   .badge{font-size:11px;padding:2px 7px;border-radius:var(--radius);display:inline-block;}
   .badge.ok{background:var(--success-bg);color:var(--success-text);}
   .badge.proceso{background:var(--warning-bg);color:var(--warning-text);}
@@ -62,13 +81,18 @@
 
   <div class="tbl-wrap" id="tableWrap" style="display:none;">
     <table>
+      <colgroup>
+        <col class="c-pedido"><col class="c-no"><col class="c-fp"><col class="c-ft">
+        <col class="c-est"><col class="c-fecha"><col class="c-dias"><col class="c-desc">
+        <col class="c-dterm"><col class="c-qty"><col class="c-alm"><col class="c-dem">
+        <col class="c-pago"><col class="c-total"><col class="c-rem">
+      </colgroup>
       <thead>
         <tr>
-          <th>PEDIDO</th><th>NO</th><th>FOLIO PRESENTACION</th>
-          <th>FOLIO TRAMITE</th><th>ESTATUS</th><th>FECHA SOLICITUD</th>
-          <th>DIAS DICT.</th><th>DESCARGA TERMINAL</th><th>DIAS TERMINAL</th>
-          <th>CONT. QTY</th><th class="num">ALMACENAJE</th>
-          <th class="num">DEMORAS</th><th class="num">PAGO AVISO</th>
+          <th>PEDIDO</th><th>NO</th><th>FOLIO PRES.</th><th>FOLIO TRAMITE</th>
+          <th>ESTATUS</th><th>FECHA SOL.</th><th>DIAS</th><th>DESCARGA</th>
+          <th>D.TERM</th><th>QTY</th><th class="num">ALMACENAJE</th>
+          <th class="num">DEMORAS</th><th class="num">PAGO</th>
           <th class="num">TOTAL</th><th>REMARK</th>
         </tr>
       </thead>
@@ -135,7 +159,7 @@ async function loadData(){
     document.getElementById('filterbar').style.display='flex';
     document.getElementById('tableWrap').style.display='block';
     document.getElementById('statusBox').className='status success';
-    document.getElementById('statusBox').textContent='✓ 구글 시트 연동 성공 — '+allRows.length+'행 불러옴';
+    document.getElementById('statusBox').textContent='✓ 구글 시트 연동 성공 — PEDIDO '+pedidos.length+'건 ('+allRows.length+'행) 불러옴';
     document.getElementById('lastUpdate').textContent='최종 업데이트: '+new Date().toLocaleString('ko-KR');
     renderTable(allRows);
   } catch(e){
@@ -145,24 +169,35 @@ async function loadData(){
 }
 
 function renderTable(rows){
-  document.getElementById('tableBody').innerHTML=rows.map(r=>`
-    <tr class="${(r['ESTATUS']||'').toLowerCase()}">
-      <td>${fmt(r['PEDIDO'])}</td>
+  // PEDIDO별 그룹핑 — 같은 PEDIDO는 첫 줄에만 표시
+  let html='';
+  let prevPedido='';
+  rows.forEach((r,i)=>{
+    const isFirst = r['PEDIDO'] !== prevPedido;
+    const isLast = (i===rows.length-1) || rows[i+1]['PEDIDO']!==r['PEDIDO'];
+    const cls = (r['ESTATUS']||'').toLowerCase();
+    const groupEndCls = isLast ? ' group-end' : '';
+
+    html+=`<tr class="${cls}${groupEndCls}">
+      <td title="${fmt(r['PEDIDO'])}">${isFirst ? fmt(r['PEDIDO']) : ''}</td>
       <td>${fmt(r['NO'])}</td>
       <td>${fmt(r['FOLIO_PRESENTACION'])}</td>
       <td style="font-size:10px;">${fmt(r['FOLIO_TRAMITE'])}</td>
-      <td><span class="badge ${(r['ESTATUS']||'').toLowerCase()}">${fmt(r['ESTATUS'])}</span></td>
-      <td>${fmt(r['FECHA_SOLICITUD'])}</td>
-      <td>${fmt(r['DIAS_DICTAMINACION'])}</td>
-      <td>${fmt(r['DESCARGA_TERMINAL'])}</td>
-      <td>${fmt(r['DIAS_TERMINAL'])}</td>
-      <td>${fmt(r['CONTAINER_QTY'])}</td>
-      <td class="num">${fmtNum(r['ALMACENAJE'])}</td>
-      <td class="num">${fmtNum(r['DEMORAS'])}</td>
-      <td class="num">${fmtNum(r['PAGO_AVISO'])}</td>
-      <td class="num">${fmtNum(r['BIENES_TOTAL'])}</td>
-      <td class="remark" title="${fmt(r['REMARK'])}">${fmt(r['REMARK'])}</td>
-    </tr>`).join('');
+      <td>${isFirst ? `<span class="badge ${cls}">${fmt(r['ESTATUS'])}</span>` : ''}</td>
+      <td>${isFirst ? fmt(r['FECHA_SOLICITUD']) : ''}</td>
+      <td>${isFirst ? fmt(r['DIAS_DICTAMINACION']) : ''}</td>
+      <td>${isFirst ? fmt(r['DESCARGA_TERMINAL']) : ''}</td>
+      <td>${isFirst ? fmt(r['DIAS_TERMINAL']) : ''}</td>
+      <td>${isFirst ? fmt(r['CONTAINER_QTY']) : ''}</td>
+      <td class="num">${isFirst ? fmtNum(r['ALMACENAJE']) : ''}</td>
+      <td class="num">${isFirst ? fmtNum(r['DEMORAS']) : ''}</td>
+      <td class="num">${isFirst ? fmtNum(r['PAGO_AVISO']) : ''}</td>
+      <td class="num">${isFirst ? fmtNum(r['BIENES_TOTAL']) : ''}</td>
+      <td class="remark" title="${fmt(r['REMARK'])}">${isFirst ? fmt(r['REMARK']) : ''}</td>
+    </tr>`;
+    prevPedido = r['PEDIDO'];
+  });
+  document.getElementById('tableBody').innerHTML=html;
 }
 
 function filterData(val,btn){
