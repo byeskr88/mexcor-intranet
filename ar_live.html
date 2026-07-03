@@ -26,10 +26,12 @@
   .card{background:var(--surface-1);border-radius:var(--radius);padding:12px;}
   .card .lbl{font-size:11px;color:var(--text-secondary);margin:0 0 4px;}
   .card .val{font-size:18px;font-weight:500;margin:0;}
-  .card .sub2{font-size:11px;color:var(--text-secondary);margin:4px 0 0;}
-  .filterbar{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+  .filter-section{margin-bottom:12px;}
+  .filter-label{font-size:11px;color:var(--text-secondary);margin:0 0 6px;}
+  .filterbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
   .filterbar button{padding:5px 12px;font-size:12px;border:0.5px solid var(--border);background:transparent;border-radius:var(--radius);cursor:pointer;font-family:inherit;}
-  .filterbar button.active{background:var(--surface-1);font-weight:500;}
+  .filterbar button.active{background:var(--surface-1);font-weight:500;border-color:var(--text);}
+  .result-info{font-size:12px;color:var(--text-secondary);margin-bottom:8px;}
   .tbl-wrap{border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;}
   table{width:100%;border-collapse:collapse;font-size:13px;}
   th{text-align:left;font-size:11px;color:var(--text-secondary);font-weight:500;padding:9px 12px;background:var(--surface-1);border-bottom:0.5px solid var(--border);white-space:nowrap;}
@@ -38,7 +40,7 @@
   .row-pending-30일이내 td{background:#fffbf0;}
   .row-pending-30~60일 td{background:#fff3e0;}
   .row-pending-60일초과 td{background:#fff0f0;}
-  .row-pagado td{background:#f9fafb;}
+  .row-pagado td{background:#f9fafb;color:var(--text-secondary);}
   .badge{font-size:11px;padding:2px 8px;border-radius:var(--radius);display:inline-block;font-weight:500;}
   .badge-pagado{background:var(--success-bg);color:var(--success-text);}
   .badge-pendiente{background:var(--warning-bg);color:var(--warning-text);}
@@ -57,20 +59,35 @@
 
   <div class="summary" id="summaryBox" style="display:none;">
     <div class="card"><p class="lbl">미수금 총액</p><p class="val" id="totalPending">-</p></div>
-    <div class="card"><p class="lbl">미만기 (예정)</p><p class="val" id="cnt0" style="color:var(--text-secondary);">-</p></div>
-    <div class="card"><p class="lbl">30일 이내 연체</p><p class="val" id="cnt30" style="color:var(--warning);">-</p></div>
-    <div class="card"><p class="lbl">30~60일 연체</p><p class="val" id="cnt60" style="color:var(--warning);">-</p></div>
-    <div class="card"><p class="lbl">60일 초과 연체</p><p class="val" id="cnt60over" style="color:var(--danger);">-</p></div>
+    <div class="card"><p class="lbl">미만기</p><p class="val" id="cnt0" style="color:var(--text-secondary);">-</p></div>
+    <div class="card"><p class="lbl">30일 이내</p><p class="val" id="cnt30" style="color:var(--warning);">-</p></div>
+    <div class="card"><p class="lbl">30~60일</p><p class="val" id="cnt60" style="color:var(--warning);">-</p></div>
+    <div class="card"><p class="lbl">60일 초과</p><p class="val" id="cnt60over" style="color:var(--danger);">-</p></div>
   </div>
 
-  <div class="filterbar" id="filterbar" style="display:none;">
-    <button class="active" onclick="filterData('all',this)">전체</button>
-    <button onclick="filterData('PENDIENTE',this)">미수금만</button>
-    <button onclick="filterData('미만기',this)">미만기</button>
-    <button onclick="filterData('30일이내',this)" style="color:var(--warning-text);">30일이내</button>
-    <button onclick="filterData('30~60일',this)" style="color:var(--warning-text);">30~60일</button>
-    <button onclick="filterData('60일초과',this)" style="color:var(--danger-text);">60일초과</button>
-    <button onclick="filterData('PAGADO',this)">결제완료</button>
+  <div id="filterSection" style="display:none;">
+    <div class="filter-section">
+      <p class="filter-label">📅 기간</p>
+      <div class="filterbar" id="yearFilter">
+        <button onclick="setYear('recent',this)" class="active">최근 6개월</button>
+        <button onclick="setYear('2026',this)">2026년</button>
+        <button onclick="setYear('2025',this)">2025년</button>
+        <button onclick="setYear('2024',this)">2024년</button>
+        <button onclick="setYear('2023',this)">2023년</button>
+        <button onclick="setYear('all',this)">전체 기록</button>
+      </div>
+    </div>
+    <div class="filter-section">
+      <p class="filter-label">📋 상태</p>
+      <div class="filterbar" id="statusFilter">
+        <button onclick="setStatus('PENDIENTE',this)" class="active">미수금만</button>
+        <button onclick="setStatus('all',this)">전체 (결제완료 포함)</button>
+        <button onclick="setStatus('60일초과',this)" style="color:var(--danger-text);">60일 초과</button>
+        <button onclick="setStatus('30~60일',this)" style="color:var(--warning-text);">30~60일</button>
+        <button onclick="setStatus('30일이내',this)" style="color:var(--warning-text);">30일 이내</button>
+      </div>
+    </div>
+    <p class="result-info" id="resultInfo"></p>
   </div>
 
   <div class="tbl-wrap" id="tableWrap" style="display:none;">
@@ -103,6 +120,10 @@
 <script>
 const TSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRfv4TFloZqAVKyJXAoGCjP5xec3MvPGjTagc1btjwQzKXvICTmREywHrT1wNSl_6JN7vA_gsY2w8kB/pub?gid=1428414690&single=true&output=tsv';
 let allRows = [];
+let currentYear = 'recent';
+let currentStatus = 'PENDIENTE';
+const TODAY = new Date();
+const SIX_MONTHS_AGO = new Date(TODAY.getFullYear(), TODAY.getMonth()-6, TODAY.getDate());
 
 function parseTSV(text){
   const lines = text.replace(/\r/g,'').split('\n');
@@ -122,7 +143,7 @@ function fmtNum(v){
   return n.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
 }
 
-function getOverdueClass(days, bucket){
+function getOverdueClass(bucket){
   if(bucket==='60일초과') return 'overdue-red';
   if(bucket==='30~60일'||bucket==='30일이내') return 'overdue-warn';
   return 'overdue-ok';
@@ -132,6 +153,49 @@ function getBadgeClass(status, bucket){
   if(status==='PAGADO') return 'badge-pagado';
   if(bucket==='60일초과'||bucket==='30~60일') return 'badge-overdue';
   return 'badge-pendiente';
+}
+
+function applyFilters(){
+  let filtered = [...allRows];
+
+  // 연도/기간 필터
+  if(currentYear==='recent'){
+    filtered = filtered.filter(r=>{
+      if(!r['FACTURA_DATE']||r['FACTURA_DATE']==='-') return false;
+      const d = new Date(r['FACTURA_DATE']);
+      return d >= SIX_MONTHS_AGO;
+    });
+  } else if(currentYear!=='all'){
+    filtered = filtered.filter(r=>r['YEAR']===currentYear);
+  }
+
+  // 상태 필터
+  if(currentStatus==='PENDIENTE'){
+    filtered = filtered.filter(r=>r['PAYMENT_STATUS']==='PENDIENTE');
+  } else if(currentStatus==='60일초과'){
+    filtered = filtered.filter(r=>r['BUCKET']==='60일초과');
+  } else if(currentStatus==='30~60일'){
+    filtered = filtered.filter(r=>r['BUCKET']==='30~60일');
+  } else if(currentStatus==='30일이내'){
+    filtered = filtered.filter(r=>r['BUCKET']==='30일이내');
+  }
+
+  document.getElementById('resultInfo').textContent = '현재 표시: '+filtered.length+'건';
+  renderTable(filtered);
+}
+
+function setYear(val, btn){
+  currentYear = val;
+  document.querySelectorAll('#yearFilter button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+
+function setStatus(val, btn){
+  currentStatus = val;
+  document.querySelectorAll('#statusFilter button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
 }
 
 async function loadData(){
@@ -146,23 +210,21 @@ async function loadData(){
       const n=parseFloat((r['TOTAL']||'0').replace(/,/g,''));
       return s+(isNaN(n)?0:n);
     },0);
-    const cnt0 = pending.filter(r=>r['BUCKET']==='미만기').length;
-    const cnt30 = pending.filter(r=>r['BUCKET']==='30일이내').length;
-    const cnt60 = pending.filter(r=>r['BUCKET']==='30~60일').length;
-    const cnt60over = pending.filter(r=>r['BUCKET']==='60일초과').length;
 
     document.getElementById('totalPending').textContent = '$'+totalPend.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
-    document.getElementById('cnt0').textContent = cnt0+'건';
-    document.getElementById('cnt30').textContent = cnt30+'건';
-    document.getElementById('cnt60').textContent = cnt60+'건';
-    document.getElementById('cnt60over').textContent = cnt60over+'건';
+    document.getElementById('cnt0').textContent = pending.filter(r=>r['BUCKET']==='미만기').length+'건';
+    document.getElementById('cnt30').textContent = pending.filter(r=>r['BUCKET']==='30일이내').length+'건';
+    document.getElementById('cnt60').textContent = pending.filter(r=>r['BUCKET']==='30~60일').length+'건';
+    document.getElementById('cnt60over').textContent = pending.filter(r=>r['BUCKET']==='60일초과').length+'건';
+
     document.getElementById('summaryBox').style.display = 'grid';
-    document.getElementById('filterbar').style.display = 'flex';
+    document.getElementById('filterSection').style.display = 'block';
     document.getElementById('tableWrap').style.display = 'block';
     document.getElementById('statusBox').className = 'status success';
     document.getElementById('statusBox').textContent = '✓ 구글 시트 연동 성공 — 전체 '+allRows.length+'건 (미수금 '+pending.length+'건)';
     document.getElementById('lastUpdate').textContent = '최종 업데이트: '+new Date().toLocaleString('ko-KR');
-    renderTable(allRows);
+
+    applyFilters();
   } catch(e){
     document.getElementById('statusBox').className = 'status error';
     document.getElementById('statusBox').textContent = '❌ 연동 실패 — '+e.message;
@@ -170,13 +232,18 @@ async function loadData(){
 }
 
 function renderTable(rows){
+  if(rows.length===0){
+    document.getElementById('tableBody').innerHTML = '<tr><td colspan="16" style="text-align:center;padding:20px;color:var(--text-secondary);">해당 조건의 데이터가 없습니다</td></tr>';
+    return;
+  }
   document.getElementById('tableBody').innerHTML = rows.map(r=>{
     const status = r['PAYMENT_STATUS'];
     const bucket = r['BUCKET'];
     const rowCls = status==='PAGADO' ? 'row-pagado' : 'row-pending-'+bucket;
     const badgeCls = getBadgeClass(status, bucket);
-    const overdueCls = getOverdueClass(r['OVERDUE_DAYS'], bucket);
-    const overdueDisplay = r['OVERDUE_DAYS']!=='' ? (parseInt(r['OVERDUE_DAYS'])>0 ? r['OVERDUE_DAYS']+'일' : 'D'+r['OVERDUE_DAYS']) : '-';
+    const overdueCls = getOverdueClass(bucket);
+    const days = parseInt(r['OVERDUE_DAYS']);
+    const overdueDisplay = r['OVERDUE_DAYS']!=='' ? (days>0 ? days+'일 경과' : 'D'+days) : '-';
 
     return `<tr class="${rowCls}">
       <td>${fmt(r['NO'])}</td>
@@ -197,17 +264,6 @@ function renderTable(rows){
       <td style="font-size:11px;color:var(--text-secondary);">${fmt(r['NOTE'])}</td>
     </tr>`;
   }).join('');
-}
-
-function filterData(val, btn){
-  document.querySelectorAll('.filterbar button').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  let filtered;
-  if(val==='all') filtered = allRows;
-  else if(val==='PENDIENTE') filtered = allRows.filter(r=>r['PAYMENT_STATUS']==='PENDIENTE');
-  else if(val==='PAGADO') filtered = allRows.filter(r=>r['PAYMENT_STATUS']==='PAGADO');
-  else filtered = allRows.filter(r=>r['BUCKET']===val);
-  renderTable(filtered);
 }
 
 loadData();
