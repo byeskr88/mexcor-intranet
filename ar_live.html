@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AR 탭 — 구글 시트 연동</title>
+<style>
+  :root{
+    --bg:#f5f4f0;--surface:#fff;--surface-1:#f1efe8;
+    --border:#e2e0d8;--text:#1f1e1c;--text-secondary:#5f5e5a;
+    --success:#1D9E75;--success-bg:#E1F5EE;--success-text:#085041;
+    --warning:#BA7517;--warning-bg:#FAEEDA;--warning-text:#854F0B;
+    --danger:#A32D2D;--danger-bg:#FCEBEB;--danger-text:#791F1F;
+    --radius:8px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;padding:20px;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Apple SD Gothic Neo",sans-serif;color:var(--text);}
+  .wrap{max-width:100%;margin:0 auto;background:var(--surface);border:0.5px solid var(--border);border-radius:12px;padding:20px;}
+  h1{font-size:17px;font-weight:500;margin:0 0 4px;}
+  .sub{font-size:12px;color:var(--text-secondary);margin:0 0 16px;}
+  .status{padding:10px 14px;border-radius:var(--radius);font-size:13px;margin-bottom:16px;}
+  .status.loading{background:var(--surface-1);color:var(--text-secondary);}
+  .status.success{background:var(--success-bg);color:var(--success-text);}
+  .status.error{background:#FCEBEB;color:#791F1F;}
+  .summary{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px;}
+  .card{background:var(--surface-1);border-radius:var(--radius);padding:12px;}
+  .card .lbl{font-size:11px;color:var(--text-secondary);margin:0 0 4px;}
+  .card .val{font-size:18px;font-weight:500;margin:0;}
+  .card .sub2{font-size:11px;color:var(--text-secondary);margin:4px 0 0;}
+  .filterbar{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+  .filterbar button{padding:5px 12px;font-size:12px;border:0.5px solid var(--border);background:transparent;border-radius:var(--radius);cursor:pointer;font-family:inherit;}
+  .filterbar button.active{background:var(--surface-1);font-weight:500;}
+  .tbl-wrap{border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:left;font-size:11px;color:var(--text-secondary);font-weight:500;padding:9px 12px;background:var(--surface-1);border-bottom:0.5px solid var(--border);white-space:nowrap;}
+  td{padding:9px 12px;border-bottom:0.5px solid var(--border);vertical-align:middle;white-space:nowrap;}
+  .row-pending-미만기 td{background:#fff;}
+  .row-pending-30일이내 td{background:#fffbf0;}
+  .row-pending-30~60일 td{background:#fff3e0;}
+  .row-pending-60일초과 td{background:#fff0f0;}
+  .row-pagado td{background:#f9fafb;}
+  .badge{font-size:11px;padding:2px 8px;border-radius:var(--radius);display:inline-block;font-weight:500;}
+  .badge-pagado{background:var(--success-bg);color:var(--success-text);}
+  .badge-pendiente{background:var(--warning-bg);color:var(--warning-text);}
+  .badge-overdue{background:var(--danger-bg);color:var(--danger-text);}
+  .num{text-align:right;}
+  .overdue-red{color:var(--danger-text);font-weight:500;}
+  .overdue-warn{color:var(--warning-text);font-weight:500;}
+  .overdue-ok{color:var(--text-secondary);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>AR 탭 — 구글 시트 실시간 연동</h1>
+  <p class="sub" id="lastUpdate">데이터 불러오는 중...</p>
+  <div class="status loading" id="statusBox">구글 시트에서 데이터를 불러오는 중...</div>
+
+  <div class="summary" id="summaryBox" style="display:none;">
+    <div class="card"><p class="lbl">미수금 총액</p><p class="val" id="totalPending">-</p></div>
+    <div class="card"><p class="lbl">미만기 (예정)</p><p class="val" id="cnt0" style="color:var(--text-secondary);">-</p></div>
+    <div class="card"><p class="lbl">30일 이내 연체</p><p class="val" id="cnt30" style="color:var(--warning);">-</p></div>
+    <div class="card"><p class="lbl">30~60일 연체</p><p class="val" id="cnt60" style="color:var(--warning);">-</p></div>
+    <div class="card"><p class="lbl">60일 초과 연체</p><p class="val" id="cnt60over" style="color:var(--danger);">-</p></div>
+  </div>
+
+  <div class="filterbar" id="filterbar" style="display:none;">
+    <button class="active" onclick="filterData('all',this)">전체</button>
+    <button onclick="filterData('PENDIENTE',this)">미수금만</button>
+    <button onclick="filterData('미만기',this)">미만기</button>
+    <button onclick="filterData('30일이내',this)" style="color:var(--warning-text);">30일이내</button>
+    <button onclick="filterData('30~60일',this)" style="color:var(--warning-text);">30~60일</button>
+    <button onclick="filterData('60일초과',this)" style="color:var(--danger-text);">60일초과</button>
+    <button onclick="filterData('PAGADO',this)">결제완료</button>
+  </div>
+
+  <div class="tbl-wrap" id="tableWrap" style="display:none;">
+    <table>
+      <thead>
+        <tr>
+          <th>NO</th>
+          <th>발행월</th>
+          <th>거래처</th>
+          <th>FACTURA NO</th>
+          <th>발행일</th>
+          <th>컨셉</th>
+          <th>통화</th>
+          <th class="num">소계</th>
+          <th class="num">IVA</th>
+          <th class="num">합계</th>
+          <th>신용일수</th>
+          <th>결제예정일</th>
+          <th>실제결제일</th>
+          <th>연체일수</th>
+          <th>상태</th>
+          <th>NOTE</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const TSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRfv4TFloZqAVKyJXAoGCjP5xec3MvPGjTagc1btjwQzKXvICTmREywHrT1wNSl_6JN7vA_gsY2w8kB/pub?gid=1428414690&single=true&output=tsv';
+let allRows = [];
+
+function parseTSV(text){
+  const lines = text.replace(/\r/g,'').split('\n');
+  const headers = lines[0].split('\t').map(h=>h.trim());
+  return lines.slice(1).filter(l=>l.trim()).map(line=>{
+    const vals = line.split('\t');
+    const obj={};
+    headers.forEach((h,i)=>obj[h]=(vals[i]||'').trim());
+    return obj;
+  });
+}
+
+function fmt(v){ return (v!==null&&v!==undefined&&v!=='') ? v : '-'; }
+function fmtNum(v){
+  const n=parseFloat(String(v).replace(/,/g,''));
+  if(isNaN(n)||n===0) return '-';
+  return n.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+}
+
+function getOverdueClass(days, bucket){
+  if(bucket==='60일초과') return 'overdue-red';
+  if(bucket==='30~60일'||bucket==='30일이내') return 'overdue-warn';
+  return 'overdue-ok';
+}
+
+function getBadgeClass(status, bucket){
+  if(status==='PAGADO') return 'badge-pagado';
+  if(bucket==='60일초과'||bucket==='30~60일') return 'badge-overdue';
+  return 'badge-pendiente';
+}
+
+async function loadData(){
+  try{
+    const res = await fetch(TSV_URL);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const text = await res.text();
+    allRows = parseTSV(text).filter(r=>r['NO']&&r['NO']!=='NO');
+
+    const pending = allRows.filter(r=>r['PAYMENT_STATUS']==='PENDIENTE');
+    const totalPend = pending.reduce((s,r)=>{
+      const n=parseFloat((r['TOTAL']||'0').replace(/,/g,''));
+      return s+(isNaN(n)?0:n);
+    },0);
+    const cnt0 = pending.filter(r=>r['BUCKET']==='미만기').length;
+    const cnt30 = pending.filter(r=>r['BUCKET']==='30일이내').length;
+    const cnt60 = pending.filter(r=>r['BUCKET']==='30~60일').length;
+    const cnt60over = pending.filter(r=>r['BUCKET']==='60일초과').length;
+
+    document.getElementById('totalPending').textContent = '$'+totalPend.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+    document.getElementById('cnt0').textContent = cnt0+'건';
+    document.getElementById('cnt30').textContent = cnt30+'건';
+    document.getElementById('cnt60').textContent = cnt60+'건';
+    document.getElementById('cnt60over').textContent = cnt60over+'건';
+    document.getElementById('summaryBox').style.display = 'grid';
+    document.getElementById('filterbar').style.display = 'flex';
+    document.getElementById('tableWrap').style.display = 'block';
+    document.getElementById('statusBox').className = 'status success';
+    document.getElementById('statusBox').textContent = '✓ 구글 시트 연동 성공 — 전체 '+allRows.length+'건 (미수금 '+pending.length+'건)';
+    document.getElementById('lastUpdate').textContent = '최종 업데이트: '+new Date().toLocaleString('ko-KR');
+    renderTable(allRows);
+  } catch(e){
+    document.getElementById('statusBox').className = 'status error';
+    document.getElementById('statusBox').textContent = '❌ 연동 실패 — '+e.message;
+  }
+}
+
+function renderTable(rows){
+  document.getElementById('tableBody').innerHTML = rows.map(r=>{
+    const status = r['PAYMENT_STATUS'];
+    const bucket = r['BUCKET'];
+    const rowCls = status==='PAGADO' ? 'row-pagado' : 'row-pending-'+bucket;
+    const badgeCls = getBadgeClass(status, bucket);
+    const overdueCls = getOverdueClass(r['OVERDUE_DAYS'], bucket);
+    const overdueDisplay = r['OVERDUE_DAYS']!=='' ? (parseInt(r['OVERDUE_DAYS'])>0 ? r['OVERDUE_DAYS']+'일' : 'D'+r['OVERDUE_DAYS']) : '-';
+
+    return `<tr class="${rowCls}">
+      <td>${fmt(r['NO'])}</td>
+      <td>${fmt(r['FACTURA_MONTH'])}</td>
+      <td>${fmt(r['CLIENTE'])}</td>
+      <td>${fmt(r['FACTURA_NO'])}</td>
+      <td>${fmt(r['FACTURA_DATE'])}</td>
+      <td>${fmt(r['CONCEPT'])}</td>
+      <td>${fmt(r['CURRENCY'])}</td>
+      <td class="num">${fmtNum(r['SUB_TOTAL'])}</td>
+      <td class="num">${fmtNum(r['IVA'])}</td>
+      <td class="num">${fmtNum(r['TOTAL'])}</td>
+      <td>${fmt(r['CREDIT_DAYS'])}</td>
+      <td>${fmt(r['PAYMENT_PLAN_DATE'])}</td>
+      <td>${fmt(r['ACTUAL_PAYMENT_DATE'])}</td>
+      <td class="${overdueCls}">${overdueDisplay}</td>
+      <td><span class="badge ${badgeCls}">${fmt(status)}</span></td>
+      <td style="font-size:11px;color:var(--text-secondary);">${fmt(r['NOTE'])}</td>
+    </tr>`;
+  }).join('');
+}
+
+function filterData(val, btn){
+  document.querySelectorAll('.filterbar button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  let filtered;
+  if(val==='all') filtered = allRows;
+  else if(val==='PENDIENTE') filtered = allRows.filter(r=>r['PAYMENT_STATUS']==='PENDIENTE');
+  else if(val==='PAGADO') filtered = allRows.filter(r=>r['PAYMENT_STATUS']==='PAGADO');
+  else filtered = allRows.filter(r=>r['BUCKET']===val);
+  renderTable(filtered);
+}
+
+loadData();
+</script>
+</body>
+</html>
