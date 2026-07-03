@@ -18,29 +18,61 @@
   .wrap{max-width:100%;margin:0 auto;background:var(--surface);border:0.5px solid var(--border);border-radius:12px;padding:20px;}
   h1{font-size:17px;font-weight:500;margin:0 0 4px;}
   .sub{font-size:12px;color:var(--text-secondary);margin:0 0 16px;}
-  .status{padding:10px 14px;border-radius:var(--radius);font-size:13px;margin-bottom:16px;}
-  .status.loading{background:var(--surface-1);color:var(--text-secondary);}
-  .status.success{background:var(--success-bg);color:var(--success-text);}
-  .status.error{background:#FCEBEB;color:#791F1F;}
+  .status-bar{padding:10px 14px;border-radius:var(--radius);font-size:13px;margin-bottom:16px;}
+  .status-bar.loading{background:var(--surface-1);color:var(--text-secondary);}
+  .status-bar.success{background:var(--success-bg);color:var(--success-text);}
+  .status-bar.error{background:#FCEBEB;color:#791F1F;}
+
+  /* 경보 배너 */
+  .alert-banner{background:var(--danger-bg);border:0.5px solid #f5c6c6;border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;font-size:13px;color:var(--danger-text);display:none;}
+
+  /* 요약 카드 */
   .summary{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px;}
   .card{background:var(--surface-1);border-radius:var(--radius);padding:12px;}
   .card .lbl{font-size:11px;color:var(--text-secondary);margin:0 0 4px;}
   .card .val{font-size:18px;font-weight:500;margin:0;}
-  .filter-section{margin-bottom:12px;}
-  .filter-label{font-size:11px;color:var(--text-secondary);margin:0 0 6px;}
-  .filterbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+
+  /* 거래처별 미수금 */
+  .client-summary{margin-bottom:16px;}
+  .client-summary-title{font-size:13px;font-weight:500;margin:0 0 8px;}
+  .client-tags{display:flex;flex-wrap:wrap;gap:6px;}
+  .client-tag{font-size:12px;padding:4px 10px;border-radius:var(--radius);background:var(--surface-1);border:0.5px solid var(--border);}
+  .client-tag span{font-weight:500;margin-left:4px;}
+
+  /* 통화별 소계 */
+  .currency-summary{display:flex;gap:10px;margin-bottom:16px;}
+  .currency-card{background:var(--surface-1);border-radius:var(--radius);padding:8px 14px;font-size:13px;}
+  .currency-card .clbl{font-size:11px;color:var(--text-secondary);margin:0 0 2px;}
+  .currency-card .cval{font-weight:500;margin:0;}
+
+  /* 필터 */
+  .filter-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
+  .filter-label{font-size:11px;color:var(--text-secondary);white-space:nowrap;}
+  .filterbar{display:flex;gap:6px;flex-wrap:wrap;}
   .filterbar button{padding:5px 12px;font-size:12px;border:0.5px solid var(--border);background:transparent;border-radius:var(--radius);cursor:pointer;font-family:inherit;}
   .filterbar button.active{background:var(--surface-1);font-weight:500;border-color:var(--text);}
-  .result-info{font-size:12px;color:var(--text-secondary);margin-bottom:8px;}
+
+  /* 검색 + 결과 */
+  .search-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .search-row input{padding:6px 10px;font-size:13px;border:0.5px solid var(--border);border-radius:var(--radius);width:220px;font-family:inherit;}
+  .result-info{font-size:12px;color:var(--text-secondary);}
+  .download-btn{margin-left:auto;padding:6px 14px;font-size:12px;border:0.5px solid var(--border);background:var(--surface-1);border-radius:var(--radius);cursor:pointer;font-family:inherit;}
+
+  /* 테이블 */
   .tbl-wrap{border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;}
-  table{width:100%;border-collapse:collapse;font-size:13px;}
-  th{text-align:left;font-size:11px;color:var(--text-secondary);font-weight:500;padding:9px 12px;background:var(--surface-1);border-bottom:0.5px solid var(--border);white-space:nowrap;}
-  td{padding:9px 12px;border-bottom:0.5px solid var(--border);vertical-align:middle;white-space:nowrap;}
-  .row-pending-미만기 td{background:#fff;}
-  .row-pending-30일이내 td{background:#fffbf0;}
-  .row-pending-30~60일 td{background:#fff3e0;}
-  .row-pending-60일초과 td{background:#fff0f0;}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  th{text-align:left;font-size:11px;color:var(--text-secondary);font-weight:500;padding:9px 10px;background:var(--surface-1);border-bottom:0.5px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;}
+  th:hover{background:#eae8e0;}
+  th .sort-icon{margin-left:4px;opacity:0.4;}
+  th.sorted .sort-icon{opacity:1;}
+  td{padding:8px 10px;border-bottom:0.5px solid var(--border);vertical-align:middle;white-space:nowrap;}
+  .row-미만기 td{background:#fff;}
+  .row-30일이내 td{background:#fffbf0;}
+  .row-30~60일 td{background:#fff3e0;}
+  .row-60일초과 td{background:#fff0f0;}
   .row-pagado td{background:#f9fafb;color:var(--text-secondary);}
+  .row-dday td{background:#fff8e1;}
+
   .badge{font-size:11px;padding:2px 8px;border-radius:var(--radius);display:inline-block;font-weight:500;}
   .badge-pagado{background:var(--success-bg);color:var(--success-text);}
   .badge-pendiente{background:var(--warning-bg);color:var(--warning-text);}
@@ -48,6 +80,7 @@
   .num{text-align:right;}
   .overdue-red{color:var(--danger-text);font-weight:500;}
   .overdue-warn{color:var(--warning-text);font-weight:500;}
+  .overdue-dday{color:#1565C0;font-weight:500;}
   .overdue-ok{color:var(--text-secondary);}
 </style>
 </head>
@@ -55,19 +88,28 @@
 <div class="wrap">
   <h1>AR 탭 — 구글 시트 실시간 연동</h1>
   <p class="sub" id="lastUpdate">데이터 불러오는 중...</p>
-  <div class="status loading" id="statusBox">구글 시트에서 데이터를 불러오는 중...</div>
+  <div class="status-bar loading" id="statusBox">구글 시트에서 데이터를 불러오는 중...</div>
+  <div class="alert-banner" id="alertBanner"></div>
 
-  <div class="summary" id="summaryBox" style="display:none;">
-    <div class="card"><p class="lbl">미수금 총액</p><p class="val" id="totalPending">-</p></div>
-    <div class="card"><p class="lbl">미만기</p><p class="val" id="cnt0" style="color:var(--text-secondary);">-</p></div>
-    <div class="card"><p class="lbl">30일 이내</p><p class="val" id="cnt30" style="color:var(--warning);">-</p></div>
-    <div class="card"><p class="lbl">30~60일</p><p class="val" id="cnt60" style="color:var(--warning);">-</p></div>
-    <div class="card"><p class="lbl">60일 초과</p><p class="val" id="cnt60over" style="color:var(--danger);">-</p></div>
-  </div>
+  <div id="mainContent" style="display:none;">
 
-  <div id="filterSection" style="display:none;">
-    <div class="filter-section">
-      <p class="filter-label">📅 기간</p>
+    <div class="summary">
+      <div class="card"><p class="lbl">미수금 총액(USD)</p><p class="val" id="totalPending">-</p></div>
+      <div class="card"><p class="lbl">미만기</p><p class="val" id="cnt0" style="color:var(--text-secondary);">-</p></div>
+      <div class="card"><p class="lbl">30일 이내</p><p class="val" id="cnt30" style="color:var(--warning);">-</p></div>
+      <div class="card"><p class="lbl">30~60일</p><p class="val" id="cnt60" style="color:var(--warning);">-</p></div>
+      <div class="card"><p class="lbl">60일 초과</p><p class="val" id="cnt60over" style="color:var(--danger);">-</p></div>
+    </div>
+
+    <div class="client-summary">
+      <p class="client-summary-title">거래처별 미수금</p>
+      <div class="client-tags" id="clientTags"></div>
+    </div>
+
+    <div class="currency-summary" id="currencySummary"></div>
+
+    <div class="filter-row">
+      <span class="filter-label">📅 기간</span>
       <div class="filterbar" id="yearFilter">
         <button onclick="setYear('recent',this)" class="active">최근 6개월</button>
         <button onclick="setYear('2026',this)">2026년</button>
@@ -77,43 +119,48 @@
         <button onclick="setYear('all',this)">전체 기록</button>
       </div>
     </div>
-    <div class="filter-section">
-      <p class="filter-label">📋 상태</p>
+    <div class="filter-row" style="margin-bottom:12px;">
+      <span class="filter-label">📋 상태</span>
       <div class="filterbar" id="statusFilter">
         <button onclick="setStatus('PENDIENTE',this)" class="active">미수금만</button>
-        <button onclick="setStatus('all',this)">전체 (결제완료 포함)</button>
-        <button onclick="setStatus('60일초과',this)" style="color:var(--danger-text);">60일 초과</button>
+        <button onclick="setStatus('all',this)">전체</button>
+        <button onclick="setStatus('60일초과',this)" style="color:var(--danger-text);">60일초과</button>
         <button onclick="setStatus('30~60일',this)" style="color:var(--warning-text);">30~60일</button>
-        <button onclick="setStatus('30일이내',this)" style="color:var(--warning-text);">30일 이내</button>
+        <button onclick="setStatus('30일이내',this)" style="color:var(--warning-text);">30일이내</button>
       </div>
     </div>
-    <p class="result-info" id="resultInfo"></p>
-  </div>
 
-  <div class="tbl-wrap" id="tableWrap" style="display:none;">
-    <table>
-      <thead>
-        <tr>
-          <th>NO</th>
-          <th>발행월</th>
-          <th>거래처</th>
-          <th>FACTURA NO</th>
-          <th>발행일</th>
-          <th>컨셉</th>
-          <th>통화</th>
-          <th class="num">소계</th>
-          <th class="num">IVA</th>
-          <th class="num">합계</th>
-          <th>신용일수</th>
-          <th>결제예정일</th>
-          <th>실제결제일</th>
-          <th>연체일수</th>
-          <th>상태</th>
-          <th>NOTE</th>
-        </tr>
-      </thead>
-      <tbody id="tableBody"></tbody>
-    </table>
+    <div class="search-row">
+      <input type="text" id="searchInput" placeholder="거래처명 검색..." oninput="applyFilters()">
+      <span class="result-info" id="resultInfo"></span>
+      <button class="download-btn" onclick="downloadCSV()">⬇ 엑셀 다운로드</button>
+    </div>
+
+    <div class="tbl-wrap">
+      <table id="mainTable">
+        <thead>
+          <tr>
+            <th onclick="sortTable('NO')">NO <span class="sort-icon">↕</span></th>
+            <th onclick="sortTable('FACTURA_MONTH')">발행월 <span class="sort-icon">↕</span></th>
+            <th onclick="sortTable('CLIENTE')">거래처 <span class="sort-icon">↕</span></th>
+            <th onclick="sortTable('FACTURA_NO')">FACTURA NO <span class="sort-icon">↕</span></th>
+            <th onclick="sortTable('FACTURA_DATE')">발행일 <span class="sort-icon">↕</span></th>
+            <th>컨셉</th>
+            <th>통화</th>
+            <th class="num" onclick="sortTable('SUB_TOTAL')">소계 <span class="sort-icon">↕</span></th>
+            <th class="num">IVA</th>
+            <th class="num" onclick="sortTable('TOTAL')">합계 <span class="sort-icon">↕</span></th>
+            <th>신용일수</th>
+            <th onclick="sortTable('PAYMENT_PLAN_DATE')">결제예정일 <span class="sort-icon">↕</span></th>
+            <th>실제결제일</th>
+            <th onclick="sortTable('OVERDUE_DAYS')">연체일수 <span class="sort-icon">↕</span></th>
+            <th>상태</th>
+            <th>NOTE</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
   </div>
 </div>
 
@@ -122,6 +169,9 @@ const TSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRfv4TFloZqAVKy
 let allRows = [];
 let currentYear = 'recent';
 let currentStatus = 'PENDIENTE';
+let sortCol = 'OVERDUE_DAYS';
+let sortDir = -1;
+let currentFiltered = [];
 const TODAY = new Date();
 const SIX_MONTHS_AGO = new Date(TODAY.getFullYear(), TODAY.getMonth()-6, TODAY.getDate());
 
@@ -143,10 +193,13 @@ function fmtNum(v){
   return n.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
 }
 
-function getOverdueClass(bucket){
-  if(bucket==='60일초과') return 'overdue-red';
-  if(bucket==='30~60일'||bucket==='30일이내') return 'overdue-warn';
-  return 'overdue-ok';
+function getRowClass(status, bucket, days){
+  if(status==='PAGADO') return 'row-pagado';
+  if(bucket==='60일초과') return 'row-60일초과';
+  if(bucket==='30~60일') return 'row-30~60일';
+  if(bucket==='30일이내') return 'row-30일이내';
+  if(parseInt(days)>=-3 && parseInt(days)<=0) return 'row-dday';
+  return 'row-미만기';
 }
 
 function getBadgeClass(status, bucket){
@@ -155,31 +208,118 @@ function getBadgeClass(status, bucket){
   return 'badge-pendiente';
 }
 
+function getOverdueClass(days, bucket){
+  if(bucket==='60일초과') return 'overdue-red';
+  if(bucket==='30~60일'||bucket==='30일이내') return 'overdue-warn';
+  const d = parseInt(days);
+  if(d>=-3 && d<=0) return 'overdue-dday';
+  return 'overdue-ok';
+}
+
+function getOverdueDisplay(days){
+  if(days==='') return '-';
+  const d = parseInt(days);
+  if(d>0) return d+'일 경과';
+  if(d===0) return 'D-day';
+  return 'D'+d;
+}
+
+async function loadData(){
+  try{
+    const res = await fetch(TSV_URL);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const text = await res.text();
+    allRows = parseTSV(text).filter(r=>r['NO']&&r['NO']!=='NO');
+
+    const pending = allRows.filter(r=>r['PAYMENT_STATUS']==='PENDIENTE');
+
+    // 요약 카드
+    const usdPending = pending.filter(r=>r['CURRENCY']==='USD');
+    const totalUSD = usdPending.reduce((s,r)=>s+(parseFloat((r['TOTAL']||'0').replace(/,/g,''))||0),0);
+    document.getElementById('totalPending').textContent = '$'+totalUSD.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+    document.getElementById('cnt0').textContent = pending.filter(r=>r['BUCKET']==='미만기').length+'건';
+    document.getElementById('cnt30').textContent = pending.filter(r=>r['BUCKET']==='30일이내').length+'건';
+    document.getElementById('cnt60').textContent = pending.filter(r=>r['BUCKET']==='30~60일').length+'건';
+    document.getElementById('cnt60over').textContent = pending.filter(r=>r['BUCKET']==='60일초과').length+'건';
+
+    // 연체 경보
+    const overdue60 = pending.filter(r=>r['BUCKET']==='60일초과');
+    const ddayItems = pending.filter(r=>{const d=parseInt(r['OVERDUE_DAYS']);return d>=-3&&d<=0;});
+    let alerts = [];
+    if(overdue60.length>0) alerts.push('⚠️ 60일 초과 연체 '+overdue60.length+'건: '+[...new Set(overdue60.map(r=>r['CLIENTE']))].join(', '));
+    if(ddayItems.length>0) alerts.push('🔔 결제 임박(D-3이내) '+ddayItems.length+'건: '+[...new Set(ddayItems.map(r=>r['CLIENTE']))].join(', '));
+    if(alerts.length>0){
+      const banner = document.getElementById('alertBanner');
+      banner.innerHTML = alerts.join('<br>');
+      banner.style.display = 'block';
+    }
+
+    // 거래처별 미수금
+    const clientMap = {};
+    pending.forEach(r=>{
+      const c = r['CLIENTE'];
+      if(!clientMap[c]) clientMap[c] = 0;
+      const n = parseFloat((r['TOTAL']||'0').replace(/,/g,''));
+      if(!isNaN(n)) clientMap[c] += n;
+    });
+    const clientTagsHtml = Object.entries(clientMap)
+      .sort((a,b)=>b[1]-a[1])
+      .map(([c,v])=>`<div class="client-tag">${c}<span>$${Math.round(v).toLocaleString()}</span></div>`)
+      .join('');
+    document.getElementById('clientTags').innerHTML = clientTagsHtml;
+
+    // 통화별 소계
+    const currencies = {};
+    pending.forEach(r=>{
+      const cur = r['CURRENCY'];
+      if(!currencies[cur]) currencies[cur] = 0;
+      const n = parseFloat((r['TOTAL']||'0').replace(/,/g,''));
+      if(!isNaN(n)) currencies[cur] += n;
+    });
+    document.getElementById('currencySummary').innerHTML = Object.entries(currencies).map(([cur,val])=>`
+      <div class="currency-card">
+        <p class="clbl">미수금 합계 (${cur})</p>
+        <p class="cval">${Math.round(val).toLocaleString()} ${cur}</p>
+      </div>`).join('');
+
+    document.getElementById('statusBox').className = 'status-bar success';
+    document.getElementById('statusBox').textContent = '✓ 구글 시트 연동 성공 — 전체 '+allRows.length+'건 (미수금 '+pending.length+'건)';
+    document.getElementById('lastUpdate').textContent = '최종 업데이트: '+new Date().toLocaleString('ko-KR');
+    document.getElementById('mainContent').style.display = 'block';
+    applyFilters();
+  } catch(e){
+    document.getElementById('statusBox').className = 'status-bar error';
+    document.getElementById('statusBox').textContent = '❌ 연동 실패 — '+e.message;
+  }
+}
+
 function applyFilters(){
+  const search = (document.getElementById('searchInput').value||'').toLowerCase();
   let filtered = [...allRows];
 
-  // 연도/기간 필터
   if(currentYear==='recent'){
     filtered = filtered.filter(r=>{
       if(!r['FACTURA_DATE']||r['FACTURA_DATE']==='-') return false;
-      const d = new Date(r['FACTURA_DATE']);
-      return d >= SIX_MONTHS_AGO;
+      return new Date(r['FACTURA_DATE']) >= SIX_MONTHS_AGO;
     });
   } else if(currentYear!=='all'){
     filtered = filtered.filter(r=>r['YEAR']===currentYear);
   }
 
-  // 상태 필터
-  if(currentStatus==='PENDIENTE'){
-    filtered = filtered.filter(r=>r['PAYMENT_STATUS']==='PENDIENTE');
-  } else if(currentStatus==='60일초과'){
-    filtered = filtered.filter(r=>r['BUCKET']==='60일초과');
-  } else if(currentStatus==='30~60일'){
-    filtered = filtered.filter(r=>r['BUCKET']==='30~60일');
-  } else if(currentStatus==='30일이내'){
-    filtered = filtered.filter(r=>r['BUCKET']==='30일이내');
-  }
+  if(currentStatus==='PENDIENTE') filtered = filtered.filter(r=>r['PAYMENT_STATUS']==='PENDIENTE');
+  else if(['60일초과','30~60일','30일이내','미만기'].includes(currentStatus)) filtered = filtered.filter(r=>r['BUCKET']===currentStatus);
 
+  if(search) filtered = filtered.filter(r=>(r['CLIENTE']||'').toLowerCase().includes(search));
+
+  // 정렬
+  filtered.sort((a,b)=>{
+    let va = a[sortCol]||'', vb = b[sortCol]||'';
+    const na = parseFloat(va), nb = parseFloat(vb);
+    if(!isNaN(na)&&!isNaN(nb)) return (na-nb)*sortDir;
+    return va.localeCompare(vb)*sortDir;
+  });
+
+  currentFiltered = filtered;
   document.getElementById('resultInfo').textContent = '현재 표시: '+filtered.length+'건';
   renderTable(filtered);
 }
@@ -198,37 +338,18 @@ function setStatus(val, btn){
   applyFilters();
 }
 
-async function loadData(){
-  try{
-    const res = await fetch(TSV_URL);
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    const text = await res.text();
-    allRows = parseTSV(text).filter(r=>r['NO']&&r['NO']!=='NO');
-
-    const pending = allRows.filter(r=>r['PAYMENT_STATUS']==='PENDIENTE');
-    const totalPend = pending.reduce((s,r)=>{
-      const n=parseFloat((r['TOTAL']||'0').replace(/,/g,''));
-      return s+(isNaN(n)?0:n);
-    },0);
-
-    document.getElementById('totalPending').textContent = '$'+totalPend.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
-    document.getElementById('cnt0').textContent = pending.filter(r=>r['BUCKET']==='미만기').length+'건';
-    document.getElementById('cnt30').textContent = pending.filter(r=>r['BUCKET']==='30일이내').length+'건';
-    document.getElementById('cnt60').textContent = pending.filter(r=>r['BUCKET']==='30~60일').length+'건';
-    document.getElementById('cnt60over').textContent = pending.filter(r=>r['BUCKET']==='60일초과').length+'건';
-
-    document.getElementById('summaryBox').style.display = 'grid';
-    document.getElementById('filterSection').style.display = 'block';
-    document.getElementById('tableWrap').style.display = 'block';
-    document.getElementById('statusBox').className = 'status success';
-    document.getElementById('statusBox').textContent = '✓ 구글 시트 연동 성공 — 전체 '+allRows.length+'건 (미수금 '+pending.length+'건)';
-    document.getElementById('lastUpdate').textContent = '최종 업데이트: '+new Date().toLocaleString('ko-KR');
-
-    applyFilters();
-  } catch(e){
-    document.getElementById('statusBox').className = 'status error';
-    document.getElementById('statusBox').textContent = '❌ 연동 실패 — '+e.message;
-  }
+function sortTable(col){
+  if(sortCol===col) sortDir*=-1;
+  else { sortCol=col; sortDir=-1; }
+  document.querySelectorAll('th').forEach(th=>{
+    th.classList.remove('sorted');
+    const icon = th.querySelector('.sort-icon');
+    if(icon) icon.textContent='↕';
+  });
+  event.currentTarget.classList.add('sorted');
+  const icon = event.currentTarget.querySelector('.sort-icon');
+  if(icon) icon.textContent = sortDir===1?'↑':'↓';
+  applyFilters();
 }
 
 function renderTable(rows){
@@ -239,12 +360,8 @@ function renderTable(rows){
   document.getElementById('tableBody').innerHTML = rows.map(r=>{
     const status = r['PAYMENT_STATUS'];
     const bucket = r['BUCKET'];
-    const rowCls = status==='PAGADO' ? 'row-pagado' : 'row-pending-'+bucket;
-    const badgeCls = getBadgeClass(status, bucket);
-    const overdueCls = getOverdueClass(bucket);
-    const days = parseInt(r['OVERDUE_DAYS']);
-    const overdueDisplay = r['OVERDUE_DAYS']!=='' ? (days>0 ? days+'일 경과' : 'D'+days) : '-';
-
+    const days = r['OVERDUE_DAYS'];
+    const rowCls = getRowClass(status, bucket, days);
     return `<tr class="${rowCls}">
       <td>${fmt(r['NO'])}</td>
       <td>${fmt(r['FACTURA_MONTH'])}</td>
@@ -259,11 +376,22 @@ function renderTable(rows){
       <td>${fmt(r['CREDIT_DAYS'])}</td>
       <td>${fmt(r['PAYMENT_PLAN_DATE'])}</td>
       <td>${fmt(r['ACTUAL_PAYMENT_DATE'])}</td>
-      <td class="${overdueCls}">${overdueDisplay}</td>
-      <td><span class="badge ${badgeCls}">${fmt(status)}</span></td>
+      <td class="${getOverdueClass(days,bucket)}">${getOverdueDisplay(days)}</td>
+      <td><span class="badge ${getBadgeClass(status,bucket)}">${fmt(status)}</span></td>
       <td style="font-size:11px;color:var(--text-secondary);">${fmt(r['NOTE'])}</td>
     </tr>`;
   }).join('');
+}
+
+function downloadCSV(){
+  const headers = ['NO','발행월','거래처','FACTURA_NO','발행일','컨셉','통화','소계','IVA','합계','신용일수','결제예정일','실제결제일','연체일수','상태','NOTE'];
+  const keys = ['NO','FACTURA_MONTH','CLIENTE','FACTURA_NO','FACTURA_DATE','CONCEPT','CURRENCY','SUB_TOTAL','IVA','TOTAL','CREDIT_DAYS','PAYMENT_PLAN_DATE','ACTUAL_PAYMENT_DATE','OVERDUE_DAYS','PAYMENT_STATUS','NOTE'];
+  const csv = [headers.join(','),...currentFiltered.map(r=>keys.map(k=>'"'+(r[k]||'')+'"').join(','))].join('\n');
+  const blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'AR_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
 }
 
 loadData();
