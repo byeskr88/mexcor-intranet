@@ -23,42 +23,23 @@
   .status-bar.success{background:var(--success-bg);color:var(--success-text);}
   .status-bar.error{background:#FCEBEB;color:#791F1F;}
 
-  /* 경보 배너 */
-  .alert-banner{background:var(--danger-bg);border:0.5px solid #f5c6c6;border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;font-size:13px;color:var(--danger-text);display:none;}
-
-  /* 요약 카드 */
-  .summary{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px;}
+  .summary{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-bottom:16px;}
   .card{background:var(--surface-1);border-radius:var(--radius);padding:12px;}
   .card .lbl{font-size:11px;color:var(--text-secondary);margin:0 0 4px;}
   .card .val{font-size:18px;font-weight:500;margin:0;}
+  .card .sub2{font-size:10px;color:var(--text-secondary);margin:3px 0 0;}
 
-  /* 거래처별 미수금 */
-  .client-summary{margin-bottom:16px;}
-  .client-summary-title{font-size:13px;font-weight:500;margin:0 0 8px;}
-  .client-tags{display:flex;flex-wrap:wrap;gap:6px;}
-  .client-tag{font-size:12px;padding:4px 10px;border-radius:var(--radius);background:var(--surface-1);border:0.5px solid var(--border);}
-  .client-tag span{font-weight:500;margin-left:4px;}
-
-  /* 통화별 소계 */
-  .currency-summary{display:flex;gap:10px;margin-bottom:16px;}
-  .currency-card{background:var(--surface-1);border-radius:var(--radius);padding:8px 14px;font-size:13px;}
-  .currency-card .clbl{font-size:11px;color:var(--text-secondary);margin:0 0 2px;}
-  .currency-card .cval{font-weight:500;margin:0;}
-
-  /* 필터 */
   .filter-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
   .filter-label{font-size:11px;color:var(--text-secondary);white-space:nowrap;}
   .filterbar{display:flex;gap:6px;flex-wrap:wrap;}
   .filterbar button{padding:5px 12px;font-size:12px;border:0.5px solid var(--border);background:transparent;border-radius:var(--radius);cursor:pointer;font-family:inherit;}
   .filterbar button.active{background:var(--surface-1);font-weight:500;border-color:var(--text);}
 
-  /* 검색 + 결과 */
   .search-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
   .search-row input{padding:6px 10px;font-size:13px;border:0.5px solid var(--border);border-radius:var(--radius);width:220px;font-family:inherit;}
   .result-info{font-size:12px;color:var(--text-secondary);}
   .download-btn{margin-left:auto;padding:6px 14px;font-size:12px;border:0.5px solid var(--border);background:var(--surface-1);border-radius:var(--radius);cursor:pointer;font-family:inherit;}
 
-  /* 테이블 */
   .tbl-wrap{border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;}
   table{width:100%;border-collapse:collapse;font-size:12px;}
   th{text-align:left;font-size:11px;color:var(--text-secondary);font-weight:500;padding:9px 10px;background:var(--surface-1);border-bottom:0.5px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;}
@@ -72,7 +53,6 @@
   .row-60일초과 td{background:#fff0f0;}
   .row-pagado td{background:#f9fafb;color:var(--text-secondary);}
   .row-dday td{background:#fff8e1;}
-
   .badge{font-size:11px;padding:2px 8px;border-radius:var(--radius);display:inline-block;font-weight:500;}
   .badge-pagado{background:var(--success-bg);color:var(--success-text);}
   .badge-pendiente{background:var(--warning-bg);color:var(--warning-text);}
@@ -89,24 +69,24 @@
   <h1>AR 탭 — 구글 시트 실시간 연동</h1>
   <p class="sub" id="lastUpdate">데이터 불러오는 중...</p>
   <div class="status-bar loading" id="statusBox">구글 시트에서 데이터를 불러오는 중...</div>
-  <div class="alert-banner" id="alertBanner"></div>
 
   <div id="mainContent" style="display:none;">
 
     <div class="summary">
-      <div class="card"><p class="lbl">미수금 총액(USD)</p><p class="val" id="totalPending">-</p></div>
+      <div class="card">
+        <p class="lbl">미수금 (USD)</p>
+        <p class="val" id="totalUSD">-</p>
+      </div>
+      <div class="card">
+        <p class="lbl">미수금 (MXN)</p>
+        <p class="val" id="totalMXN" style="font-size:15px;">-</p>
+      </div>
       <div class="card"><p class="lbl">미만기</p><p class="val" id="cnt0" style="color:var(--text-secondary);">-</p></div>
       <div class="card"><p class="lbl">30일 이내</p><p class="val" id="cnt30" style="color:var(--warning);">-</p></div>
       <div class="card"><p class="lbl">30~60일</p><p class="val" id="cnt60" style="color:var(--warning);">-</p></div>
       <div class="card"><p class="lbl">60일 초과</p><p class="val" id="cnt60over" style="color:var(--danger);">-</p></div>
+      <div class="card"><p class="lbl">미수금 총 건수</p><p class="val" id="totalCnt">-</p></div>
     </div>
-
-    <div class="client-summary">
-      <p class="client-summary-title">거래처별 미수금</p>
-      <div class="client-tags" id="clientTags"></div>
-    </div>
-
-    <div class="currency-summary" id="currencySummary"></div>
 
     <div class="filter-row">
       <span class="filter-label">📅 기간</span>
@@ -140,20 +120,20 @@
       <table id="mainTable">
         <thead>
           <tr>
-            <th onclick="sortTable('NO')">NO <span class="sort-icon">↕</span></th>
-            <th onclick="sortTable('FACTURA_MONTH')">발행월 <span class="sort-icon">↕</span></th>
-            <th onclick="sortTable('CLIENTE')">거래처 <span class="sort-icon">↕</span></th>
-            <th onclick="sortTable('FACTURA_NO')">FACTURA NO <span class="sort-icon">↕</span></th>
-            <th onclick="sortTable('FACTURA_DATE')">발행일 <span class="sort-icon">↕</span></th>
+            <th onclick="sortTable(this,'NO')">NO <span class="sort-icon">↕</span></th>
+            <th onclick="sortTable(this,'FACTURA_MONTH')">발행월 <span class="sort-icon">↕</span></th>
+            <th onclick="sortTable(this,'CLIENTE')">거래처 <span class="sort-icon">↕</span></th>
+            <th onclick="sortTable(this,'FACTURA_NO')">FACTURA NO <span class="sort-icon">↕</span></th>
+            <th onclick="sortTable(this,'FACTURA_DATE')">발행일 <span class="sort-icon">↕</span></th>
             <th>컨셉</th>
             <th>통화</th>
-            <th class="num" onclick="sortTable('SUB_TOTAL')">소계 <span class="sort-icon">↕</span></th>
+            <th class="num" onclick="sortTable(this,'SUB_TOTAL')">소계 <span class="sort-icon">↕</span></th>
             <th class="num">IVA</th>
-            <th class="num" onclick="sortTable('TOTAL')">합계 <span class="sort-icon">↕</span></th>
+            <th class="num" onclick="sortTable(this,'TOTAL')">합계 <span class="sort-icon">↕</span></th>
             <th>신용일수</th>
-            <th onclick="sortTable('PAYMENT_PLAN_DATE')">결제예정일 <span class="sort-icon">↕</span></th>
+            <th onclick="sortTable(this,'PAYMENT_PLAN_DATE')">결제예정일 <span class="sort-icon">↕</span></th>
             <th>실제결제일</th>
-            <th onclick="sortTable('OVERDUE_DAYS')">연체일수 <span class="sort-icon">↕</span></th>
+            <th onclick="sortTable(this,'OVERDUE_DAYS')">연체일수 <span class="sort-icon">↕</span></th>
             <th>상태</th>
             <th>NOTE</th>
           </tr>
@@ -198,7 +178,8 @@ function getRowClass(status, bucket, days){
   if(bucket==='60일초과') return 'row-60일초과';
   if(bucket==='30~60일') return 'row-30~60일';
   if(bucket==='30일이내') return 'row-30일이내';
-  if(parseInt(days)>=-3 && parseInt(days)<=0) return 'row-dday';
+  const d = parseInt(days);
+  if(d>=-3&&d<=0) return 'row-dday';
   return 'row-미만기';
 }
 
@@ -208,11 +189,11 @@ function getBadgeClass(status, bucket){
   return 'badge-pendiente';
 }
 
-function getOverdueClass(days, bucket){
+function getOverdueClass(bucket, days){
   if(bucket==='60일초과') return 'overdue-red';
   if(bucket==='30~60일'||bucket==='30일이내') return 'overdue-warn';
   const d = parseInt(days);
-  if(d>=-3 && d<=0) return 'overdue-dday';
+  if(d>=-3&&d<=0) return 'overdue-dday';
   return 'overdue-ok';
 }
 
@@ -232,55 +213,16 @@ async function loadData(){
     allRows = parseTSV(text).filter(r=>r['NO']&&r['NO']!=='NO');
 
     const pending = allRows.filter(r=>r['PAYMENT_STATUS']==='PENDIENTE');
+    const usdTotal = pending.filter(r=>r['CURRENCY']==='USD').reduce((s,r)=>s+(parseFloat((r['TOTAL']||'0').replace(/,/g,''))||0),0);
+    const mxnTotal = pending.filter(r=>r['CURRENCY']==='MXN').reduce((s,r)=>s+(parseFloat((r['TOTAL']||'0').replace(/,/g,''))||0),0);
 
-    // 요약 카드
-    const usdPending = pending.filter(r=>r['CURRENCY']==='USD');
-    const totalUSD = usdPending.reduce((s,r)=>s+(parseFloat((r['TOTAL']||'0').replace(/,/g,''))||0),0);
-    document.getElementById('totalPending').textContent = '$'+totalUSD.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+    document.getElementById('totalUSD').textContent = '$'+usdTotal.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+    document.getElementById('totalMXN').textContent = mxnTotal>0 ? '$'+mxnTotal.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}) : '-';
     document.getElementById('cnt0').textContent = pending.filter(r=>r['BUCKET']==='미만기').length+'건';
     document.getElementById('cnt30').textContent = pending.filter(r=>r['BUCKET']==='30일이내').length+'건';
     document.getElementById('cnt60').textContent = pending.filter(r=>r['BUCKET']==='30~60일').length+'건';
     document.getElementById('cnt60over').textContent = pending.filter(r=>r['BUCKET']==='60일초과').length+'건';
-
-    // 연체 경보
-    const overdue60 = pending.filter(r=>r['BUCKET']==='60일초과');
-    const ddayItems = pending.filter(r=>{const d=parseInt(r['OVERDUE_DAYS']);return d>=-3&&d<=0;});
-    let alerts = [];
-    if(overdue60.length>0) alerts.push('⚠️ 60일 초과 연체 '+overdue60.length+'건: '+[...new Set(overdue60.map(r=>r['CLIENTE']))].join(', '));
-    if(ddayItems.length>0) alerts.push('🔔 결제 임박(D-3이내) '+ddayItems.length+'건: '+[...new Set(ddayItems.map(r=>r['CLIENTE']))].join(', '));
-    if(alerts.length>0){
-      const banner = document.getElementById('alertBanner');
-      banner.innerHTML = alerts.join('<br>');
-      banner.style.display = 'block';
-    }
-
-    // 거래처별 미수금
-    const clientMap = {};
-    pending.forEach(r=>{
-      const c = r['CLIENTE'];
-      if(!clientMap[c]) clientMap[c] = 0;
-      const n = parseFloat((r['TOTAL']||'0').replace(/,/g,''));
-      if(!isNaN(n)) clientMap[c] += n;
-    });
-    const clientTagsHtml = Object.entries(clientMap)
-      .sort((a,b)=>b[1]-a[1])
-      .map(([c,v])=>`<div class="client-tag">${c}<span>$${Math.round(v).toLocaleString()}</span></div>`)
-      .join('');
-    document.getElementById('clientTags').innerHTML = clientTagsHtml;
-
-    // 통화별 소계
-    const currencies = {};
-    pending.forEach(r=>{
-      const cur = r['CURRENCY'];
-      if(!currencies[cur]) currencies[cur] = 0;
-      const n = parseFloat((r['TOTAL']||'0').replace(/,/g,''));
-      if(!isNaN(n)) currencies[cur] += n;
-    });
-    document.getElementById('currencySummary').innerHTML = Object.entries(currencies).map(([cur,val])=>`
-      <div class="currency-card">
-        <p class="clbl">미수금 합계 (${cur})</p>
-        <p class="cval">${Math.round(val).toLocaleString()} ${cur}</p>
-      </div>`).join('');
+    document.getElementById('totalCnt').textContent = pending.length+'건';
 
     document.getElementById('statusBox').className = 'status-bar success';
     document.getElementById('statusBox').textContent = '✓ 구글 시트 연동 성공 — 전체 '+allRows.length+'건 (미수금 '+pending.length+'건)';
@@ -311,10 +253,9 @@ function applyFilters(){
 
   if(search) filtered = filtered.filter(r=>(r['CLIENTE']||'').toLowerCase().includes(search));
 
-  // 정렬
   filtered.sort((a,b)=>{
-    let va = a[sortCol]||'', vb = b[sortCol]||'';
-    const na = parseFloat(va), nb = parseFloat(vb);
+    let va=a[sortCol]||'', vb=b[sortCol]||'';
+    const na=parseFloat(va), nb=parseFloat(vb);
     if(!isNaN(na)&&!isNaN(nb)) return (na-nb)*sortDir;
     return va.localeCompare(vb)*sortDir;
   });
@@ -338,31 +279,30 @@ function setStatus(val, btn){
   applyFilters();
 }
 
-function sortTable(col){
+function sortTable(th, col){
   if(sortCol===col) sortDir*=-1;
   else { sortCol=col; sortDir=-1; }
-  document.querySelectorAll('th').forEach(th=>{
-    th.classList.remove('sorted');
-    const icon = th.querySelector('.sort-icon');
+  document.querySelectorAll('th').forEach(t=>{
+    t.classList.remove('sorted');
+    const icon=t.querySelector('.sort-icon');
     if(icon) icon.textContent='↕';
   });
-  event.currentTarget.classList.add('sorted');
-  const icon = event.currentTarget.querySelector('.sort-icon');
-  if(icon) icon.textContent = sortDir===1?'↑':'↓';
+  th.classList.add('sorted');
+  const icon=th.querySelector('.sort-icon');
+  if(icon) icon.textContent=sortDir===1?'↑':'↓';
   applyFilters();
 }
 
 function renderTable(rows){
   if(rows.length===0){
-    document.getElementById('tableBody').innerHTML = '<tr><td colspan="16" style="text-align:center;padding:20px;color:var(--text-secondary);">해당 조건의 데이터가 없습니다</td></tr>';
+    document.getElementById('tableBody').innerHTML='<tr><td colspan="16" style="text-align:center;padding:20px;color:var(--text-secondary);">해당 조건의 데이터가 없습니다</td></tr>';
     return;
   }
-  document.getElementById('tableBody').innerHTML = rows.map(r=>{
-    const status = r['PAYMENT_STATUS'];
-    const bucket = r['BUCKET'];
-    const days = r['OVERDUE_DAYS'];
-    const rowCls = getRowClass(status, bucket, days);
-    return `<tr class="${rowCls}">
+  document.getElementById('tableBody').innerHTML=rows.map(r=>{
+    const status=r['PAYMENT_STATUS'];
+    const bucket=r['BUCKET'];
+    const days=r['OVERDUE_DAYS'];
+    return `<tr class="${getRowClass(status,bucket,days)}">
       <td>${fmt(r['NO'])}</td>
       <td>${fmt(r['FACTURA_MONTH'])}</td>
       <td>${fmt(r['CLIENTE'])}</td>
@@ -376,7 +316,7 @@ function renderTable(rows){
       <td>${fmt(r['CREDIT_DAYS'])}</td>
       <td>${fmt(r['PAYMENT_PLAN_DATE'])}</td>
       <td>${fmt(r['ACTUAL_PAYMENT_DATE'])}</td>
-      <td class="${getOverdueClass(days,bucket)}">${getOverdueDisplay(days)}</td>
+      <td class="${getOverdueClass(bucket,days)}">${getOverdueDisplay(days)}</td>
       <td><span class="badge ${getBadgeClass(status,bucket)}">${fmt(status)}</span></td>
       <td style="font-size:11px;color:var(--text-secondary);">${fmt(r['NOTE'])}</td>
     </tr>`;
@@ -384,13 +324,13 @@ function renderTable(rows){
 }
 
 function downloadCSV(){
-  const headers = ['NO','발행월','거래처','FACTURA_NO','발행일','컨셉','통화','소계','IVA','합계','신용일수','결제예정일','실제결제일','연체일수','상태','NOTE'];
-  const keys = ['NO','FACTURA_MONTH','CLIENTE','FACTURA_NO','FACTURA_DATE','CONCEPT','CURRENCY','SUB_TOTAL','IVA','TOTAL','CREDIT_DAYS','PAYMENT_PLAN_DATE','ACTUAL_PAYMENT_DATE','OVERDUE_DAYS','PAYMENT_STATUS','NOTE'];
-  const csv = [headers.join(','),...currentFiltered.map(r=>keys.map(k=>'"'+(r[k]||'')+'"').join(','))].join('\n');
-  const blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'AR_'+new Date().toISOString().slice(0,10)+'.csv';
+  const headers=['NO','발행월','거래처','FACTURA_NO','발행일','컨셉','통화','소계','IVA','합계','신용일수','결제예정일','실제결제일','연체일수','상태','NOTE'];
+  const keys=['NO','FACTURA_MONTH','CLIENTE','FACTURA_NO','FACTURA_DATE','CONCEPT','CURRENCY','SUB_TOTAL','IVA','TOTAL','CREDIT_DAYS','PAYMENT_PLAN_DATE','ACTUAL_PAYMENT_DATE','OVERDUE_DAYS','PAYMENT_STATUS','NOTE'];
+  const csv=[headers.join(','),...currentFiltered.map(r=>keys.map(k=>'"'+(r[k]||'')+'"').join(','))].join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='AR_'+new Date().toISOString().slice(0,10)+'.csv';
   a.click();
 }
 
