@@ -24,49 +24,50 @@
   .status-bar.success{background:var(--success-bg);color:var(--success-text);}
   .status-bar.error{background:#FCEBEB;color:#791F1F;}
 
-  /* 상단 요약 카드 */
-  .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
-  .card{background:var(--surface-1);border-radius:var(--radius);padding:12px;}
-  .card .lbl{font-size:11px;color:var(--text-secondary);margin:0 0 4px;}
-  .card .val{font-size:18px;font-weight:500;margin:0;}
+  /* 상단 3개 카드 */
+  .top-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.5rem;}
+  .top-card{background:var(--surface-1);border-radius:var(--radius);padding:1rem;cursor:pointer;border:2px solid transparent;transition:border-color 0.15s;}
+  .top-card:hover{border-color:var(--border-strong);}
+  .top-card.gen:hover{border-color:var(--accent-text);}
+  .top-card.hw:hover{border-color:#4527A0;}
+  .top-card.mkc:hover{border-color:var(--warning-text);}
+  .top-card .lbl{font-size:12px;color:var(--text-secondary);margin:0 0 4px;}
+  .top-card .val{font-size:20px;font-weight:500;margin:0 0 4px;}
+  .top-card .info{font-size:11px;margin:0;}
 
-  /* 구분 탭 */
-  .tabbar{display:flex;gap:4px;border-bottom:0.5px solid var(--border);margin-bottom:16px;}
-  .tabbt{border:none;border-bottom:2px solid transparent;background:transparent;padding:8px 14px;font-size:13px;cursor:pointer;font-family:inherit;color:var(--text-secondary);}
-  .tabbt.active{border-bottom:2px solid var(--text);color:var(--text);font-weight:500;}
-
-  /* 필터 */
-  .filter-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
-  .filter-label{font-size:11px;color:var(--text-secondary);white-space:nowrap;}
-  .filterbar{display:flex;gap:6px;flex-wrap:wrap;}
-  .filterbar button{padding:5px 12px;font-size:12px;border:0.5px solid var(--border);background:transparent;border-radius:var(--radius);cursor:pointer;font-family:inherit;}
-  .filterbar button.active{background:var(--surface-1);font-weight:500;border-color:var(--text);}
+  /* 섹션 헤더 */
+  .sec-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-top:8px;}
+  .sec-badge{font-size:12px;padding:3px 10px;border-radius:var(--radius);font-weight:500;}
+  .sec-title{font-size:15px;font-weight:500;margin:0;}
+  .sec-filters{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap;}
+  .sec-filters button{padding:4px 10px;font-size:12px;border:0.5px solid var(--border);background:transparent;border-radius:var(--radius);cursor:pointer;font-family:inherit;}
+  .sec-filters button.active{background:var(--surface-1);font-weight:500;border-color:var(--text);}
 
   /* 검색/다운로드 */
-  .search-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
-  .search-row input{padding:6px 10px;font-size:13px;border:0.5px solid var(--border);border-radius:var(--radius);width:220px;font-family:inherit;}
+  .search-row{display:flex;align-items:center;gap:10px;margin:8px 0;}
+  .search-row input{padding:6px 10px;font-size:12px;border:0.5px solid var(--border);border-radius:var(--radius);width:200px;font-family:inherit;}
   .result-info{font-size:12px;color:var(--text-secondary);}
-  .download-btn{margin-left:auto;padding:6px 14px;font-size:12px;border:0.5px solid var(--border);background:var(--surface-1);border-radius:var(--radius);cursor:pointer;font-family:inherit;}
+  .dl-btn{margin-left:auto;padding:5px 12px;font-size:12px;border:0.5px solid var(--border);background:var(--surface-1);border-radius:var(--radius);cursor:pointer;font-family:inherit;}
 
   /* 테이블 */
-  .tbl-wrap{border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  .tbl-wrap{border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:2rem;}
   table{width:100%;border-collapse:collapse;font-size:12px;}
-  th{text-align:left;font-size:11px;color:var(--text-secondary);font-weight:500;padding:9px 10px;background:var(--surface-1);border-bottom:0.5px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;}
+  th{text-align:left;font-size:11px;color:var(--text-secondary);font-weight:500;padding:8px 10px;background:var(--surface-1);border-bottom:0.5px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;}
   th:hover{background:#eae8e0;}
   td{padding:8px 10px;border-bottom:0.5px solid var(--border);vertical-align:middle;white-space:nowrap;}
   .row-paid td{background:#f9fafb;color:var(--text-secondary);}
   .row-pending td{background:#fffbf0;}
   .row-overdue td{background:#fff0f0;}
   .badge{font-size:11px;padding:2px 8px;border-radius:var(--radius);display:inline-block;font-weight:500;}
-  .badge-paid{background:var(--success-bg);color:var(--success-text);}
-  .badge-pending{background:var(--warning-bg);color:var(--warning-text);}
+  .badge-paid,.badge-pagado{background:var(--success-bg);color:var(--success-text);}
+  .badge-pending,.badge-pendiente{background:var(--warning-bg);color:var(--warning-text);}
   .badge-overdue{background:var(--danger-bg);color:var(--danger-text);}
-  .badge-gen{background:var(--accent-bg);color:var(--accent-text);}
-  .badge-hw{background:#EDE7F6;color:#4527A0;}
-  .badge-mkc{background:var(--warning-bg);color:var(--warning-text);}
   .num{text-align:right;}
   .overdue-red{color:var(--danger-text);font-weight:500;}
   .overdue-warn{color:var(--warning-text);font-weight:500;}
+
+  /* 구분선 */
+  .section-divider{border:none;border-top:1.5px solid var(--border);margin:0.5rem 0 1.5rem;}
 </style>
 </head>
 <body>
@@ -77,61 +78,62 @@
 
   <div id="mainContent" style="display:none;">
 
-    <div class="summary">
-      <div class="card"><p class="lbl">일반 AP (MXN)</p><p class="val" id="sumGen">-</p></div>
-      <div class="card"><p class="lbl">현대웰딩 미결제</p><p class="val" id="sumHW" style="color:var(--warning);">-</p></div>
-      <div class="card"><p class="lbl">MKC 미결제</p><p class="val" id="sumMKC" style="color:var(--warning);">-</p></div>
-      <div class="card"><p class="lbl">전체 미결제 건수</p><p class="val" id="sumTotal" style="color:var(--danger);">-</p></div>
-    </div>
-
-    <div class="tabbar">
-      <button class="tabbt active" onclick="switchTab('gen',this)">일반 AP</button>
-      <button class="tabbt" onclick="switchTab('hw',this)">현대웰딩</button>
-      <button class="tabbt" onclick="switchTab('mkc',this)">MKC (포워딩)</button>
-    </div>
-
-    <!-- 일반 AP -->
-    <div id="panel-gen">
-      <div class="filter-row">
-        <span class="filter-label">📅 기간</span>
-        <div class="filterbar" id="yearFilter-gen">
-          <button onclick="setFilter('gen','year','recent',this)" class="active">최근 6개월</button>
-          <button onclick="setFilter('gen','year','2026',this)">2026년</button>
-          <button onclick="setFilter('gen','year','2025',this)">2025년</button>
-          <button onclick="setFilter('gen','year','2024',this)">2024년</button>
-          <button onclick="setFilter('gen','year','2023',this)">2023년</button>
-          <button onclick="setFilter('gen','year','all',this)">전체</button>
-        </div>
+    <!-- 상단 요약 카드 -->
+    <div class="top-cards">
+      <div class="top-card gen" onclick="document.getElementById('sec-gen').scrollIntoView({behavior:'smooth'})">
+        <p class="lbl">일반 AP</p>
+        <p class="val" id="card-gen-amt">-</p>
+        <p class="info" id="card-gen-info" style="color:var(--text-secondary);">-</p>
       </div>
-      <div class="filter-row" style="margin-bottom:12px;">
-        <span class="filter-label">📋 상태</span>
-        <div class="filterbar" id="statusFilter-gen">
-          <button onclick="setFilter('gen','status','all',this)" class="active">전체</button>
-          <button onclick="setFilter('gen','status','PAGADO',this)">결제완료</button>
-          <button onclick="setFilter('gen','status','PENDING',this)" style="color:var(--warning-text);">미결제</button>
+      <div class="top-card hw" onclick="document.getElementById('sec-hw').scrollIntoView({behavior:'smooth'})">
+        <p class="lbl">현대웰딩 AP</p>
+        <p class="val" id="card-hw-amt">-</p>
+        <p class="info" id="card-hw-info" style="color:var(--warning-text);">-</p>
+      </div>
+      <div class="top-card mkc" onclick="document.getElementById('sec-mkc').scrollIntoView({behavior:'smooth'})">
+        <p class="lbl">MKC (포워딩)</p>
+        <p class="val" id="card-mkc-amt">-</p>
+        <p class="info" id="card-mkc-info" style="color:var(--warning-text);">-</p>
+      </div>
+    </div>
+
+    <!-- 일반 AP 섹션 -->
+    <div id="sec-gen">
+      <hr class="section-divider">
+      <div class="sec-header">
+        <span class="sec-badge" style="background:var(--accent-bg);color:var(--accent-text);">일반 AP</span>
+        <p class="sec-title">일반 구매/지급</p>
+        <div class="sec-filters">
+          <button onclick="setYearFilter('gen','recent',this)" class="active">최근 6개월</button>
+          <button onclick="setYearFilter('gen','2026',this)">2026년</button>
+          <button onclick="setYearFilter('gen','2025',this)">2025년</button>
+          <button onclick="setYearFilter('gen','all',this)">전체</button>
+        </div>
+        <div class="sec-filters" style="margin-left:8px;">
+          <button onclick="setStatusFilter('gen','all',this)" class="active">전체</button>
+          <button onclick="setStatusFilter('gen','PENDING',this)" style="color:var(--warning-text);">미결제</button>
+          <button onclick="setStatusFilter('gen','PAID',this)">결제완료</button>
         </div>
       </div>
       <div class="search-row">
         <input type="text" id="search-gen" placeholder="공급사명 검색..." oninput="applyFilter('gen')">
         <span class="result-info" id="result-gen"></span>
-        <button class="download-btn" onclick="downloadCSV('gen')">⬇ 다운로드</button>
+        <button class="dl-btn" onclick="downloadCSV('gen')">⬇ 다운로드</button>
       </div>
       <div class="tbl-wrap">
         <table>
           <thead><tr>
-            <th onclick="sortBy('gen','NO')">NO</th>
-            <th onclick="sortBy('gen','FACTURA_MONTH')">발행월</th>
-            <th onclick="sortBy('gen','PROVEEDOR')">공급사</th>
+            <th onclick="sortBy('gen','NO')">NO ↕</th>
+            <th onclick="sortBy('gen','FACTURA_MONTH')">발행월 ↕</th>
+            <th onclick="sortBy('gen','PROVEEDOR')">공급사 ↕</th>
             <th>FACTURA NO</th>
             <th>컨셉</th>
             <th>통화</th>
-            <th class="num" onclick="sortBy('gen','SUB_TOTAL')">소계</th>
-            <th class="num">IVA</th>
-            <th class="num" onclick="sortBy('gen','TOTAL')">합계</th>
+            <th class="num" onclick="sortBy('gen','TOTAL')">합계 ↕</th>
             <th>결제방식</th>
             <th>부서</th>
             <th>담당자</th>
-            <th onclick="sortBy('gen','FECHA_PAGO')">결제일</th>
+            <th onclick="sortBy('gen','FECHA_PAGO')">결제일 ↕</th>
             <th>상태</th>
             <th>NOTA</th>
           </tr></thead>
@@ -140,49 +142,45 @@
       </div>
     </div>
 
-    <!-- 현대웰딩 -->
-    <div id="panel-hw" style="display:none;">
-      <div class="filter-row">
-        <span class="filter-label">📅 기간</span>
-        <div class="filterbar" id="yearFilter-hw">
-          <button onclick="setFilter('hw','year','recent',this)" class="active">최근 6개월</button>
-          <button onclick="setFilter('hw','year','2026',this)">2026년</button>
-          <button onclick="setFilter('hw','year','2025',this)">2025년</button>
-          <button onclick="setFilter('hw','year','2024',this)">2024년</button>
-          <button onclick="setFilter('hw','year','2023',this)">2023년</button>
-          <button onclick="setFilter('hw','year','all',this)">전체</button>
+    <!-- 현대웰딩 섹션 -->
+    <div id="sec-hw">
+      <hr class="section-divider">
+      <div class="sec-header">
+        <span class="sec-badge" style="background:#EDE7F6;color:#4527A0;">현대웰딩</span>
+        <p class="sec-title">용접봉 수입 결제</p>
+        <div class="sec-filters">
+          <button onclick="setYearFilter('hw','recent',this)" class="active">최근 6개월</button>
+          <button onclick="setYearFilter('hw','2026',this)">2026년</button>
+          <button onclick="setYearFilter('hw','2025',this)">2025년</button>
+          <button onclick="setYearFilter('hw','all',this)">전체</button>
         </div>
-      </div>
-      <div class="filter-row" style="margin-bottom:12px;">
-        <span class="filter-label">📋 상태</span>
-        <div class="filterbar" id="statusFilter-hw">
-          <button onclick="setFilter('hw','status','PENDING',this)" class="active">미결제</button>
-          <button onclick="setFilter('hw','status','all',this)">전체</button>
-          <button onclick="setFilter('hw','status','PAID',this)">결제완료</button>
-          <button onclick="setFilter('hw','status','60일초과',this)" style="color:var(--danger-text);">60일초과</button>
+        <div class="sec-filters" style="margin-left:8px;">
+          <button onclick="setStatusFilter('hw','PENDING',this)" class="active">미결제</button>
+          <button onclick="setStatusFilter('hw','all',this)">전체</button>
+          <button onclick="setStatusFilter('hw','PAID',this)">결제완료</button>
         </div>
       </div>
       <div class="search-row">
         <input type="text" id="search-hw" placeholder="계약번호 검색..." oninput="applyFilter('hw')">
         <span class="result-info" id="result-hw"></span>
-        <button class="download-btn" onclick="downloadCSV('hw')">⬇ 다운로드</button>
+        <button class="dl-btn" onclick="downloadCSV('hw')">⬇ 다운로드</button>
       </div>
       <div class="tbl-wrap">
         <table>
           <thead><tr>
             <th>LOC</th>
-            <th onclick="sortBy('hw','NO')">NO</th>
-            <th onclick="sortBy('hw','CONTRACT_DATE')">계약일</th>
-            <th onclick="sortBy('hw','CONTRACT_NO')">계약번호</th>
+            <th onclick="sortBy('hw','NO')">NO ↕</th>
+            <th onclick="sortBy('hw','CONTRACT_DATE')">계약일 ↕</th>
+            <th onclick="sortBy('hw','CONTRACT_NO')">계약번호 ↕</th>
             <th>INCOTERMS</th>
-            <th onclick="sortBy('hw','ETD_BUSAN')">ETD 부산</th>
+            <th onclick="sortBy('hw','ETD_BUSAN')">ETD 부산 ↕</th>
             <th>통화</th>
-            <th class="num" onclick="sortBy('hw','AMOUNT')">금액</th>
+            <th class="num" onclick="sortBy('hw','AMOUNT')">금액 ↕</th>
             <th>신용일수</th>
-            <th onclick="sortBy('hw','DUE_DATE')">결제만기일</th>
+            <th onclick="sortBy('hw','DUE_DATE')">결제만기일 ↕</th>
             <th>상태</th>
-            <th onclick="sortBy('hw','PAYMENT_DATE')">결제일</th>
-            <th onclick="sortBy('hw','OVERDUE_DAYS')">연체</th>
+            <th onclick="sortBy('hw','PAYMENT_DATE')">결제일 ↕</th>
+            <th onclick="sortBy('hw','OVERDUE_DAYS')">연체 ↕</th>
             <th>NOTE</th>
           </tr></thead>
           <tbody id="tbody-hw"></tbody>
@@ -190,45 +188,40 @@
       </div>
     </div>
 
-    <!-- MKC -->
-    <div id="panel-mkc" style="display:none;">
-      <div class="filter-row">
-        <span class="filter-label">📅 기간</span>
-        <div class="filterbar" id="yearFilter-mkc">
-          <button onclick="setFilter('mkc','year','recent',this)" class="active">최근 6개월</button>
-          <button onclick="setFilter('mkc','year','2026',this)">2026년</button>
-          <button onclick="setFilter('mkc','year','2025',this)">2025년</button>
-          <button onclick="setFilter('mkc','year','2024',this)">2024년</button>
-          <button onclick="setFilter('mkc','year','2023',this)">2023년</button>
-          <button onclick="setFilter('mkc','year','all',this)">전체</button>
+    <!-- MKC 섹션 -->
+    <div id="sec-mkc">
+      <hr class="section-divider">
+      <div class="sec-header">
+        <span class="sec-badge" style="background:var(--warning-bg);color:var(--warning-text);">MKC</span>
+        <p class="sec-title">포워딩 비용</p>
+        <div class="sec-filters">
+          <button onclick="setYearFilter('mkc','recent',this)" class="active">최근 6개월</button>
+          <button onclick="setYearFilter('mkc','2026',this)">2026년</button>
+          <button onclick="setYearFilter('mkc','2025',this)">2025년</button>
+          <button onclick="setYearFilter('mkc','all',this)">전체</button>
         </div>
-      </div>
-      <div class="filter-row" style="margin-bottom:12px;">
-        <span class="filter-label">📋 상태</span>
-        <div class="filterbar" id="statusFilter-mkc">
-          <button onclick="setFilter('mkc','status','PENDING',this)" class="active">미결제</button>
-          <button onclick="setFilter('mkc','status','all',this)">전체</button>
-          <button onclick="setFilter('mkc','status','PAID',this)">결제완료</button>
+        <div class="sec-filters" style="margin-left:8px;">
+          <button onclick="setStatusFilter('mkc','PENDING',this)" class="active">미결제</button>
+          <button onclick="setStatusFilter('mkc','all',this)">전체</button>
+          <button onclick="setStatusFilter('mkc','PAID',this)">결제완료</button>
         </div>
       </div>
       <div class="search-row">
-        <input type="text" id="search-mkc" placeholder="인보이스/운송유형 검색..." oninput="applyFilter('mkc')">
+        <input type="text" id="search-mkc" placeholder="인보이스 검색..." oninput="applyFilter('mkc')">
         <span class="result-info" id="result-mkc"></span>
-        <button class="download-btn" onclick="downloadCSV('mkc')">⬇ 다운로드</button>
+        <button class="dl-btn" onclick="downloadCSV('mkc')">⬇ 다운로드</button>
       </div>
       <div class="tbl-wrap">
         <table>
           <thead><tr>
-            <th>MBL</th>
-            <th>HBL</th>
-            <th onclick="sortBy('mkc','SHIPMODE')">운송유형</th>
-            <th onclick="sortBy('mkc','INVOICE_NO')">INVOICE NO</th>
+            <th onclick="sortBy('mkc','SHIPMODE')">운송유형 ↕</th>
+            <th onclick="sortBy('mkc','INVOICE_NO')">INVOICE NO ↕</th>
             <th>통화</th>
-            <th class="num" onclick="sortBy('mkc','COST')">COST</th>
+            <th class="num" onclick="sortBy('mkc','COST')">COST ↕</th>
             <th class="num">IVA</th>
-            <th class="num" onclick="sortBy('mkc','AMOUNT')">합계</th>
-            <th onclick="sortBy('mkc','ISSUE_DATE')">발행일</th>
-            <th onclick="sortBy('mkc','DEPOSIT_DATE')">입금일</th>
+            <th class="num" onclick="sortBy('mkc','AMOUNT')">합계 ↕</th>
+            <th onclick="sortBy('mkc','ISSUE_DATE')">발행일 ↕</th>
+            <th onclick="sortBy('mkc','DEPOSIT_DATE')">입금일 ↕</th>
             <th>컨테이너</th>
             <th>상태</th>
             <th>REMARK</th>
@@ -248,13 +241,10 @@ const URLS = {
   mkc: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRfv4TFloZqAVKyJXAoGCjP5xec3MvPGjTagc1btjwQzKXvICTmREywHrT1wNSl_6JN7vA_gsY2w8kB/pub?gid=1071626899&single=true&output=tsv'
 };
 
-const data = {gen:[],hw:[],mkc:[]};
-const filters = {
-  gen:{year:'recent',status:'all'},
-  hw:{year:'recent',status:'PENDING'},
-  mkc:{year:'recent',status:'PENDING'}
-};
-const sortState = {gen:{col:'NO',dir:1},hw:{col:'NO',dir:1},mkc:{col:'INVOICE_NO',dir:1}};
+const allData = {gen:[],hw:[],mkc:[]};
+const yearFilters = {gen:'recent',hw:'recent',mkc:'recent'};
+const statusFilters = {gen:'all',hw:'PENDING',mkc:'PENDING'};
+const sortState = {gen:{col:'NO',dir:1},hw:{col:'OVERDUE_DAYS',dir:-1},mkc:{col:'ISSUE_DATE',dir:-1}};
 const currentFiltered = {gen:[],hw:[],mkc:[]};
 const TODAY = new Date();
 const SIX_MONTHS_AGO = new Date(TODAY.getFullYear(),TODAY.getMonth()-6,TODAY.getDate());
@@ -275,33 +265,33 @@ function fmtNum(v){
   if(isNaN(n)||n===0)return'-';
   return n.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
 }
-function getDateStr(r,keys){
-  for(const k of keys){if(r[k]&&r[k]!=='-')return r[k];}
-  return '';
-}
 
 async function loadAll(){
   try{
     const [r1,r2,r3]=await Promise.all([fetch(URLS.gen),fetch(URLS.hw),fetch(URLS.mkc)]);
     const [t1,t2,t3]=await Promise.all([r1.text(),r2.text(),r3.text()]);
-    data.gen=parseTSV(t1).filter(r=>r['NO']&&r['NO']!=='NO');
-    data.hw=parseTSV(t2).filter(r=>r['NO']&&r['NO']!=='NO');
-    data.mkc=parseTSV(t3).filter(r=>r['INVOICE_NO']&&r['INVOICE_NO']!=='INVOICE_NO');
+    allData.gen=parseTSV(t1).filter(r=>r['NO']&&r['NO']!=='NO');
+    allData.hw=parseTSV(t2).filter(r=>r['NO']&&r['NO']!=='NO');
+    allData.mkc=parseTSV(t3).filter(r=>r['INVOICE_NO']&&r['INVOICE_NO']!=='INVOICE_NO');
 
-    // 요약 카드
-    const genTotal=data.gen.reduce((s,r)=>{const n=parseFloat((r['TOTAL']||'0').replace(/,/g,''));return s+(isNaN(n)?0:n);},0);
-    const hwPend=data.hw.filter(r=>r['PAYMENT_STATUS']!=='PAID');
-    const hwAmt=hwPend.reduce((s,r)=>{const n=parseFloat((r['AMOUNT']||'0').replace(/,/g,''));return s+(isNaN(n)?0:n);},0);
-    const mkcPend=data.mkc.filter(r=>r['PAYMENT_STATUS']==='PENDING');
-    const mkcAmt=mkcPend.reduce((s,r)=>{const n=parseFloat((r['AMOUNT']||'0').replace(/,/g,''));return s+(isNaN(n)?0:n);},0);
+    // 상단 카드 계산
+    const genPend=allData.gen.filter(r=>r['PAGO_STATUS']==='PENDIENTE');
+    const genTotal=allData.gen.reduce((s,r)=>s+(parseFloat((r['TOTAL']||'0').replace(/,/g,''))||0),0);
+    const hwPend=allData.hw.filter(r=>r['PAYMENT_STATUS']!=='PAID');
+    const hwAmt=hwPend.reduce((s,r)=>s+(parseFloat((r['AMOUNT']||'0').replace(/,/g,''))||0),0);
+    const mkcPend=allData.mkc.filter(r=>r['PAYMENT_STATUS']==='PENDING');
+    const mkcAmt=mkcPend.reduce((s,r)=>s+(parseFloat((r['AMOUNT']||'0').replace(/,/g,''))||0),0);
 
-    document.getElementById('sumGen').textContent='$'+Math.round(genTotal).toLocaleString()+' MXN';
-    document.getElementById('sumHW').textContent='$'+Math.round(hwAmt).toLocaleString()+' ('+hwPend.length+'건)';
-    document.getElementById('sumMKC').textContent='$'+Math.round(mkcAmt).toLocaleString()+' ('+mkcPend.length+'건)';
-    document.getElementById('sumTotal').textContent=(hwPend.length+mkcPend.length)+'건';
+    document.getElementById('card-gen-amt').textContent='$'+Math.round(genTotal).toLocaleString();
+    document.getElementById('card-gen-info').textContent=allData.gen.length+'건 · 미결제 '+genPend.length+'건 (MXN/USD)';
+    document.getElementById('card-gen-info').style.color = genPend.length>0?'var(--warning-text)':'var(--text-secondary)';
+    document.getElementById('card-hw-amt').textContent='$'+Math.round(hwAmt).toLocaleString();
+    document.getElementById('card-hw-info').textContent=allData.hw.length+'건 · 미결제 '+hwPend.length+'건 (USD)';
+    document.getElementById('card-mkc-amt').textContent='$'+Math.round(mkcAmt).toLocaleString();
+    document.getElementById('card-mkc-info').textContent=allData.mkc.length+'건 · 미결제 '+mkcPend.length+'건 (USD)';
 
     document.getElementById('statusBox').className='status-bar success';
-    document.getElementById('statusBox').textContent='✓ 연동 성공 — 일반 '+data.gen.length+'건 / 현대웰딩 '+data.hw.length+'건 / MKC '+data.mkc.length+'건';
+    document.getElementById('statusBox').textContent='✓ 연동 성공 — 일반 '+allData.gen.length+'건 / 현대웰딩 '+allData.hw.length+'건 / MKC '+allData.mkc.length+'건';
     document.getElementById('lastUpdate').textContent='최종 업데이트: '+new Date().toLocaleString('ko-KR');
     document.getElementById('mainContent').style.display='block';
 
@@ -314,47 +304,44 @@ async function loadAll(){
   }
 }
 
-function switchTab(tab,btn){
-  ['gen','hw','mkc'].forEach(t=>{document.getElementById('panel-'+t).style.display=t===tab?'block':'none';});
-  document.querySelectorAll('.tabbt').forEach(b=>b.classList.remove('active'));
+function setYearFilter(tab,val,btn){
+  yearFilters[tab]=val;
+  document.querySelectorAll('#sec-'+tab+' .sec-filters:first-of-type button').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+  applyFilter(tab);
 }
 
-function setFilter(tab,type,val,btn){
-  filters[tab][type]=val;
-  document.querySelectorAll('#'+type+'Filter-'+tab+' button').forEach(b=>b.classList.remove('active'));
+function setStatusFilter(tab,val,btn){
+  statusFilters[tab]=val;
+  document.querySelectorAll('#sec-'+tab+' .sec-filters:last-of-type button').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   applyFilter(tab);
 }
 
 function applyFilter(tab){
-  const f=filters[tab];
+  const yf=yearFilters[tab];
+  const sf=statusFilters[tab];
   const search=(document.getElementById('search-'+tab).value||'').toLowerCase();
-  let rows=[...data[tab]];
+  let rows=[...allData[tab]];
 
-  // 기간 필터
   const dateKey=tab==='gen'?'FECHA_REQ':tab==='hw'?'ETD_BUSAN':'ISSUE_DATE';
-  if(f.year==='recent'){
+  if(yf==='recent'){
     rows=rows.filter(r=>{
       const d=r[dateKey];
-      if(!d||d==='-')return false;
+      if(!d||d==='-') return tab==='gen'&&r['YEAR']>='2026'; // 날짜 없어도 2026이면 포함
       return new Date(d)>=SIX_MONTHS_AGO;
     });
-  } else if(f.year!=='all'){
-    rows=rows.filter(r=>(r['YEAR']||r[dateKey]||'').startsWith(f.year));
+  } else if(yf!=='all'){
+    rows=rows.filter(r=>r['YEAR']===yf||r[dateKey].startsWith(yf));
   }
 
-  // 상태 필터
-  const statusKey=tab==='gen'?'PAGO_STATUS':'PAYMENT_STATUS';
-  if(f.status==='PENDING') rows=rows.filter(r=>r[statusKey]!=='PAID'&&r[statusKey]!=='PAGADO');
-  else if(f.status==='PAID'||f.status==='PAGADO') rows=rows.filter(r=>r[statusKey]==='PAID'||r[statusKey]==='PAGADO');
-  else if(f.status==='60일초과') rows=rows.filter(r=>r['BUCKET']==='60일초과');
+  const sk=tab==='gen'?'PAGO_STATUS':'PAYMENT_STATUS';
+  if(sf==='PENDING') rows=rows.filter(r=>r[sk]!=='PAID'&&r[sk]!=='PAGADO');
+  else if(sf==='PAID') rows=rows.filter(r=>r[sk]==='PAID'||r[sk]==='PAGADO');
 
-  // 검색
-  const searchFields={gen:['PROVEEDOR','FACTURA_NO'],hw:['CONTRACT_NO'],mkc:['INVOICE_NO','SHIPMODE']};
-  if(search) rows=rows.filter(r=>searchFields[tab].some(k=>(r[k]||'').toLowerCase().includes(search)));
+  const sf2={gen:['PROVEEDOR','FACTURA_NO'],hw:['CONTRACT_NO'],mkc:['INVOICE_NO','SHIPMODE']};
+  if(search) rows=rows.filter(r=>sf2[tab].some(k=>(r[k]||'').toLowerCase().includes(search)));
 
-  // 정렬
   const {col,dir}=sortState[tab];
   rows.sort((a,b)=>{
     let va=a[col]||'',vb=b[col]||'';
@@ -383,16 +370,15 @@ function renderTable(tab,rows){
   if(tab==='gen'){
     tbody.innerHTML=rows.map(r=>{
       const s=r['PAGO_STATUS']||'';
-      const cls=s==='PAGADO'?'row-paid':'row-pending';
-      const bc=s==='PAGADO'?'badge-paid':'badge-pending';
-      return `<tr class="${cls}">
+      const cls=s==='PAGADO'?'row-paid':(s==='PENDIENTE'?'row-pending':'row-paid');
+      const bc=s==='PAGADO'?'badge-pagado':'badge-pendiente';
+      return`<tr class="${cls}">
         <td>${fmt(r['NO'])}</td><td>${fmt(r['FACTURA_MONTH'])}</td>
         <td>${fmt(r['PROVEEDOR'])}</td><td>${fmt(r['FACTURA_NO'])}</td>
         <td>${fmt(r['CONCEPT'])}</td><td>${fmt(r['MONEDA'])}</td>
-        <td class="num">${fmtNum(r['SUB_TOTAL'])}</td><td class="num">${fmtNum(r['IVA'])}</td>
         <td class="num">${fmtNum(r['TOTAL'])}</td>
-        <td>${fmt(r['FORMA_PAGO'])}</td><td>${fmt(r['DEPTO'])}</td><td>${fmt(r['ENCARGADO'])}</td>
-        <td>${fmt(r['FECHA_PAGO'])}</td>
+        <td>${fmt(r['FORMA_PAGO'])}</td><td>${fmt(r['DEPTO'])}</td>
+        <td>${fmt(r['ENCARGADO'])}</td><td>${fmt(r['FECHA_PAGO'])}</td>
         <td><span class="badge ${bc}">${fmt(s)}</span></td>
         <td style="font-size:11px;color:var(--text-secondary);">${fmt(r['NOTA'])}</td>
       </tr>`;
@@ -400,22 +386,22 @@ function renderTable(tab,rows){
   } else if(tab==='hw'){
     tbody.innerHTML=rows.map(r=>{
       const s=r['PAYMENT_STATUS']||'';
-      const bucket=r['BUCKET']||'';
-      const cls=s==='PAID'?'row-paid':(bucket==='60일초과'||bucket==='30~60일'?'row-overdue':'row-pending');
-      const bc=s==='PAID'?'badge-paid':(bucket==='60일초과'||bucket==='30~60일'?'badge-overdue':'badge-pending');
-      const days=parseInt(r['OVERDUE_DAYS']);
-      const od=r['OVERDUE_DAYS']!==''?(days>0?days+'일경과':(days===0?'D-day':'D'+days)):'-';
-      const odcls=bucket==='60일초과'?'overdue-red':(bucket==='30~60일'||bucket==='30일이내'?'overdue-warn':'');
-      return `<tr class="${cls}">
-        <td><span class="badge badge-hw">${fmt(r['LOC'])}</span></td>
+      const b=r['BUCKET']||'';
+      const cls=s==='PAID'?'row-paid':(b==='60일초과'||b==='30~60일'?'row-overdue':'row-pending');
+      const bc=s==='PAID'?'badge-paid':(b==='60일초과'||b==='30~60일'?'badge-overdue':'badge-pending');
+      const d=parseInt(r['OVERDUE_DAYS']);
+      const od=r['OVERDUE_DAYS']!==''?(d>0?d+'일경과':(d===0?'D-day':'D'+d)):'-';
+      const oc=b==='60일초과'?'overdue-red':(b==='30~60일'||b==='30일이내'?'overdue-warn':'');
+      return`<tr class="${cls}">
+        <td><span class="badge" style="background:#EDE7F6;color:#4527A0;">${fmt(r['LOC'])}</span></td>
         <td>${fmt(r['NO'])}</td><td>${fmt(r['CONTRACT_DATE'])}</td>
         <td>${fmt(r['CONTRACT_NO'])}</td><td>${fmt(r['INCOTERMS'])}</td>
         <td>${fmt(r['ETD_BUSAN'])}</td><td>${fmt(r['CURRENCY'])}</td>
-        <td class="num">${fmtNum(r['AMOUNT'])}</td><td>${fmt(r['CREDIT_DAYS'])}</td>
-        <td>${fmt(r['DUE_DATE'])}</td>
+        <td class="num">${fmtNum(r['AMOUNT'])}</td>
+        <td>${fmt(r['CREDIT_DAYS'])}</td><td>${fmt(r['DUE_DATE'])}</td>
         <td><span class="badge ${bc}">${fmt(s)}</span></td>
         <td>${fmt(r['PAYMENT_DATE'])}</td>
-        <td class="${odcls}">${od}</td>
+        <td class="${oc}">${od}</td>
         <td style="font-size:11px;color:var(--text-secondary);">${fmt(r['NOTE'])}</td>
       </tr>`;
     }).join('');
@@ -424,12 +410,11 @@ function renderTable(tab,rows){
       const s=r['PAYMENT_STATUS']||'';
       const cls=s==='PAID'?'row-paid':'row-pending';
       const bc=s==='PAID'?'badge-paid':'badge-pending';
-      return `<tr class="${cls}">
-        <td style="font-size:11px;">${fmt(r['MBL'])}</td>
-        <td style="font-size:11px;">${fmt(r['HBL'])}</td>
+      return`<tr class="${cls}">
         <td>${fmt(r['SHIPMODE'])}</td><td>${fmt(r['INVOICE_NO'])}</td>
         <td>${fmt(r['CURRENCY'])}</td>
-        <td class="num">${fmtNum(r['COST'])}</td><td class="num">${fmtNum(r['IVA'])}</td>
+        <td class="num">${fmtNum(r['COST'])}</td>
+        <td class="num">${fmtNum(r['IVA'])}</td>
         <td class="num">${fmtNum(r['AMOUNT'])}</td>
         <td>${fmt(r['ISSUE_DATE'])}</td><td>${fmt(r['DEPOSIT_DATE'])}</td>
         <td style="font-size:11px;">${fmt(r['CONTAINERS'])}</td>
