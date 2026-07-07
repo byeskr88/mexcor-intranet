@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>매출 탭 — 구글 시트 연동</title>
+<style>
+  :root{
+    --bg:#f5f4f0;--surface:#fff;--surface-1:#f1efe8;
+    --border:#e2e0d8;--text:#1f1e1c;--text-secondary:#5f5e5a;
+    --radius:8px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;padding:20px;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--text);}
+  .wrap{max-width:100%;background:var(--surface);border:0.5px solid var(--border);border-radius:12px;padding:20px;}
+  h1{font-size:17px;font-weight:500;margin:0 0 4px;}
+  .sub{font-size:12px;color:var(--text-secondary);margin:0 0 16px;}
+  .status-bar{padding:10px 14px;border-radius:var(--radius);font-size:13px;margin-bottom:16px;}
+  .status-bar.loading{background:var(--surface-1);color:var(--text-secondary);}
+  .status-bar.success{background:#E1F5EE;color:#085041;}
+  .status-bar.error{background:#FCEBEB;color:#791F1F;}
+  .cards{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:12px;}
+  .card{background:var(--surface-1);border-radius:var(--radius);padding:12px;}
+  .card .lbl{font-size:11px;color:var(--text-secondary);margin:0 0 4px;}
+  .card .val{font-size:18px;font-weight:500;margin:0;}
+  .card .sub2{font-size:11px;margin:3px 0 0;}
+  .rate-bar{display:grid;grid-template-columns:repeat(12,1fr);gap:6px;margin-bottom:20px;padding:12px;background:var(--surface-1);border-radius:var(--radius);}
+  .rate-cell{text-align:center;}
+  .rate-cell .m{font-size:10px;color:var(--text-secondary);margin:0 0 4px;}
+  .rate-cell .p{font-size:13px;font-weight:500;margin:0 0 4px;}
+  .rate-cell .bar-bg{height:4px;background:#e2e0d8;border-radius:2px;overflow:hidden;}
+  .rate-cell .bar-fill{height:4px;border-radius:2px;}
+  .rate-cell .amt{font-size:10px;color:var(--text-secondary);margin:3px 0 0;}
+  .good{color:#1D9E75;}.warn{color:#BA7517;}.bad{color:#A32D2D;}.none{color:#ccc;}
+  .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+  .chart-box{background:var(--surface-1);border-radius:var(--radius);padding:16px;}
+  .chart-box h2{font-size:13px;font-weight:500;margin:0 0 12px;color:var(--text-secondary);}
+  .chart-wrap{position:relative;width:100%;height:220px;}
+  .tbl-wrap{border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  table{width:100%;border-collapse:collapse;font-size:11px;}
+  th{text-align:right;font-size:11px;color:var(--text-secondary);font-weight:500;padding:8px 7px;background:var(--surface-1);border-bottom:0.5px solid var(--border);white-space:nowrap;}
+  th:first-child,th:nth-child(2){text-align:left;}
+  td{padding:7px 7px;border-bottom:0.5px solid var(--border);text-align:right;white-space:nowrap;}
+  td:first-child,td:nth-child(2){text-align:left;}
+  td.zero{color:#ccc;}
+  td.cur{background:#EDF6FF;font-weight:500;color:#185FA5;}
+  td.future{color:#bbb;}
+  tr.plan-row td{color:var(--text-secondary);background:#f5f9ff;}
+  tr.plan-row td.cur{background:#deeeff;}
+  tr.plan-row td.future{background:#f9fbff;color:#aac4e4;}
+  tr.total-row td{background:var(--surface-1);font-weight:500;}
+  tr.rate-row td{font-size:11px;font-weight:500;}
+  .badge-mty{font-size:10px;padding:1px 5px;border-radius:3px;background:#E3F2FD;color:#1565C0;}
+  .badge-qro{font-size:10px;padding:1px 5px;border-radius:3px;background:#F3E5F5;color:#6A1B9A;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>매출 탭 — 구글 시트 실시간 연동</h1>
+  <p class="sub" id="lastUpdate">데이터 불러오는 중...</p>
+  <div class="status-bar loading" id="statusBox">구글 시트에서 데이터를 불러오는 중...</div>
+
+  <div id="mainContent" style="display:none;">
+    <div class="cards" id="cardsBox"></div>
+    <div class="rate-bar" id="rateBar"></div>
+    <div class="chart-grid">
+      <div class="chart-box"><h2>① 월별 계획 vs 실적 + 달성률</h2><div class="chart-wrap"><canvas id="chart1"></canvas></div></div>
+      <div class="chart-box"><h2>② MTY vs QRO 비중 (YTD)</h2><div class="chart-wrap"><canvas id="chart2"></canvas></div></div>
+      <div class="chart-box"><h2>③ 거래처별 YTD 실적</h2><div class="chart-wrap"><canvas id="chart3"></canvas></div></div>
+      <div class="chart-box"><h2>④ MTY vs QRO 월별 추이</h2><div class="chart-wrap"><canvas id="chart4"></canvas></div></div>
+    </div>
+    <div class="tbl-wrap"><table><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const TSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRfv4TFloZqAVKyJXAoGCjP5xec3MvPGjTagc1btjwQzKXvICTmREywHrT1wNSl_6JN7vA_gsY2w8kB/pub?gid=609736586&single=true&output=tsv';
+const MONTHS = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+let charts = [];
+
+function parseTSV(text){
+  const lines = text.replace(/\r/g,'').split('\n');
+  const headers = lines[0].split('\t').map(h=>h.trim());
+  return lines.slice(1).filter(l=>l.trim()).map(line=>{
+    const vals = line.split('\t');
+    const obj={};
+    headers.forEach((h,i)=>obj[h]=(vals[i]||'').trim());
+    return obj;
+  });
+}
+
+function toNum(v){ const n=parseFloat(String(v).replace(/,/g,'').replace('%','')); return isNaN(n)?0:n; }
+function fmtK(v){ return '$'+Math.round(v/1000)+'K'; }
+function fmtDollar(v){ return '$'+Math.round(v).toLocaleString('en-US'); }
+function rateColor(r){ return r>=100?'#1D9E75':r>=90?'#BA7517':'#A32D2D'; }
+function rateClass(r){ return r>=100?'good':r>=90?'warn':r>0?'bad':'none'; }
+
+async function loadData(){
+  try{
+    const res = await fetch(TSV_URL);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const text = await res.text();
+    const rows = parseTSV(text);
+
+    // 계획 행
+    const planRow = rows.find(r=>r['COMPANY']==='계획(USD)');
+    const plan = MONTHS.map((_,i)=>toNum(planRow?.[''+(i+1)+'월']||planRow?.[(i+1)+'월']||0));
+
+    // 실제로 컬럼 키 확인
+    const sampleRow = rows[0];
+    const keys = Object.keys(sampleRow);
+
+    // 월별 컬럼 키 찾기 (1월~12월)
+    const monthKeys = MONTHS.map(m=>{
+      return keys.find(k=>k.trim()===m || k.trim()===m.replace('월','')+'월') || m;
+    });
+
+    // 계획 행
+    const planVals = monthKeys.map(k=>toNum(planRow?.[k]||0));
+    const planTotal = planVals.reduce((s,v)=>s+v,0);
+
+    // 거래처 행 (계획/합계/달성률 제외)
+    const clientRows = rows.filter(r=>{
+      const c=r['COMPANY']||'';
+      return c && !['계획(USD)','합계','달성률(%)','YTD','-'].includes(c);
+    });
+
+    // 월별 실적 합산
+    const mtyRows = clientRows.filter(r=>r['LOC']==='MTY');
+    const qroRows = clientRows.filter(r=>r['LOC']==='QRO');
+    const mtyMonthly = MONTHS.map((_,mi)=>mtyRows.reduce((s,r)=>s+toNum(r[monthKeys[mi]]||0),0));
+    const qroMonthly = MONTHS.map((_,mi)=>qroRows.reduce((s,r)=>s+toNum(r[monthKeys[mi]]||0),0));
+    const totalMonthly = MONTHS.map((_,i)=>mtyMonthly[i]+qroMonthly[i]);
+
+    // 현재 월 (실적 있는 마지막 달)
+    let curMonth = 0;
+    totalMonthly.forEach((v,i)=>{ if(v>0) curMonth=i+1; });
+
+    const mtyYTD = mtyMonthly.reduce((s,v)=>s+v,0);
+    const qroYTD = qroMonthly.reduce((s,v)=>s+v,0);
+    const ytdActual = totalMonthly.reduce((s,v)=>s+v,0);
+    const ytdPlan = planVals.slice(0,curMonth).reduce((s,v)=>s+v,0);
+    const ytdRate = ytdPlan>0?Math.round(ytdActual/ytdPlan*100):0;
+    const annualRate = planTotal>0?Math.round(ytdActual/planTotal*100):0;
+    const rateData = MONTHS.map((_,i)=>totalMonthly[i]>0?Math.round(totalMonthly[i]/planVals[i]*100):null);
+
+    // 카드
+    document.getElementById('cardsBox').innerHTML = `
+      <div class="card"><p class="lbl">연간 계획</p><p class="val">${fmtDollar(planTotal)}</p></div>
+      <div class="card"><p class="lbl">YTD 실적 (1~${curMonth}월)</p><p class="val">${fmtDollar(ytdActual)}</p></div>
+      <div class="card"><p class="lbl">MTY YTD</p><p class="val" style="color:#2a78d6;">${fmtDollar(mtyYTD)}</p><p class="sub2" style="color:var(--text-secondary);">비중 ${Math.round(mtyYTD/ytdActual*100)}%</p></div>
+      <div class="card"><p class="lbl">QRO YTD</p><p class="val" style="color:#7B1FA2;">${fmtDollar(qroYTD)}</p><p class="sub2" style="color:var(--text-secondary);">비중 ${Math.round(qroYTD/ytdActual*100)}%</p></div>
+      <div class="card"><p class="lbl">YTD 달성률</p><p class="val" style="color:${rateColor(ytdRate)};">${ytdRate}%</p><p class="sub2" style="color:${rateColor(ytdRate)};">${ytdRate>=100?'▲':'▼'} ${fmtDollar(Math.abs(ytdActual-ytdPlan))} ${ytdRate>=100?'초과':'미달'}</p></div>
+      <div class="card"><p class="lbl">연간 대비 달성률</p><p class="val" style="color:#2a78d6;">${annualRate}%</p><p class="sub2" style="color:var(--text-secondary);">잔여 ${fmtDollar(planTotal-ytdActual)}</p></div>
+    `;
+
+    // 달성률 바
+    document.getElementById('rateBar').innerHTML = MONTHS.map((m,i)=>{
+      const r = rateData[i];
+      const isCur = i===curMonth-1;
+      const isFuture = i>=curMonth;
+      const cls = r===null?'none':r>=100?'good':r>=90?'warn':'bad';
+      const barColor = r===null?'#e2e0d8':r>=100?'#1D9E75':r>=90?'#BA7517':'#A32D2D';
+      const barW = r===null?0:Math.min(r,100);
+      const display = r===null?(isFuture?'예정':'-'):r+'%';
+      const amt = totalMonthly[i]>0?'$'+Math.round(totalMonthly[i]/1000)+'K':'';
+      return `<div class="rate-cell" style="${isCur?'background:#EDF6FF;border-radius:6px;padding:4px 0;':''}">
+        <p class="m" style="${isCur?'color:#185FA5;font-weight:500;':''}">${m}</p>
+        <p class="p ${cls}">${display}</p>
+        <div class="bar-bg"><div class="bar-fill" style="width:${barW}%;background:${barColor};"></div></div>
+        <p class="amt">${amt}</p>
+      </div>`;
+    }).join('');
+
+    // 차트 초기화
+    charts.forEach(c=>c.destroy());
+    charts=[];
+
+    // 차트1
+    charts.push(new Chart(document.getElementById('chart1'),{
+      type:'bar',
+      data:{labels:MONTHS,datasets:[
+        {label:'계획',data:planVals,backgroundColor:'#b4b2a933',borderColor:'#b4b2a9',borderWidth:1,stack:'s',order:2},
+        {label:'실적',data:totalMonthly.map(v=>v>0?v:null),
+          backgroundColor:MONTHS.map((_,i)=>i<curMonth?'#2a78d699':'#2a78d633'),
+          borderColor:MONTHS.map((_,i)=>i<curMonth?'#2a78d6':'#2a78d666'),
+          borderWidth:1,stack:'s2',order:1},
+        {label:'달성률(%)',data:rateData,type:'line',yAxisID:'y2',
+          borderColor:'#e34948',backgroundColor:'transparent',borderWidth:2,
+          pointRadius:5,pointBackgroundColor:rateData.map(r=>r===null?'transparent':r>=100?'#1D9E75':r>=90?'#BA7517':'#A32D2D'),
+          pointBorderColor:'#fff',pointBorderWidth:2,fill:false,tension:0,order:0,spanGaps:false}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:true,position:'bottom',labels:{boxWidth:12,font:{size:11},padding:8}},
+          tooltip:{callbacks:{afterBody:items=>{const i=items[0].dataIndex;return rateData[i]?['달성률: '+rateData[i]+'%']:[];}}}},
+        scales:{x:{ticks:{color:'#898781',font:{size:10}},grid:{display:false}},
+          y:{ticks:{color:'#898781',font:{size:10},callback:v=>fmtK(v)},grid:{color:'#e1e0d9'},title:{display:true,text:'금액(USD)',font:{size:10},color:'#898781'}},
+          y2:{position:'right',ticks:{color:'#e34948',font:{size:10},callback:v=>v+'%'},grid:{display:false},min:0,max:160,title:{display:true,text:'달성률',font:{size:10},color:'#e34948'}}
+        }
+      }
+    }));
+
+    // 차트2
+    charts.push(new Chart(document.getElementById('chart2'),{
+      type:'doughnut',
+      data:{labels:['MTY','QRO(METALSA)'],
+        datasets:[{data:[mtyYTD,qroYTD],backgroundColor:['#2a78d6','#7B1FA2'],borderColor:['#fff','#fff'],borderWidth:3,hoverOffset:6}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'65%',
+        plugins:{legend:{display:true,position:'bottom',labels:{boxWidth:12,font:{size:11},padding:8}},
+          tooltip:{callbacks:{label:ctx=>{const t=mtyYTD+qroYTD;return ` ${fmtDollar(ctx.raw)} (${Math.round(ctx.raw/t*100)}%)`;}}}}
+      }
+    }));
+
+    // 차트3
+    const clientEntries=[
+      ...mtyRows.map(r=>({name:r['COMPANY'],loc:'MTY',ytd:monthKeys.reduce((s,k)=>s+toNum(r[k]||0),0)})),
+      ...qroRows.map(r=>({name:r['COMPANY'],loc:'QRO',ytd:monthKeys.reduce((s,k)=>s+toNum(r[k]||0),0)}))
+    ].filter(c=>c.ytd>0).sort((a,b)=>b.ytd-a.ytd);
+
+    charts.push(new Chart(document.getElementById('chart3'),{
+      type:'bar',
+      data:{labels:clientEntries.map(c=>c.name),
+        datasets:[{data:clientEntries.map(c=>c.ytd),
+          backgroundColor:clientEntries.map(c=>c.loc==='QRO'?'#7B1FA299':'#2a78d699'),
+          borderColor:clientEntries.map(c=>c.loc==='QRO'?'#7B1FA2':'#2a78d6'),borderWidth:1,borderRadius:3}]},
+      options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${fmtDollar(ctx.raw)}`}}},
+        scales:{x:{ticks:{color:'#898781',font:{size:10},callback:v=>fmtK(v)},grid:{color:'#e1e0d9'}},
+          y:{ticks:{color:'#1f1e1c',font:{size:10}},grid:{display:false}}}
+      }
+    }));
+
+    // 차트4
+    charts.push(new Chart(document.getElementById('chart4'),{
+      type:'line',
+      data:{labels:MONTHS,datasets:[
+        {label:'계획',data:planVals,borderColor:'#b4b2a9',backgroundColor:'transparent',borderWidth:1.5,borderDash:[5,3],pointRadius:0,fill:false,tension:0},
+        {label:'MTY',data:mtyMonthly.map(v=>v>0?v:null),borderColor:'#2a78d6',backgroundColor:'#2a78d611',borderWidth:2,pointRadius:4,pointBackgroundColor:'#2a78d6',fill:true,tension:0.3,spanGaps:false},
+        {label:'QRO',data:qroMonthly.map(v=>v>0?v:null),borderColor:'#7B1FA2',backgroundColor:'#7B1FA211',borderWidth:2,pointRadius:4,pointBackgroundColor:'#7B1FA2',fill:true,tension:0.3,spanGaps:false}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:true,position:'bottom',labels:{boxWidth:12,font:{size:11},padding:8}}},
+        scales:{x:{ticks:{color:'#898781',font:{size:10}},grid:{display:false}},
+          y:{ticks:{color:'#898781',font:{size:10},callback:v=>fmtK(v)},grid:{color:'#e1e0d9'}}}
+      }
+    }));
+
+    // 표 헤더
+    document.getElementById('thead').innerHTML=`<tr>
+      <th style="text-align:left;">거래처</th><th style="text-align:left;">LOC</th>
+      ${MONTHS.map(m=>`<th>${m}</th>`).join('')}<th>YTD</th>
+    </tr>`;
+
+    // 표 본문
+    let tbody='';
+    tbody+=`<tr class="plan-row"><td>계획(USD)</td><td>-</td>`;
+    planVals.forEach((v,i)=>{const cls=i===curMonth-1?'cur':i>=curMonth?'future':'';tbody+=`<td class="${cls}">${v>0?fmtDollar(v):'-'}</td>`;});
+    tbody+=`<td>${fmtDollar(planTotal)}</td></tr>`;
+
+    clientRows.forEach(r=>{
+      const loc=r['LOC'];
+      const badge=loc==='QRO'?'<span class="badge-qro">QRO</span>':'<span class="badge-mty">MTY</span>';
+      const vals=monthKeys.map(k=>toNum(r[k]||0));
+      const ytd=vals.reduce((s,v)=>s+v,0);
+      if(ytd===0) return;
+      tbody+=`<tr><td style="font-weight:500;">${r['COMPANY']}</td><td>${badge}</td>`;
+      vals.forEach((v,i)=>{
+        const cls=i===curMonth-1?'cur':i>=curMonth?'future':'';
+        tbody+=`<td class="${cls}${v===0?' zero':''}">${v===0?'-':fmtDollar(v)}</td>`;
+      });
+      tbody+=`<td style="font-weight:500;">${fmtDollar(ytd)}</td></tr>`;
+    });
+
+    tbody+=`<tr class="total-row"><td>합계</td><td></td>`;
+    totalMonthly.forEach((v,i)=>{const cls=i===curMonth-1?'cur':i>=curMonth?'future':'';tbody+=`<td class="${cls}">${v>0?fmtDollar(v):'-'}</td>`;});
+    tbody+=`<td>${fmtDollar(ytdActual)}</td></tr>`;
+
+    tbody+=`<tr class="rate-row"><td>달성률</td><td></td>`;
+    totalMonthly.forEach((v,i)=>{
+      const cls=i===curMonth-1?'cur':i>=curMonth?'future':'';
+      if(v===0){tbody+=`<td class="${cls} none">-</td>`;return;}
+      const r=Math.round(v/planVals[i]*100);
+      tbody+=`<td class="${cls} ${rateClass(r)}">${r}%</td>`;
+    });
+    tbody+=`<td class="${rateClass(ytdRate)}">${ytdRate}%</td></tr>`;
+    document.getElementById('tbody').innerHTML=tbody;
+
+    document.getElementById('statusBox').className='status-bar success';
+    document.getElementById('statusBox').textContent='✓ 구글 시트 연동 성공 — '+clientRows.length+'개 거래처 불러옴';
+    document.getElementById('lastUpdate').textContent='최종 업데이트: '+new Date().toLocaleString('ko-KR');
+    document.getElementById('mainContent').style.display='block';
+
+  } catch(e){
+    document.getElementById('statusBox').className='status-bar error';
+    document.getElementById('statusBox').textContent='❌ 연동 실패 — '+e.message;
+  }
+}
+
+loadData();
+</script>
+</body>
+</html>
