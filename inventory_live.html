@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>재고 탭</title>
+<style>
+  :root{
+    --bg:#f5f4f0;--surface:#fff;--surface-1:#f1efe8;
+    --border:#e2e0d8;--text:#1f1e1c;--text-secondary:#5f5e5a;
+    --success:#1D9E75;--success-bg:#E1F5EE;--success-text:#085041;
+    --warning:#BA7517;--warning-bg:#FAEEDA;--warning-text:#854F0B;
+    --danger:#A32D2D;--danger-bg:#FCEBEB;--danger-text:#791F1F;
+    --radius:8px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;padding:20px;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--text);}
+  .wrap{max-width:100%;background:var(--surface);border:0.5px solid var(--border);border-radius:12px;padding:20px;}
+  h1{font-size:17px;font-weight:500;margin:0 0 4px;}
+  .status{font-size:12px;color:var(--text-secondary);margin:0 0 16px;}
+  .status-bar{padding:8px 14px;border-radius:var(--radius);font-size:12px;margin-bottom:16px;}
+  .status-bar.loading{background:var(--surface-1);color:var(--text-secondary);}
+  .status-bar.ok{background:var(--success-bg);color:var(--success-text);}
+  .status-bar.err{background:var(--danger-bg);color:var(--danger-text);}
+  .loc-tabs{display:flex;gap:4px;border-bottom:0.5px solid var(--border);}
+  .loc-tab{border:none;border-bottom:2px solid transparent;background:transparent;padding:8px 16px;font-size:13px;cursor:pointer;font-family:inherit;color:var(--text-secondary);}
+  .loc-tab.active{border-bottom:2px solid var(--text);color:var(--text);font-weight:500;}
+  .sec-tabs{display:flex;background:var(--surface-1);border-bottom:0.5px solid var(--border);margin-bottom:16px;}
+  .sec-tab{border:none;border-bottom:2px solid transparent;background:transparent;padding:10px 16px;font-size:12px;cursor:pointer;font-family:inherit;color:var(--text-secondary);}
+  .sec-tab.active{border-bottom:2px solid #2a78d6;color:#2a78d6;font-weight:500;background:var(--surface);}
+  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+  .card{background:var(--surface-1);border-radius:var(--radius);padding:12px;}
+  .card .lbl{font-size:11px;color:var(--text-secondary);margin:0 0 4px;}
+  .card .val{font-size:20px;font-weight:500;margin:0;}
+  .card .sub{font-size:11px;margin:3px 0 0;color:var(--text-secondary);}
+  .alert-list{margin-bottom:16px;display:flex;flex-direction:column;gap:5px;}
+  .alert-item{display:flex;align-items:center;gap:12px;padding:9px 14px;background:var(--danger-bg);border:0.5px solid #f5c6c6;border-radius:var(--radius);font-size:12px;}
+  .alert-item .a-item{font-weight:500;color:var(--danger-text);flex:1;}
+  .alert-item .a-moh{font-size:11px;font-weight:500;color:#fff;background:var(--danger-text);padding:2px 8px;border-radius:4px;white-space:nowrap;}
+  .sec-title{font-size:13px;font-weight:500;margin:16px 0 10px;}
+  .divider{border:none;border-top:1px solid var(--border);margin:20px 0;}
+  .badge{font-size:11px;padding:2px 7px;border-radius:var(--radius);display:inline-block;font-weight:500;}
+  .badge-ok{background:var(--success-bg);color:var(--success-text);}
+  .badge-warn{background:var(--warning-bg);color:var(--warning-text);}
+  .badge-danger{background:var(--danger-bg);color:var(--danger-text);}
+  .badge-gray{background:var(--surface-1);color:var(--text-secondary);}
+  .tbl-wrap{border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px;overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  th{text-align:left;font-size:11px;color:var(--text-secondary);font-weight:500;padding:8px 10px;background:var(--surface-1);border-bottom:0.5px solid var(--border);white-space:nowrap;}
+  th.r{text-align:right;}
+  td{padding:8px 10px;border-bottom:0.5px solid var(--border);white-space:nowrap;}
+  td.r{text-align:right;}
+  .row-danger td{background:#fff8f8;}
+  .row-warn td{background:#fffbf0;}
+  .moh-wrap{display:flex;align-items:center;gap:6px;justify-content:flex-end;}
+  .moh-bar{width:48px;height:5px;background:#e2e0d8;border-radius:3px;overflow:hidden;flex-shrink:0;}
+  .moh-fill{height:5px;border-radius:3px;}
+  .perf-wrap{overflow-x:auto;margin-bottom:16px;}
+  .perf-tbl{border-collapse:collapse;font-size:11px;min-width:860px;width:100%;}
+  .perf-tbl th{padding:7px 8px;background:#1F3864;color:#fff;font-weight:500;border:0.5px solid #2a4a7f;white-space:nowrap;text-align:center;}
+  .perf-tbl th.tl{text-align:left;}
+  .perf-tbl td{border:0.5px solid var(--border);padding:0;vertical-align:middle;}
+  .perf-tbl td.label{padding:6px 10px;text-align:left;white-space:nowrap;}
+  .perf-tbl td.item-label{padding:6px 10px;text-align:left;white-space:nowrap;color:var(--text-secondary);font-size:11px;}
+  .client-cell{background:#E8F0FE;font-weight:600;font-size:12px;text-align:center;}
+  .result-cell{text-align:center;padding:5px 4px;min-width:70px;}
+  .result-cell .res{font-size:15px;font-weight:600;display:block;line-height:1.2;}
+  .result-cell .fc-num{font-size:11px;display:block;line-height:1.3;margin-top:2px;font-weight:500;color:var(--text-secondary);}
+  .result-cell .rate{font-size:11px;display:block;line-height:1.3;margin-top:1px;font-weight:500;}
+  .cell-good{background:#E1F5EE;}.cell-warn{background:#FAEEDA;}.cell-bad{background:#FCEBEB;}.cell-none{background:var(--surface-1);}
+  .res-good{color:#085041;}.res-warn{color:#854F0B;}.res-bad{color:#791F1F;}.res-none{color:#bbb;}
+  .fc-good{color:#1D9E75;}.fc-warn{color:#BA7517;}.fc-bad{color:#A32D2D;}
+  .total-row td{background:#fff59d !important;font-weight:600;text-align:center;padding:5px 4px;font-size:11px;}
+  .total-row td.label{text-align:left;padding:5px 10px;}
+  .legend{display:flex;align-items:center;gap:12px;margin-bottom:12px;font-size:11px;color:var(--text-secondary);}
+  .legend span{display:flex;align-items:center;gap:4px;}
+  .legend-dot{width:12px;height:12px;border-radius:2px;display:inline-block;}
+  .sub-tabs{display:flex;gap:4px;margin-bottom:10px;}
+  .sub-tab{border:none;border-bottom:2px solid transparent;background:transparent;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit;color:var(--text-secondary);}
+  .sub-tab.active{border-bottom:2px solid var(--text);color:var(--text);font-weight:500;}
+  .filter-bar{display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap;}
+  .filter-bar button{padding:3px 9px;font-size:11px;border:0.5px solid var(--border);background:transparent;border-radius:var(--radius);cursor:pointer;font-family:inherit;}
+  .filter-bar button.active{background:var(--surface-1);font-weight:500;border-color:#888;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>재고 탭</h1>
+  <p class="status" id="lastUpdate">데이터 불러오는 중...</p>
+  <div class="status-bar loading" id="statusBar">구글 시트에서 데이터를 불러오는 중...</div>
+
+  <div id="mainContent" style="display:none;">
+    <div class="loc-tabs">
+      <button class="loc-tab active" onclick="switchLoc('mty',this)">MTY</button>
+      <button class="loc-tab" onclick="switchLoc('qro',this)">QRO</button>
+    </div>
+
+    <!-- MTY -->
+    <div id="panel-mty">
+      <div class="sec-tabs">
+        <button class="sec-tab active" onclick="switchSec('mty','inv',this)">재고 현황</button>
+        <button class="sec-tab" onclick="switchSec('mty','perf',this)">업체별 계획 대비 실적</button>
+        <button class="sec-tab" onclick="switchSec('mty','io',this)">입출고 실적</button>
+      </div>
+      <div id="mty-inv">
+        <div class="cards" id="mtyCards"></div>
+        <p class="sec-title" id="mtyAlertTitle"></p>
+        <div class="alert-list" id="mtyAlerts"></div>
+        <p class="sec-title">재고 현황</p>
+        <div class="tbl-wrap"><table>
+          <thead><tr>
+            <th>NO</th><th>ORIGIN</th><th>ITEM</th><th>TYPE</th><th>CLIENT</th>
+            <th class="r">재고</th><th class="r">OPEN</th><th class="r">REORDER PT</th>
+            <th class="r">FORECAST/월</th><th class="r">MOH</th><th>상태</th>
+          </tr></thead>
+          <tbody id="mtyInvBody"></tbody>
+        </table></div>
+      </div>
+      <div id="mty-perf" style="display:none;">
+        <div class="legend">
+          <span><span class="legend-dot" style="background:#E1F5EE;border:0.5px solid #5DCAA5;"></span>≥100%</span>
+          <span><span class="legend-dot" style="background:#FAEEDA;border:0.5px solid #EF9F27;"></span>80~99%</span>
+          <span><span class="legend-dot" style="background:#FCEBEB;border:0.5px solid #F09595;"></span>&lt;80%</span>
+          <span style="color:var(--text-secondary);">셀: 실적 / FC:계획 / ▲▼달성율</span>
+        </div>
+        <div class="perf-wrap"><table class="perf-tbl">
+          <thead><tr>
+            <th class="tl" style="min-width:110px;">CLIENTE</th>
+            <th class="tl" style="min-width:140px;">ITEM</th>
+            <th>1월</th><th>2월</th><th>3월</th><th>4월</th><th>5월</th><th>6월</th>
+            <th>7월</th><th>8월</th><th>9월</th><th>10월</th><th>11월</th><th>12월</th>
+          </tr></thead>
+          <tbody id="mtyPerfBody"></tbody>
+        </table></div>
+      </div>
+      <div id="mty-io" style="display:none;">
+        <div class="sub-tabs">
+          <button class="sub-tab active" onclick="switchIO('mty','out',this)">출고</button>
+          <button class="sub-tab" onclick="switchIO('mty','in',this)">입고</button>
+        </div>
+        <div id="mty-io-out">
+          <div class="filter-bar" id="mtyFilter"></div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>NO</th><th>월</th><th>거래처</th><th>PO NO</th><th>납품일</th><th>품목</th><th>단위</th><th class="r">수량</th><th class="r">총 KG</th></tr></thead>
+            <tbody id="mtyOutBody"></tbody>
+          </table></div>
+        </div>
+        <div id="mty-io-in" style="display:none;">
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>NO</th><th>월</th><th>계약번호</th><th>INCOTERMS</th><th>FCL/LCL</th><th>ETD 부산</th><th>ETA 입고</th><th>품목</th><th>단위</th><th class="r">수량</th><th>상태</th></tr></thead>
+            <tbody id="mtyInBody"></tbody>
+          </table></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QRO -->
+    <div id="panel-qro" style="display:none;">
+      <div class="sec-tabs">
+        <button class="sec-tab active" onclick="switchSec('qro','inv',this)">재고 현황</button>
+        <button class="sec-tab" onclick="switchSec('qro','perf',this)">업체별 계획 대비 실적</button>
+        <button class="sec-tab" onclick="switchSec('qro','io',this)">입출고 실적</button>
+      </div>
+      <div id="qro-inv">
+        <div class="cards" id="qroCards"></div>
+        <p class="sec-title">재고 현황</p>
+        <div class="tbl-wrap"><table>
+          <thead><tr>
+            <th>ORIGIN</th><th>ITEM</th><th>TYPE</th><th>CLIENT</th>
+            <th class="r">재고</th><th class="r">OPEN</th><th class="r">REORDER PT</th>
+            <th class="r">FORECAST/월</th><th class="r">MOH</th><th>상태</th>
+          </tr></thead>
+          <tbody id="qroInvBody"></tbody>
+        </table></div>
+      </div>
+      <div id="qro-perf" style="display:none;">
+        <div class="legend">
+          <span><span class="legend-dot" style="background:#E1F5EE;border:0.5px solid #5DCAA5;"></span>≥100%</span>
+          <span><span class="legend-dot" style="background:#FAEEDA;border:0.5px solid #EF9F27;"></span>80~99%</span>
+          <span><span class="legend-dot" style="background:#FCEBEB;border:0.5px solid #F09595;"></span>&lt;80%</span>
+          <span style="color:var(--text-secondary);">셀: 실적 / FC:계획 / ▲▼달성율</span>
+        </div>
+        <div class="perf-wrap"><table class="perf-tbl">
+          <thead><tr>
+            <th class="tl" style="min-width:100px;">CLIENTE</th>
+            <th class="tl" style="min-width:160px;">ITEM</th>
+            <th>1월</th><th>2월</th><th>3월</th><th>4월</th><th>5월</th><th>6월</th>
+            <th>7월</th><th>8월</th><th>9월</th><th>10월</th><th>11월</th><th>12월</th>
+          </tr></thead>
+          <tbody id="qroPerfBody"></tbody>
+        </table></div>
+      </div>
+      <div id="qro-io" style="display:none;">
+        <div class="sub-tabs">
+          <button class="sub-tab active" onclick="switchIO('qro','out',this)">출고</button>
+          <button class="sub-tab" onclick="switchIO('qro','in',this)">입고</button>
+        </div>
+        <div id="qro-io-out">
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>NO</th><th>월</th><th>거래처</th><th>PO NO</th><th>납품일</th><th>품목</th><th>단위</th><th class="r">수량</th><th class="r">총 KG</th></tr></thead>
+            <tbody id="qroOutBody"></tbody>
+          </table></div>
+        </div>
+        <div id="qro-io-in" style="display:none;">
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>NO</th><th>월</th><th>계약번호</th><th>INCOTERMS</th><th>FCL/LCL</th><th>ETD 부산</th><th>ETA 입고</th><th>품목</th><th>단위</th><th class="r">수량</th><th>상태</th></tr></thead>
+            <tbody id="qroInBody"></tbody>
+          </table></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const BASE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRfv4TFloZqAVKyJXAoGCjP5xec3MvPGjTagc1btjwQzKXvICTmREywHrT1wNSl_6JN7vA_gsY2w8kB/pub?gid={GID}&single=true&output=tsv';
+const GIDS = {
+  재고현황_MTY: '1055215705',
+  재고현황_QRO: '1072433103',
+  입고_MTY:     '1108163381',
+  출고_MTY:     '1563587550',
+  입고_QRO:     '490156723',
+  출고_QRO:     '1836289398',
+  재고_FC:      '118513204',
+  납품_FC:      '45242996',
+};
+
+function url(key){ return BASE.replace('{GID}', GIDS[key]); }
+
+async function fetchTSV(key){
+  const res = await fetch(url(key));
+  if(!res.ok) throw new Error(`${key} ${res.status}`);
+  const text = await res.text();
+  const rows = text.trim().split('\n').map(r=>r.split('\t').map(v=>v.trim()));
+  return {header: rows[0], data: rows.slice(1).filter(r=>r.some(v=>v))};
+}
+
+function toN(v){ const n=parseFloat(String(v).replace(/,/g,'')); return isNaN(n)?0:n; }
+
+async function loadAll(){
+  try {
+    const [invMTY, invQRO, inMTY, outMTY, inQRO, outQRO, fcInv, fcPerf] = await Promise.all([
+      fetchTSV('재고현황_MTY'), fetchTSV('재고현황_QRO'),
+      fetchTSV('입고_MTY'),     fetchTSV('출고_MTY'),
+      fetchTSV('입고_QRO'),     fetchTSV('출고_QRO'),
+      fetchTSV('재고_FC'),      fetchTSV('납품_FC'),
+    ]);
+
+    // FORECAST 맵 (재고현황용) — 재고_FC: NO, ITEM, TYPE, FORECAST/월
+    const fcMap = {};
+    fcInv.data.forEach(r=>{ if(r[1]) fcMap[r[1].trim()] = toN(r[3]); });
+
+    // FORECAST 납품용 — 납품_FC: LOC, CLIENTE, ITEM, UNIT, 1월~12월
+    const perfFCMap = {}; // key: `${loc}|${client}|${item}`
+    fcPerf.data.forEach(r=>{
+      if(!r[1]) return;
+      const key = `${r[0]}|${r[1]}|${r[2]}`;
+      perfFCMap[key] = r.slice(4,16).map(toN);
+    });
+
+    // 출고 실적 집계 (업체별 계획 대비 실적용)
+    // MTY 출고: NO,YEAR,MES,CLIENTE,PO DATE,DELIVERY DATE,ITEM,UNIT,QTY,TOTAL KG
+    const mtyResultMap = {}; // key: `${client}|${item}` → [0]*12
+    outMTY.data.forEach(r=>{
+      const mes=toN(r[2]), client=(r[3]||'').trim(), item=(r[6]||'').trim(), qty=toN(r[8]);
+      if(mes>=1&&mes<=12&&client&&item){
+        const k=`${client}|${item}`;
+        if(!mtyResultMap[k]) mtyResultMap[k]=[0]*12;
+        mtyResultMap[k][mes-1]+=qty;
+      }
+    });
+
+    // QRO 출고 집계
+    const qroResultMap = {};
+    outQRO.data.forEach(r=>{
+      const mes=toN(r[2]), client=(r[3]||'').trim(), item=(r[6]||'').trim(), qty=toN(r[8]);
+      if(mes>=1&&mes<=12&&client&&item){
+        const k=`${client}|${item}`;
+        if(!qroResultMap[k]) qroResultMap[k]=[0]*12;
+        qroResultMap[k][mes-1]+=qty;
+      }
+    });
+
+    // 현재 달 감지
+    const now = new Date();
+    const CUR_MONTH = now.getMonth(); // 0-indexed, 실적있는 마지막 달 기준
+
+    // ===== MTY 재고현황 =====
+    // invMTY: NO,ORIGIN,ITEM,TYPE,CLIENT,INVENTORY,OPEN ITEMS,REORDER POINT,KG/UNIT,NOTE
+    const mtyInvData = invMTY.data.filter(r=>r[2]);
+    const mtyReorders = [];
+
+    document.getElementById('mtyInvBody').innerHTML = mtyInvData.map(r=>{
+      const [no,origin,item,type,client,stock_raw,,reorder_raw] = r;
+      const stock = toN(stock_raw), reorder = toN(reorder_raw);
+      const fc = fcMap[item?.trim()] || 0;
+      const moh = fc>0 ? (stock/fc).toFixed(1) : null;
+      const m = moh ? parseFloat(moh) : 99;
+      const status = m<1?'재주문 필요':m<3?'재주문 필요':m<6?'주의':'정상';
+      const badge = m<3?'badge-danger':m<6?'badge-warn':'badge-ok';
+      const rowCls = m<3?'row-danger':m<6?'row-warn':'';
+      const bw = moh?Math.min(m/12*100,100):0;
+      const bc = m<3?'var(--danger-text)':m<6?'var(--warning-text)':'var(--success)';
+      if(m<3 && fc>0) mtyReorders.push({item,stock,fc,moh,order:toN(r[6])});
+      return `<tr class="${rowCls}">
+        <td>${no}</td><td>${origin}</td><td>${item}</td><td>${type}</td>
+        <td style="font-size:11px;">${client}</td>
+        <td class="r">${stock}</td><td class="r">${toN(r[6])||'-'}</td>
+        <td class="r">${reorder||'-'}</td><td class="r">${fc||'-'}</td>
+        <td class="r"><div class="moh-wrap">${moh||'-'}<div class="moh-bar"><div class="moh-fill" style="width:${bw}%;background:${bc};"></div></div></div></td>
+        <td><span class="badge ${badge}">${status}</span></td>
+      </tr>`;
+    }).join('');
+
+    // 재주문 알림
+    document.getElementById('mtyAlertTitle').textContent = mtyReorders.length>0 ? `⚠️ 재주문 필요 품목 (${mtyReorders.length}개)` : '';
+    document.getElementById('mtyAlerts').innerHTML = mtyReorders.map(r=>
+      `<div class="alert-item">
+        <span class="a-item">${r.item}</span>
+        <span>재고 ${r.stock} · FORECAST ${r.fc}/월${r.order?` · ORDER ${r.order}`:''}</span>
+        <span class="a-moh">MOH ${r.moh}개월</span>
+      </div>`).join('');
+
+    // MTY 카드
+    const mtyOutCnt = outMTY.data.filter(r=>r[0]).length;
+    const mtyInCnt = inMTY.data.filter(r=>r[0]).length;
+    document.getElementById('mtyCards').innerHTML = `
+      <div class="card"><p class="lbl">전체 품목</p><p class="val">${mtyInvData.length}개</p></div>
+      <div class="card"><p class="lbl">재주문 필요</p><p class="val" style="color:var(--danger-text);">${mtyReorders.length}개</p></div>
+      <div class="card"><p class="lbl">2026 입고</p><p class="val">${mtyInCnt}건</p></div>
+      <div class="card"><p class="lbl">2026 출고</p><p class="val">${mtyOutCnt}건</p></div>`;
+
+    // ===== MTY 납품실적 =====
+    const mtyPerfKeys = Object.keys(perfFCMap).filter(k=>k.startsWith('MTY|'));
+    const mtyClients = [...new Set(mtyPerfKeys.map(k=>k.split('|')[1]))];
+    let perfHTML = '';
+    mtyClients.forEach(client=>{
+      const items = mtyPerfKeys.filter(k=>k.split('|')[1]===client);
+      const rowspan = items.length + 1;
+      items.forEach((key,idx)=>{
+        const [,cl,item] = key.split('|');
+        const fc = perfFCMap[key];
+        const unit = fcPerf.data.find(r=>r[0]==='MTY'&&r[1]===cl&&r[2]===item)?.[3]||'';
+        const res = mtyResultMap[`${cl}|${item}`]||[0,0,0,0,0,0,0,0,0,0,0,0];
+        perfHTML += `<tr>`;
+        if(idx===0) perfHTML += `<td class="label client-cell" rowspan="${rowspan}">${client}</td>`;
+        perfHTML += `<td class="item-label">${item}<br><small style="color:#bbb;">(${unit})</small></td>`;
+        for(let m=0;m<12;m++){
+          const f=fc[m], r=res[m], future=(m>=CUR_MONTH&&r===0);
+          if(future){ perfHTML+=`<td class="result-cell cell-none"><span class="res res-none">-</span><span class="fc-num" style="color:#ccc;">FC: ${f}</span><span class="rate" style="color:#ccc;">예정</span></td>`; continue; }
+          if(r===0){ perfHTML+=`<td class="result-cell cell-none"><span class="res res-none">0</span><span class="fc-num" style="color:#ccc;">FC: ${f}</span><span class="rate" style="color:#A32D2D;">▼0%</span></td>`; continue; }
+          const pct=f>0?Math.round(r/f*100):0;
+          const cc=pct>=100?'cell-good':pct>=80?'cell-warn':'cell-bad';
+          const rc=pct>=100?'res-good':pct>=80?'res-warn':'res-bad';
+          const fc2=pct>=100?'fc-good':pct>=80?'fc-warn':'fc-bad';
+          perfHTML+=`<td class="result-cell ${cc}"><span class="res ${rc}">${r}</span><span class="fc-num">FC: ${f}</span><span class="rate ${fc2}">${pct>=100?'▲':'▼'}${pct}%</span></td>`;
+        }
+        perfHTML += '</tr>';
+      });
+      // TOTAL
+      perfHTML += `<tr class="total-row"><td class="label" colspan="2">TOTAL 달성율(중량기준)</td>`;
+      for(let m=0;m<12;m++){
+        const fcKg=items.reduce((s,k)=>{const fc=perfFCMap[k];const u=fcPerf.data.find(r=>r[0]==='MTY'&&r[1]===k.split('|')[1]&&r[2]===k.split('|')[2])?.[3]||'';return s+fc[m]*(u==='DRUM'?300:15);},0);
+        const resKg=items.reduce((s,k)=>{const res=mtyResultMap[`${k.split('|')[1]}|${k.split('|')[2]}`]||[];const u=fcPerf.data.find(r=>r[0]==='MTY'&&r[1]===k.split('|')[1]&&r[2]===k.split('|')[2])?.[3]||'';return s+(res[m]||0)*(u==='DRUM'?300:15);},0);
+        if(m>=CUR_MONTH&&resKg===0){perfHTML+=`<td style="color:#bbb;">-</td>`;continue;}
+        if(fcKg===0){perfHTML+=`<td>-</td>`;continue;}
+        const r=Math.round(resKg/fcKg*100);
+        const c=r>=100?'#085041':r>=80?'#854F0B':'#791F1F';
+        perfHTML+=`<td style="color:${c};">${r}%</td>`;
+      }
+      perfHTML += '</tr>';
+    });
+    document.getElementById('mtyPerfBody').innerHTML = perfHTML;
+
+    // ===== QRO 재고현황 =====
+    const qroInvData = invQRO.data.filter(r=>r[1]);
+    const qroReorders = [];
+    document.getElementById('qroInvBody').innerHTML = qroInvData.map(r=>{
+      const [no,origin,item,type,client,stock_raw,,reorder_raw] = r;
+      const stock=toN(stock_raw), reorder=toN(reorder_raw);
+      const fc=fcMap[item?.trim()]||0;
+      const moh=fc>0?(stock/fc).toFixed(1):null;
+      const m=moh?parseFloat(moh):99;
+      const status=m<2?'재주문 필요':m<4?'주의':'정상';
+      const badge=m<2?'badge-danger':m<4?'badge-warn':'badge-ok';
+      const rowCls=m<2?'row-danger':m<4?'row-warn':'';
+      const bw=moh?Math.min(m/12*100,100):0;
+      const bc=m<2?'var(--danger-text)':m<4?'var(--warning-text)':'var(--success)';
+      if(m<2&&fc>0) qroReorders.push({item,stock,fc,moh});
+      return `<tr class="${rowCls}">
+        <td>${origin}</td><td>${item}</td><td>${type}</td>
+        <td style="font-size:11px;">${client}</td>
+        <td class="r">${stock}</td><td class="r">${toN(r[6])||'-'}</td>
+        <td class="r">${reorder||'-'}</td><td class="r">${fc||'-'}</td>
+        <td class="r"><div class="moh-wrap">${moh||'-'}<div class="moh-bar"><div class="moh-fill" style="width:${bw}%;background:${bc};"></div></div></div></td>
+        <td><span class="badge ${badge}">${status}</span></td>
+      </tr>`;
+    }).join('');
+
+    // QRO 카드
+    const qroOutCnt=outQRO.data.filter(r=>r[0]).length;
+    const qroInCnt=inQRO.data.filter(r=>r[0]).length;
+    document.getElementById('qroCards').innerHTML = `
+      <div class="card"><p class="lbl">전체 품목</p><p class="val">${qroInvData.length}개</p></div>
+      <div class="card"><p class="lbl">재주문 필요</p><p class="val" style="color:${qroReorders.length>0?'var(--danger-text)':'var(--success-text)'};">${qroReorders.length}개</p></div>
+      <div class="card"><p class="lbl">2026 입고</p><p class="val">${qroInCnt}건</p></div>
+      <div class="card"><p class="lbl">2026 출고</p><p class="val">${qroOutCnt}건</p></div>`;
+
+    // ===== QRO 납품실적 =====
+    const qroPerfKeys = Object.keys(perfFCMap).filter(k=>k.startsWith('QRO|'));
+    const qroClientsPerf = [...new Set(qroPerfKeys.map(k=>k.split('|')[1]))];
+    let qroPerfHTML = '';
+    qroClientsPerf.forEach(client=>{
+      const items = qroPerfKeys.filter(k=>k.split('|')[1]===client);
+      const rowspan = items.length+1;
+      items.forEach((key,idx)=>{
+        const [,cl,item] = key.split('|');
+        const fc=perfFCMap[key];
+        const unit=fcPerf.data.find(r=>r[0]==='QRO'&&r[1]===cl&&r[2]===item)?.[3]||'';
+        const res=qroResultMap[`${cl}|${item}`]||[0,0,0,0,0,0,0,0,0,0,0,0];
+        qroPerfHTML+=`<tr>`;
+        if(idx===0) qroPerfHTML+=`<td class="label client-cell" rowspan="${rowspan}">${client}</td>`;
+        qroPerfHTML+=`<td class="item-label">${item}<br><small style="color:#bbb;">(${unit})</small></td>`;
+        for(let m=0;m<12;m++){
+          const f=fc[m],r=res[m],future=(m>=CUR_MONTH&&r===0);
+          if(future){qroPerfHTML+=`<td class="result-cell cell-none"><span class="res res-none">-</span><span class="fc-num" style="color:#ccc;">FC: ${f}</span><span class="rate" style="color:#ccc;">예정</span></td>`;continue;}
+          if(r===0){qroPerfHTML+=`<td class="result-cell cell-none"><span class="res res-none">0</span><span class="fc-num" style="color:#ccc;">FC: ${f}</span><span class="rate" style="color:#A32D2D;">▼0%</span></td>`;continue;}
+          const pct=f>0?Math.round(r/f*100):0;
+          const cc=pct>=100?'cell-good':pct>=80?'cell-warn':'cell-bad';
+          const rc=pct>=100?'res-good':pct>=80?'res-warn':'res-bad';
+          const fc2=pct>=100?'fc-good':pct>=80?'fc-warn':'fc-bad';
+          qroPerfHTML+=`<td class="result-cell ${cc}"><span class="res ${rc}">${r}</span><span class="fc-num">FC: ${f}</span><span class="rate ${fc2}">${pct>=100?'▲':'▼'}${pct}%</span></td>`;
+        }
+        qroPerfHTML+='</tr>';
+      });
+      qroPerfHTML+=`<tr class="total-row"><td class="label" colspan="2">TOTAL 달성율(중량기준)</td>`;
+      for(let m=0;m<12;m++){
+        const fcKg=items.reduce((s,k)=>{const fc=perfFCMap[k];const u=fcPerf.data.find(r=>r[0]==='QRO'&&r[1]===k.split('|')[1]&&r[2]===k.split('|')[2])?.[3]||'';return s+fc[m]*(u==='DRUM'?300:15);},0);
+        const resKg=items.reduce((s,k)=>{const res=qroResultMap[`${k.split('|')[1]}|${k.split('|')[2]}`]||[];const u=fcPerf.data.find(r=>r[0]==='QRO'&&r[1]===k.split('|')[1]&&r[2]===k.split('|')[2])?.[3]||'';return s+(res[m]||0)*(u==='DRUM'?300:15);},0);
+        if(m>=CUR_MONTH&&resKg===0){qroPerfHTML+=`<td style="color:#bbb;">-</td>`;continue;}
+        if(fcKg===0){qroPerfHTML+=`<td>-</td>`;continue;}
+        const r=Math.round(resKg/fcKg*100);
+        const c=r>=100?'#085041':r>=80?'#854F0B':'#791F1F';
+        qroPerfHTML+=`<td style="color:${c};">${r}%</td>`;
+      }
+      qroPerfHTML+='</tr>';
+    });
+    document.getElementById('qroPerfBody').innerHTML = qroPerfHTML;
+
+    // ===== 입출고 테이블 =====
+    // MTY 출고: NO,YEAR,MES,CLIENTE,PO DATE,DELIVERY DATE,ITEM,UNIT,QTY,TOTAL KG
+    const mtyOutRows = outMTY.data.filter(r=>r[0]);
+    const mtyClients2 = [...new Set(mtyOutRows.map(r=>r[3]).filter(Boolean))];
+    document.getElementById('mtyFilter').innerHTML =
+      `<button class="active" onclick="filterMtyOut('all',this)">전체</button>` +
+      mtyClients2.map(c=>`<button onclick="filterMtyOut('${c}',this)">${c}</button>`).join('');
+
+    window._mtyOutRows = mtyOutRows;
+    function renderMtyOut(rows){
+      document.getElementById('mtyOutBody').innerHTML = rows.map(r=>
+        `<tr><td>${r[0]}</td><td>${r[2]}월</td><td>${r[3]}</td>
+        <td style="font-size:11px;">${r[4]}</td><td>${r[5]}</td>
+        <td>${r[6]}</td><td>${r[7]}</td>
+        <td class="r">${r[8]}</td><td class="r">${r[9]}</td></tr>`).join('');
+    }
+    window.filterMtyOut = (client,btn)=>{
+      document.querySelectorAll('#mtyFilter button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      renderMtyOut(client==='all'?window._mtyOutRows:window._mtyOutRows.filter(r=>r[3]===client));
+    };
+    renderMtyOut(mtyOutRows);
+
+    // MTY 입고
+    document.getElementById('mtyInBody').innerHTML = inMTY.data.filter(r=>r[0]).map(r=>{
+      const st=r[8]||'';
+      const sb=st==='COMPLETE'?'badge-ok':'badge-gray';
+      return `<tr><td>${r[0]}</td><td>${r[2]}월</td><td style="font-size:11px;">${r[3]}</td>
+        <td>${r[4]}</td><td>${r[5]}</td><td>${r[6]}</td><td>${r[7]}</td>
+        <td>${r[9]}</td><td>${r[10]}</td><td class="r">${r[11]}</td>
+        <td><span class="badge ${sb}">${st}</span></td></tr>`;
+    }).join('');
+
+    // QRO 출고
+    document.getElementById('qroOutBody').innerHTML = outQRO.data.filter(r=>r[0]).map(r=>
+      `<tr><td>${r[0]}</td><td>${r[2]}월</td><td>${r[3]}</td>
+      <td style="font-size:11px;">${r[4]}</td><td>${r[5]}</td>
+      <td>${r[6]}</td><td>${r[7]}</td>
+      <td class="r">${r[8]}</td><td class="r">${r[9]}</td></tr>`).join('');
+
+    // QRO 입고
+    document.getElementById('qroInBody').innerHTML = inQRO.data.filter(r=>r[0]).map(r=>{
+      const st=r[8]||'';
+      const sb=st==='COMPLETE'?'badge-ok':'badge-gray';
+      return `<tr><td>${r[0]}</td><td>${r[2]}월</td><td style="font-size:11px;">${r[3]}</td>
+        <td>${r[4]}</td><td>${r[5]}</td><td>${r[6]}</td><td>${r[7]}</td>
+        <td>${r[9]}</td><td>${r[10]}</td><td class="r">${r[11]}</td>
+        <td><span class="badge ${sb}">${st}</span></td></tr>`;
+    }).join('');
+
+    document.getElementById('statusBar').className='status-bar ok';
+    document.getElementById('statusBar').textContent='✓ 구글 시트 연동 성공';
+    document.getElementById('lastUpdate').textContent='최종 업데이트: '+new Date().toLocaleString('ko-KR');
+    document.getElementById('mainContent').style.display='block';
+
+  } catch(e) {
+    document.getElementById('statusBar').className='status-bar err';
+    document.getElementById('statusBar').textContent='❌ 연동 실패 — '+e.message;
+    console.error(e);
+  }
+}
+
+loadAll();
+
+function switchLoc(loc,btn){
+  ['mty','qro'].forEach(l=>document.getElementById('panel-'+l).style.display=l===loc?'block':'none');
+  document.querySelectorAll('.loc-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function switchSec(loc,sec,btn){
+  ['inv','perf','io'].forEach(s=>{const el=document.getElementById(loc+'-'+s);if(el)el.style.display=s===sec?'block':'none';});
+  btn.closest('.sec-tabs').querySelectorAll('.sec-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function switchIO(loc,tab,btn){
+  [loc+'-io-in',loc+'-io-out'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=id===loc+'-io-'+tab?'block':'none';});
+  btn.closest('.sub-tabs').querySelectorAll('.sub-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>
