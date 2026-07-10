@@ -45,6 +45,7 @@
   .badge-danger{background:var(--danger-bg);color:var(--danger-text);}
   .badge-gray{background:var(--surface-1);color:var(--text-secondary);}
   .tbl-wrap{border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px;overflow-x:auto;}
+  table{min-width:600px;}
   table{width:100%;border-collapse:collapse;font-size:12px;}
   th{text-align:left;font-size:11px;color:var(--text-secondary);font-weight:500;padding:8px 10px;background:var(--surface-1);border-bottom:0.5px solid var(--border);white-space:nowrap;}
   th.r{text-align:right;}
@@ -52,7 +53,7 @@
   td.r{text-align:right;}
   .row-danger td{background:#fff8f8;}
   .row-warn td{background:#fffbf0;}
-  .moh-wrap{display:flex;align-items:center;gap:6px;justify-content:flex-end;}
+  .moh-wrap{display:flex;align-items:center;gap:6px;justify-content:flex-end;white-space:nowrap;}
   .moh-bar{width:48px;height:5px;background:#e2e0d8;border-radius:3px;overflow:hidden;flex-shrink:0;}
   .moh-fill{height:5px;border-radius:3px;}
   .perf-wrap{overflow-x:auto;margin-bottom:16px;}
@@ -298,7 +299,7 @@ async function loadAll(){
 
     // ===== MTY 재고현황 =====
     // invMTY: NO,ORIGIN,ITEM,TYPE,CLIENT,INVENTORY,OPEN ITEMS,REORDER POINT,KG/UNIT,NOTE
-    const mtyInvData = invMTY.data.filter(r=>r[2]);
+    const mtyInvData = invMTY.data.filter(r=>r[2]&&r[2].trim());
     const mtyReorders = [];
 
     document.getElementById('mtyInvBody').innerHTML = mtyInvData.map(r=>{
@@ -333,8 +334,8 @@ async function loadAll(){
       </div>`).join('');
 
     // MTY 카드
-    const mtyOutCnt = outMTY.data.filter(r=>r[0]).length;
-    const mtyInCnt = inMTY.data.filter(r=>r[0]).length;
+    const mtyOutCnt = outMTY.data.filter(r=>r[3]||r[1]).length;
+    const mtyInCnt = inMTY.data.filter(r=>r[1]||r[3]).length;
     document.getElementById('mtyCards').innerHTML = `
       <div class="card"><p class="lbl">전체 품목</p><p class="val">${mtyInvData.length}개</p></div>
       <div class="card"><p class="lbl">재주문 필요</p><p class="val" style="color:var(--danger-text);">${mtyReorders.length}개</p></div>
@@ -384,7 +385,7 @@ async function loadAll(){
     document.getElementById('mtyPerfBody').innerHTML = perfHTML;
 
     // ===== QRO 재고현황 =====
-    const qroInvData = invQRO.data.filter(r=>r[1]);
+    const qroInvData = invQRO.data.filter(r=>r[1]&&r[1].trim()||r[2]&&r[2].trim());
     const qroReorders = [];
     document.getElementById('qroInvBody').innerHTML = qroInvData.map(r=>{
       const [no,origin,item,type,client,stock_raw,,reorder_raw] = r;
@@ -409,8 +410,8 @@ async function loadAll(){
     }).join('');
 
     // QRO 카드
-    const qroOutCnt=outQRO.data.filter(r=>r[0]).length;
-    const qroInCnt=inQRO.data.filter(r=>r[0]).length;
+    const qroOutCnt=outQRO.data.filter(r=>r[3]||r[1]).length;
+    const qroInCnt=inQRO.data.filter(r=>r[1]||r[3]).length;
     document.getElementById('qroCards').innerHTML = `
       <div class="card"><p class="lbl">전체 품목</p><p class="val">${qroInvData.length}개</p></div>
       <div class="card"><p class="lbl">재주문 필요</p><p class="val" style="color:${qroReorders.length>0?'var(--danger-text)':'var(--success-text)'};">${qroReorders.length}개</p></div>
@@ -460,7 +461,7 @@ async function loadAll(){
 
     // ===== 입출고 테이블 =====
     // MTY 출고: NO,YEAR,MES,CLIENTE,PO DATE,DELIVERY DATE,ITEM,UNIT,QTY,TOTAL KG
-    const mtyOutRows = outMTY.data.filter(r=>r[0]);
+    const mtyOutRows = outMTY.data.filter(r=>r[3]||r[1]);
     const mtyClients2 = [...new Set(mtyOutRows.map(r=>r[3]).filter(Boolean))];
     document.getElementById('mtyFilter').innerHTML =
       `<button class="active" onclick="filterMtyOut('all',this)">전체</button>` +
@@ -482,7 +483,7 @@ async function loadAll(){
     renderMtyOut(mtyOutRows);
 
     // MTY 입고
-    document.getElementById('mtyInBody').innerHTML = inMTY.data.filter(r=>r[0]).map(r=>{
+    document.getElementById('mtyInBody').innerHTML = inMTY.data.filter(r=>r[1]||r[3]).map(r=>{
       const st=r[8]||'';
       const sb=st==='COMPLETE'?'badge-ok':'badge-gray';
       return `<tr><td>${r[0]}</td><td>${r[2]}월</td><td style="font-size:11px;">${r[3]}</td>
@@ -492,14 +493,14 @@ async function loadAll(){
     }).join('');
 
     // QRO 출고
-    document.getElementById('qroOutBody').innerHTML = outQRO.data.filter(r=>r[0]).map(r=>
+    document.getElementById('qroOutBody').innerHTML = outQRO.data.filter(r=>r[3]||r[1]).map(r=>
       `<tr><td>${r[0]}</td><td>${r[2]}월</td><td>${r[3]}</td>
       <td style="font-size:11px;">${r[4]}</td><td>${r[5]}</td>
       <td>${r[6]}</td><td>${r[7]}</td>
       <td class="r">${r[8]}</td><td class="r">${r[9]}</td></tr>`).join('');
 
     // QRO 입고
-    document.getElementById('qroInBody').innerHTML = inQRO.data.filter(r=>r[0]).map(r=>{
+    document.getElementById('qroInBody').innerHTML = inQRO.data.filter(r=>r[1]||r[3]).map(r=>{
       const st=r[8]||'';
       const sb=st==='COMPLETE'?'badge-ok':'badge-gray';
       return `<tr><td>${r[0]}</td><td>${r[2]}월</td><td style="font-size:11px;">${r[3]}</td>
