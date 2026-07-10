@@ -110,7 +110,7 @@
         <div class="tbl-wrap"><table>
           <thead><tr>
             <th>NO</th><th>ORIGIN</th><th>ITEM</th><th>TYPE</th><th>CLIENT</th>
-            <th class="r">재고</th><th class="r">OPEN</th><th class="r">REORDER PT</th>
+            <th class="r">재고</th><th class="r">OPEN</th>
             <th class="r">FORECAST/월</th><th class="r">MOH</th><th>상태</th>
           </tr></thead>
           <tbody id="mtyInvBody"></tbody>
@@ -167,7 +167,7 @@
         <div class="tbl-wrap"><table>
           <thead><tr>
             <th>ORIGIN</th><th>ITEM</th><th>TYPE</th><th>CLIENT</th>
-            <th class="r">재고</th><th class="r">OPEN</th><th class="r">REORDER PT</th>
+            <th class="r">재고</th><th class="r">OPEN</th>
             <th class="r">FORECAST/월</th><th class="r">MOH</th><th>상태</th>
           </tr></thead>
           <tbody id="qroInvBody"></tbody>
@@ -236,6 +236,7 @@ async function fetchTSV(key){
 }
 
 function toN(v){ const n=parseFloat(String(v).replace(/,/g,'')); return isNaN(n)?0:n; }
+function norm(s){ return String(s||'').toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9]/g,''); }
 
 async function loadAll(){
   try {
@@ -248,38 +249,48 @@ async function loadAll(){
 
     // FORECAST 맵 (재고현황용) — 재고_FC: NO, ITEM, TYPE, FORECAST/월
     const fcMap = {};
-    fcInv.data.forEach(r=>{ if(r[1]) fcMap[r[1].trim()] = toN(r[3]); });
+    const fcMapRaw = {};
+    fcInv.data.forEach(r=>{ if(r[1]){ fcMapRaw[r[1].trim()] = toN(r[3]); fcMap[norm(r[1])] = toN(r[3]); } });
+    function getFC(itemName){ return fcMap[norm(itemName)] || fcMapRaw[itemName?.trim()] || 0; }
 
     // FORECAST 납품용 — 납품_FC: LOC, CLIENTE, ITEM, UNIT, 1월~12월
-    const perfFCMap = {}; // key: `${loc}|${client}|${item}`
+    const perfFCMap = {}; // key norm
+    const perfFCRaw = {}; // original key
     fcPerf.data.forEach(r=>{
       if(!r[1]) return;
       const key = `${r[0]}|${r[1]}|${r[2]}`;
-      perfFCMap[key] = r.slice(4,16).map(toN);
+      const nkey = `${r[0]}|${norm(r[1])}|${norm(r[2])}`;
+      const vals = r.slice(4,16).map(toN);
+      perfFCMap[nkey] = vals;
+      perfFCRaw[key] = {unit: r[3], fc: vals};
     });
+    function getPerfFC(loc,client,item){ return perfFCMap[`${loc}|${norm(client)}|${norm(item)}`] || null; }
+    function getPerfUnit(loc,client,item){ return perfFCRaw[`${loc}|${client}|${item}`]?.unit || perfFCRaw[Object.keys(perfFCRaw).find(k=>norm(k)===norm(`${loc}|${client}|${item}`))]?.unit || ''; }
 
     // 출고 실적 집계 (업체별 계획 대비 실적용)
     // MTY 출고: NO,YEAR,MES,CLIENTE,PO DATE,DELIVERY DATE,ITEM,UNIT,QTY,TOTAL KG
-    const mtyResultMap = {}; // key: `${client}|${item}` → [0]*12
+    const mtyResultMap = {}; // normalized key
     outMTY.data.forEach(r=>{
       const mes=toN(r[2]), client=(r[3]||'').trim(), item=(r[6]||'').trim(), qty=toN(r[8]);
       if(mes>=1&&mes<=12&&client&&item){
-        const k=`${client}|${item}`;
-        if(!mtyResultMap[k]) mtyResultMap[k]=[0]*12;
+        const k=`${norm(client)}|${norm(item)}`;
+        if(!mtyResultMap[k]) mtyResultMap[k]=new Array(12).fill(0);
         mtyResultMap[k][mes-1]+=qty;
       }
     });
+    function getMtyResult(client,item){ return mtyResultMap[`${norm(client)}|${norm(item)}`]||new Array(12).fill(0); }
 
     // QRO 출고 집계
     const qroResultMap = {};
     outQRO.data.forEach(r=>{
       const mes=toN(r[2]), client=(r[3]||'').trim(), item=(r[6]||'').trim(), qty=toN(r[8]);
       if(mes>=1&&mes<=12&&client&&item){
-        const k=`${client}|${item}`;
-        if(!qroResultMap[k]) qroResultMap[k]=[0]*12;
+        const k=`${norm(client)}|${norm(item)}`;
+        if(!qroResultMap[k]) qroResultMap[k]=new Array(12).fill(0);
         qroResultMap[k][mes-1]+=qty;
       }
     });
+    function getQroResult(client,item){ return qroResultMap[`${norm(client)}|${norm(item)}`]||new Array(12).fill(0); }
 
     // 현재 달 감지
     const now = new Date();
@@ -293,7 +304,7 @@ async function loadAll(){
     document.getElementById('mtyInvBody').innerHTML = mtyInvData.map(r=>{
       const [no,origin,item,type,client,stock_raw,,reorder_raw] = r;
       const stock = toN(stock_raw), reorder = toN(reorder_raw);
-      const fc = fcMap[item?.trim()] || 0;
+      const fc = getFC(item);
       const moh = fc>0 ? (stock/fc).toFixed(1) : null;
       const m = moh ? parseFloat(moh) : 99;
       const status = m<1?'재주문 필요':m<3?'재주문 필요':m<6?'주의':'정상';
@@ -331,17 +342,17 @@ async function loadAll(){
       <div class="card"><p class="lbl">2026 출고</p><p class="val">${mtyOutCnt}건</p></div>`;
 
     // ===== MTY 납품실적 =====
-    const mtyPerfKeys = Object.keys(perfFCMap).filter(k=>k.startsWith('MTY|'));
+    const mtyPerfKeys = Object.keys(perfFCRaw).filter(k=>k.startsWith('MTY|'));
     const mtyClients = [...new Set(mtyPerfKeys.map(k=>k.split('|')[1]))];
     let perfHTML = '';
     mtyClients.forEach(client=>{
       const items = mtyPerfKeys.filter(k=>k.split('|')[1]===client);
       const rowspan = items.length + 1;
       items.forEach((key,idx)=>{
-        const [,cl,item] = key.split('|');
-        const fc = perfFCMap[key];
-        const unit = fcPerf.data.find(r=>r[0]==='MTY'&&r[1]===cl&&r[2]===item)?.[3]||'';
-        const res = mtyResultMap[`${cl}|${item}`]||[0,0,0,0,0,0,0,0,0,0,0,0];
+        const [loc_,cl,item] = key.split('|');
+        const fc = getPerfFC(loc_,cl,item) || perfFCRaw[key]?.fc || new Array(12).fill(0);
+        const unit = perfFCRaw[key]?.unit || '';
+        const res = getMtyResult(cl,item);
         perfHTML += `<tr>`;
         if(idx===0) perfHTML += `<td class="label client-cell" rowspan="${rowspan}">${client}</td>`;
         perfHTML += `<td class="item-label">${item}<br><small style="color:#bbb;">(${unit})</small></td>`;
@@ -360,8 +371,8 @@ async function loadAll(){
       // TOTAL
       perfHTML += `<tr class="total-row"><td class="label" colspan="2">TOTAL 달성율(중량기준)</td>`;
       for(let m=0;m<12;m++){
-        const fcKg=items.reduce((s,k)=>{const fc=perfFCMap[k];const u=fcPerf.data.find(r=>r[0]==='MTY'&&r[1]===k.split('|')[1]&&r[2]===k.split('|')[2])?.[3]||'';return s+fc[m]*(u==='DRUM'?300:15);},0);
-        const resKg=items.reduce((s,k)=>{const res=mtyResultMap[`${k.split('|')[1]}|${k.split('|')[2]}`]||[];const u=fcPerf.data.find(r=>r[0]==='MTY'&&r[1]===k.split('|')[1]&&r[2]===k.split('|')[2])?.[3]||'';return s+(res[m]||0)*(u==='DRUM'?300:15);},0);
+        const fcKg=items.reduce((s,k)=>{const d=perfFCRaw[k];const u=d?.unit||'';const fc=d?.fc||[];return s+(fc[m]||0)*(u==='DRUM'?300:15);},0);
+        const resKg=items.reduce((s,k)=>{const [,c2,i2]=k.split('|');const res=getMtyResult(c2,i2);const u=perfFCRaw[k]?.unit||'';return s+(res[m]||0)*(u==='DRUM'?300:15);},0);
         if(m>=CUR_MONTH&&resKg===0){perfHTML+=`<td style="color:#bbb;">-</td>`;continue;}
         if(fcKg===0){perfHTML+=`<td>-</td>`;continue;}
         const r=Math.round(resKg/fcKg*100);
@@ -378,7 +389,7 @@ async function loadAll(){
     document.getElementById('qroInvBody').innerHTML = qroInvData.map(r=>{
       const [no,origin,item,type,client,stock_raw,,reorder_raw] = r;
       const stock=toN(stock_raw), reorder=toN(reorder_raw);
-      const fc=fcMap[item?.trim()]||0;
+      const fc=getFC(item);
       const moh=fc>0?(stock/fc).toFixed(1):null;
       const m=moh?parseFloat(moh):99;
       const status=m<2?'재주문 필요':m<4?'주의':'정상';
@@ -407,7 +418,7 @@ async function loadAll(){
       <div class="card"><p class="lbl">2026 출고</p><p class="val">${qroOutCnt}건</p></div>`;
 
     // ===== QRO 납품실적 =====
-    const qroPerfKeys = Object.keys(perfFCMap).filter(k=>k.startsWith('QRO|'));
+    const qroPerfKeys = Object.keys(perfFCRaw).filter(k=>k.startsWith('QRO|'));
     const qroClientsPerf = [...new Set(qroPerfKeys.map(k=>k.split('|')[1]))];
     let qroPerfHTML = '';
     qroClientsPerf.forEach(client=>{
@@ -415,9 +426,9 @@ async function loadAll(){
       const rowspan = items.length+1;
       items.forEach((key,idx)=>{
         const [,cl,item] = key.split('|');
-        const fc=perfFCMap[key];
-        const unit=fcPerf.data.find(r=>r[0]==='QRO'&&r[1]===cl&&r[2]===item)?.[3]||'';
-        const res=qroResultMap[`${cl}|${item}`]||[0,0,0,0,0,0,0,0,0,0,0,0];
+        const fc=perfFCRaw[key]?.fc || new Array(12).fill(0);
+        const unit=perfFCRaw[key]?.unit||'';
+        const res=getQroResult(cl,item);
         qroPerfHTML+=`<tr>`;
         if(idx===0) qroPerfHTML+=`<td class="label client-cell" rowspan="${rowspan}">${client}</td>`;
         qroPerfHTML+=`<td class="item-label">${item}<br><small style="color:#bbb;">(${unit})</small></td>`;
@@ -435,8 +446,8 @@ async function loadAll(){
       });
       qroPerfHTML+=`<tr class="total-row"><td class="label" colspan="2">TOTAL 달성율(중량기준)</td>`;
       for(let m=0;m<12;m++){
-        const fcKg=items.reduce((s,k)=>{const fc=perfFCMap[k];const u=fcPerf.data.find(r=>r[0]==='QRO'&&r[1]===k.split('|')[1]&&r[2]===k.split('|')[2])?.[3]||'';return s+fc[m]*(u==='DRUM'?300:15);},0);
-        const resKg=items.reduce((s,k)=>{const res=qroResultMap[`${k.split('|')[1]}|${k.split('|')[2]}`]||[];const u=fcPerf.data.find(r=>r[0]==='QRO'&&r[1]===k.split('|')[1]&&r[2]===k.split('|')[2])?.[3]||'';return s+(res[m]||0)*(u==='DRUM'?300:15);},0);
+        const fcKg=items.reduce((s,k)=>{const d=perfFCRaw[k];const u=d?.unit||'';const fc=d?.fc||[];return s+(fc[m]||0)*(u==='DRUM'?300:15);},0);
+        const resKg=items.reduce((s,k)=>{const [,c2,i2]=k.split('|');const res=getQroResult(c2,i2);const u=perfFCRaw[k]?.unit||'';return s+(res[m]||0)*(u==='DRUM'?300:15);},0);
         if(m>=CUR_MONTH&&resKg===0){qroPerfHTML+=`<td style="color:#bbb;">-</td>`;continue;}
         if(fcKg===0){qroPerfHTML+=`<td>-</td>`;continue;}
         const r=Math.round(resKg/fcKg*100);
