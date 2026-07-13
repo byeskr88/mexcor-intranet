@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>고객관리 CRM</title>
+<style>
+:root{
+  --bg:#f5f4f0;--surface:#fff;--s1:#f1efe8;--s2:#e8e6de;
+  --border:#e2e0d8;--text:#1f1e1c;--muted:#5f5e5a;--hint:#8a8880;
+  --ok:#1D9E75;--ok-bg:#E1F5EE;--ok-text:#085041;
+  --warn:#BA7517;--warn-bg:#FAEEDA;--warn-text:#854F0B;
+  --danger:#A32D2D;--danger-bg:#FCEBEB;--danger-text:#791F1F;
+  --blue:#2a78d6;--blue-bg:#E6F1FB;--blue-text:#0C447C;
+  --purple:#534AB7;--purple-bg:#EEEDFE;--purple-text:#3C3489;
+  --r:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text);min-height:100vh;}
+
+/* 헤더 */
+.header{background:var(--surface);border-bottom:0.5px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.header h1{font-size:16px;font-weight:500;}
+.header-right{display:flex;align-items:center;gap:10px;}
+.btn{padding:7px 14px;font-size:12px;border-radius:var(--r);cursor:pointer;font-family:inherit;border:0.5px solid var(--border);background:var(--surface);color:var(--text);}
+.btn:hover{background:var(--s1);}
+.btn-primary{background:var(--text);color:#fff;border-color:var(--text);}
+.btn-primary:hover{background:#333;}
+.ts{font-size:11px;color:var(--hint);}
+
+/* 알림 배너 */
+.alerts-bar{background:var(--warn-bg);border-bottom:0.5px solid #EF9F27;padding:8px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.alert-chip{font-size:12px;color:var(--warn-text);display:flex;align-items:center;gap:5px;}
+.alert-chip b{font-weight:500;}
+
+/* 통계 바 */
+.stats-bar{padding:12px 24px;display:flex;gap:10px;border-bottom:0.5px solid var(--border);background:var(--surface);}
+.stat-card{background:var(--s1);border-radius:var(--r);padding:10px 16px;min-width:90px;}
+.stat-card .lbl{font-size:11px;color:var(--muted);margin-bottom:3px;}
+.stat-card .val{font-size:20px;font-weight:500;}
+
+/* 칸반 보드 */
+.board-wrap{padding:16px 24px;overflow-x:auto;}
+.board{display:flex;gap:12px;min-width:900px;}
+.col{background:var(--surface);border:0.5px solid var(--border);border-radius:10px;width:200px;flex-shrink:0;display:flex;flex-direction:column;}
+.col-head{padding:10px 12px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.col-name{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
+.col-cnt{font-size:11px;background:var(--s1);color:var(--muted);padding:1px 7px;border-radius:20px;}
+.col-cards{padding:8px;flex:1;min-height:80px;}
+.col.drag-over .col-cards{background:var(--blue-bg);border-radius:6px;}
+
+/* 칸반 카드 */
+.card{background:var(--s1);border:0.5px solid var(--border);border-radius:var(--r);padding:10px;margin-bottom:8px;cursor:pointer;transition:border-color .15s,transform .1s;}
+.card:hover{border-color:var(--blue);transform:translateY(-1px);}
+.card.dragging{opacity:.4;transform:rotate(2deg);}
+.card.selected{border-color:var(--blue);background:var(--blue-bg);}
+.card:last-child{margin-bottom:0;}
+.card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:5px;}
+.card-name{font-size:12px;font-weight:500;line-height:1.3;}
+.flag{font-size:9px;padding:1px 5px;border-radius:3px;white-space:nowrap;font-weight:500;}
+.flag-kr{background:var(--blue-bg);color:var(--blue-text);}
+.flag-mx{background:var(--ok-bg);color:var(--ok-text);}
+.card-product{font-size:11px;color:var(--muted);margin-bottom:6px;line-height:1.4;}
+.card-foot{display:flex;align-items:center;justify-content:space-between;}
+.card-days{font-size:10px;font-weight:500;}
+.days-ok{color:var(--ok-text);}
+.days-warn{color:var(--warn-text);}
+.days-danger{color:var(--danger-text);}
+.card-loc{font-size:10px;color:var(--hint);background:var(--s2);padding:1px 6px;border-radius:20px;}
+
+/* 단계별 색상 */
+.col-active .col-name{color:var(--ok-text);}
+.col-active .col-head{border-bottom-color:#5DCAA5;}
+.col-prospect .col-name{color:var(--muted);}
+.col-qualified .col-name{color:var(--blue-text);}
+.col-proposal .col-name{color:var(--purple-text);}
+.col-negotiation .col-name{color:var(--warn-text);}
+
+/* 빈 컬럼 */
+.col-empty{text-align:center;padding:20px 10px;font-size:12px;color:var(--hint);}
+
+/* 상세 패널 */
+.detail-panel{position:fixed;right:0;top:0;height:100vh;width:380px;background:var(--surface);border-left:0.5px solid var(--border);z-index:200;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .2s ease;}
+.detail-panel.open{transform:translateX(0);}
+.dp-head{padding:16px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:12px;}
+.dp-avatar{width:40px;height:40px;border-radius:50%;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;color:var(--blue-text);flex-shrink:0;}
+.dp-name{font-size:15px;font-weight:500;}
+.dp-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.dp-close{margin-left:auto;background:none;border:none;cursor:pointer;font-size:18px;color:var(--muted);line-height:1;}
+.dp-body{flex:1;overflow-y:auto;padding:16px;}
+.dp-section{margin-bottom:16px;}
+.dp-section-title{font-size:11px;font-weight:600;color:var(--hint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.info-cell{background:var(--s1);border-radius:6px;padding:8px 10px;}
+.info-cell .lbl{font-size:10px;color:var(--hint);margin-bottom:2px;}
+.info-cell .val{font-size:12px;font-weight:500;}
+
+/* 단계 변경 드롭다운 */
+.stage-select{padding:5px 10px;font-size:12px;border:0.5px solid var(--border);border-radius:var(--r);font-family:inherit;background:var(--surface);color:var(--text);cursor:pointer;}
+
+/* 컨택 로그 타임라인 */
+.timeline{border-left:2px solid var(--border);padding-left:14px;margin-left:6px;}
+.tl-item{position:relative;margin-bottom:12px;}
+.tl-dot{position:absolute;left:-19px;top:4px;width:8px;height:8px;border-radius:50%;background:var(--s2);border:2px solid var(--border);}
+.tl-dot.new{background:var(--blue);border-color:var(--blue);}
+.tl-date{font-size:10px;color:var(--hint);margin-bottom:2px;}
+.tl-text{font-size:12px;color:var(--text);line-height:1.5;}
+.tl-by{font-size:10px;color:var(--hint);margin-top:2px;}
+.tl-empty{font-size:12px;color:var(--hint);text-align:center;padding:16px 0;}
+
+/* AI 요약 */
+.ai-box{background:var(--purple-bg);border:0.5px solid #AFA9EC;border-radius:var(--r);padding:12px;margin-bottom:12px;}
+.ai-box .ai-label{font-size:10px;font-weight:600;color:var(--purple-text);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;display:flex;align-items:center;gap:4px;}
+.ai-box .ai-text{font-size:12px;color:var(--purple-text);line-height:1.6;}
+.ai-loading{color:var(--hint);font-style:italic;}
+
+/* 컨택 입력 */
+.dp-footer{padding:12px 16px;border-top:0.5px solid var(--border);}
+.contact-input-wrap{display:flex;flex-direction:column;gap:6px;}
+.contact-input-wrap textarea{width:100%;padding:8px 10px;font-size:12px;border:0.5px solid var(--border);border-radius:var(--r);font-family:inherit;resize:none;height:60px;background:var(--s1);color:var(--text);}
+.contact-input-wrap textarea:focus{outline:none;border-color:var(--blue);}
+.input-footer{display:flex;align-items:center;justify-content:space-between;}
+.input-footer select{font-size:11px;border:0.5px solid var(--border);border-radius:6px;padding:4px 8px;font-family:inherit;background:var(--surface);}
+
+/* 신규 거래처 모달 */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:300;display:flex;align-items:center;justify-content:center;}
+.modal{background:var(--surface);border-radius:12px;padding:20px;width:400px;border:0.5px solid var(--border);}
+.modal h2{font-size:15px;font-weight:500;margin-bottom:16px;}
+.form-row{margin-bottom:10px;}
+.form-row label{display:block;font-size:11px;color:var(--muted);margin-bottom:4px;}
+.form-row input,.form-row select,.form-row textarea{width:100%;padding:7px 10px;font-size:12px;border:0.5px solid var(--border);border-radius:var(--r);font-family:inherit;background:var(--s1);color:var(--text);}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{outline:none;border-color:var(--blue);}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;}
+
+/* 로딩 */
+.loading{text-align:center;padding:40px;color:var(--hint);}
+.spin{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* 토스트 */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1f1e1c;color:#fff;padding:10px 18px;border-radius:var(--r);font-size:13px;z-index:999;opacity:0;transition:opacity .2s;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>고객관리</h1>
+  <div class="header-right">
+    <span class="ts" id="lastUpdate"></span>
+    <button class="btn btn-primary" onclick="openNewModal()">+ 신규 거래처</button>
+  </div>
+</div>
+
+<div class="alerts-bar" id="alertsBar" style="display:none;"></div>
+
+<div class="stats-bar">
+  <div class="stat-card"><div class="lbl">전체 거래처</div><div class="val" id="statTotal">-</div></div>
+  <div class="stat-card"><div class="lbl">Active</div><div class="val" style="color:var(--ok-text)" id="statActive">-</div></div>
+  <div class="stat-card"><div class="lbl">파이프라인</div><div class="val" style="color:var(--blue-text)" id="statPipe">-</div></div>
+  <div class="stat-card"><div class="lbl">팔로업 필요</div><div class="val" style="color:var(--warn-text)" id="statFollowup">-</div></div>
+</div>
+
+<div class="board-wrap">
+  <div class="board" id="board">
+    <div class="loading"><span class="spin"></span>불러오는 중...</div>
+  </div>
+</div>
+
+<!-- 상세 패널 -->
+<div class="detail-panel" id="detailPanel">
+  <div class="dp-head">
+    <div class="dp-avatar" id="dpAvatar">-</div>
+    <div>
+      <div class="dp-name" id="dpName">-</div>
+      <div class="dp-sub" id="dpSub">-</div>
+    </div>
+    <button class="dp-close" onclick="closeDetail()">✕</button>
+  </div>
+  <div class="dp-body">
+    <div class="dp-section">
+      <div class="dp-section-title">단계 변경</div>
+      <select class="stage-select" id="dpStageSelect" onchange="changeStage(this.value)">
+        <option value="active">Active</option>
+        <option value="prospect">Prospect</option>
+        <option value="qualified">Qualified</option>
+        <option value="proposal">Proposal</option>
+        <option value="negotiation">Negotiation</option>
+        <option value="won">Won ✓</option>
+        <option value="lost">Lost ✗</option>
+      </select>
+    </div>
+    <div class="dp-section">
+      <div class="dp-section-title">거래처 정보</div>
+      <div class="info-grid" id="dpInfo"></div>
+    </div>
+    <div class="dp-section" id="aiSection">
+      <div class="dp-section-title">AI 요약</div>
+      <div class="ai-box">
+        <div class="ai-label">✦ Claude 분석</div>
+        <div class="ai-text" id="aiText"><span class="ai-loading">컨택 기록 로드 중...</span></div>
+      </div>
+    </div>
+    <div class="dp-section">
+      <div class="dp-section-title">컨택 로그</div>
+      <div class="timeline" id="dpTimeline"><div class="tl-empty">컨택 기록 없음</div></div>
+    </div>
+  </div>
+  <div class="dp-footer">
+    <div class="contact-input-wrap">
+      <textarea id="contactInput" placeholder="컨택 내용 입력... (예: 견적 발송, 미팅 진행, 전화 통화 등)"></textarea>
+      <div class="input-footer">
+        <select id="loggedBy">
+          <option>DJ</option>
+          <option>QRO 담당</option>
+          <option>회계팀</option>
+        </select>
+        <button class="btn btn-primary" onclick="saveContact()">저장</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 신규 거래처 모달 -->
+<div class="modal-bg" id="newModal" style="display:none;" onclick="if(event.target===this)closeNewModal()">
+  <div class="modal">
+    <h2>신규 거래처 추가</h2>
+    <div class="form-grid">
+      <div class="form-row"><label>거래처명 *</label><input id="nName" placeholder="ACME MEXICO"></div>
+      <div class="form-row"><label>국가</label>
+        <select id="nFlag"><option value="KR">KR (한국계)</option><option value="MX">MX (멕시코)</option><option value="US">US</option></select>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="form-row"><label>단계</label>
+        <select id="nStage">
+          <option value="prospect">Prospect</option>
+          <option value="qualified">Qualified</option>
+          <option value="proposal">Proposal</option>
+          <option value="active">Active</option>
+        </select>
+      </div>
+      <div class="form-row"><label>위치</label><input id="nLoc" placeholder="MTY / QRO / Ramos..."></div>
+    </div>
+    <div class="form-row"><label>관심 제품</label><input id="nProducts" placeholder="SM 70 1.2mm 300KG, ..."></div>
+    <div class="form-row"><label>담당자</label><input id="nContact" placeholder="홍길동 과장 / Juan Reyes"></div>
+    <div class="form-row"><label>비고</label><textarea id="nNote" rows="2" placeholder="첫 미팅 날짜, 소개 경로 등..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeNewModal()">취소</button>
+      <button class="btn btn-primary" onclick="createAccount()">추가</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SURL='https://oezergrrqcinclorwvnk.supabase.co';
+const SKEY='sb_publishable_1eqTksIg-IetXykOBHf0rg_19ourTmF';
+const sb=supabase.createClient(SURL,SKEY);
+
+const STAGES=[
+  {id:'active',   label:'Active',      col:'col-active'},
+  {id:'prospect', label:'Prospect',    col:'col-prospect'},
+  {id:'qualified',label:'Qualified',   col:'col-qualified'},
+  {id:'proposal', label:'Proposal',    col:'col-proposal'},
+  {id:'negotiation',label:'Negotiation',col:'col-negotiation'},
+];
+
+let accounts=[], logs={}, selectedId=null;
+
+// ===== 데이터 로드 =====
+async function loadAll(){
+  const {data:acc}=await sb.from('accounts').select('*').order('name');
+  if(acc) accounts=acc;
+  // 컨택 로그 전체 최근 컨택일 파악용
+  const {data:lg}=await sb.from('contact_logs').select('*').order('created_at',{ascending:false});
+  if(lg){
+    logs={};
+    lg.forEach(l=>{
+      if(!logs[l.account_id]) logs[l.account_id]=[];
+      logs[l.account_id].push(l);
+    });
+  }
+  renderAll();
+  updateStats();
+  renderAlerts();
+  document.getElementById('lastUpdate').textContent='업데이트 '+new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+}
+
+// ===== 렌더링 =====
+function renderAll(){
+  const board=document.getElementById('board');
+  board.innerHTML='';
+  STAGES.forEach(st=>{
+    const cards=accounts.filter(a=>a.stage===st.id);
+    const col=document.createElement('div');
+    col.className=`col ${st.col}`;
+    col.dataset.stage=st.id;
+    col.innerHTML=`<div class="col-head"><span class="col-name">${st.label}</span><span class="col-cnt" id="cnt-${st.id}">${cards.length}</span></div><div class="col-cards" id="cards-${st.id}"></div>`;
+    board.appendChild(col);
+    setupDrop(col);
+    const container=col.querySelector('.col-cards');
+    if(cards.length===0){
+      container.innerHTML='<div class="col-empty">없음</div>';
+    } else {
+      cards.forEach(a=>container.appendChild(makeCard(a)));
+    }
+  });
+}
+
+function makeCard(a){
+  const div=document.createElement('div');
+  div.className='card'+(selectedId===a.id?' selected':'');
+  div.dataset.id=a.id;
+  div.draggable=true;
+  const daysSince=lastContactDays(a.id);
+  const daysHtml=daysSince===null
+    ?'<span class="card-days" style="color:var(--hint);">기록 없음</span>'
+    :daysSince>30
+      ?`<span class="card-days days-danger">${daysSince}일 전</span>`
+      :daysSince>14
+        ?`<span class="card-days days-warn">${daysSince}일 전</span>`
+        :`<span class="card-days days-ok">${daysSince}일 전</span>`;
+  div.innerHTML=`
+    <div class="card-top">
+      <span class="card-name">${a.name}</span>
+      <span class="flag flag-${(a.flag||'KR').toLowerCase()}">${a.flag||'KR'}</span>
+    </div>
+    ${a.products?`<div class="card-product">${a.products}</div>`:'<div class="card-product" style="color:var(--hint);">제품 미입력</div>'}
+    <div class="card-foot">${daysHtml}<span class="card-loc">${a.location||'-'}</span></div>`;
+  div.onclick=()=>openDetail(a.id);
+  div.ondragstart=e=>{e.dataTransfer.setData('id',a.id);div.classList.add('dragging');};
+  div.ondragend=()=>div.classList.remove('dragging');
+  return div;
+}
+
+function lastContactDays(id){
+  if(!logs[id]||logs[id].length===0) return null;
+  const last=new Date(logs[id][0].created_at);
+  return Math.floor((Date.now()-last)/86400000);
+}
+
+function updateStats(){
+  document.getElementById('statTotal').textContent=accounts.length;
+  document.getElementById('statActive').textContent=accounts.filter(a=>a.stage==='active').length;
+  document.getElementById('statPipe').textContent=accounts.filter(a=>['prospect','qualified','proposal','negotiation'].includes(a.stage)).length;
+  const fu=accounts.filter(a=>{const d=lastContactDays(a.id);return d===null||d>30;}).length;
+  document.getElementById('statFollowup').textContent=fu;
+}
+
+function renderAlerts(){
+  const bar=document.getElementById('alertsBar');
+  const items=accounts.filter(a=>{const d=lastContactDays(a.id);return d===null?a.stage==='active':d>30;});
+  if(items.length===0){bar.style.display='none';return;}
+  bar.style.display='flex';
+  bar.innerHTML='<span style="font-size:11px;font-weight:600;color:var(--warn-text);">⚠ 팔로업 필요</span>'+
+    items.map(a=>{
+      const d=lastContactDays(a.id);
+      return `<div class="alert-chip" onclick="openDetail('${a.id}')" style="cursor:pointer;">
+        <b>${a.name}</b><span>${d===null?'컨택 기록 없음':d+'일 전'}</span>
+      </div>`;
+    }).join('<span style="color:var(--warn-text);">·</span>');
+}
+
+// ===== 드래그 앤 드롭 =====
+function setupDrop(col){
+  col.ondragover=e=>{e.preventDefault();col.classList.add('drag-over');};
+  col.ondragleave=()=>col.classList.remove('drag-over');
+  col.ondrop=async e=>{
+    e.preventDefault();
+    col.classList.remove('drag-over');
+    const id=e.dataTransfer.getData('id');
+    const newStage=col.dataset.stage;
+    if(!id||!newStage) return;
+    const acc=accounts.find(a=>a.id===id);
+    if(!acc||acc.stage===newStage) return;
+    await sb.from('accounts').update({stage:newStage,updated_at:new Date()}).eq('id',id);
+    showToast(`${acc.name} → ${STAGES.find(s=>s.id===newStage)?.label}`);
+    await loadAll();
+    if(selectedId===id) openDetail(id);
+  };
+}
+
+// ===== 상세 패널 =====
+async function openDetail(id){
+  selectedId=id;
+  document.querySelectorAll('.card').forEach(c=>c.classList.toggle('selected',c.dataset.id===id));
+  const a=accounts.find(x=>x.id===id);
+  if(!a) return;
+  const initials=a.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('dpAvatar').textContent=initials;
+  document.getElementById('dpName').textContent=a.name;
+  document.getElementById('dpSub').textContent=(a.location||'-')+' · '+(STAGES.find(s=>s.id===a.stage)?.label||a.stage);
+  document.getElementById('dpStageSelect').value=a.stage||'prospect';
+  document.getElementById('dpInfo').innerHTML=`
+    <div class="info-cell"><div class="lbl">담당자</div><div class="val">${a.contact_person||'-'}</div></div>
+    <div class="info-cell"><div class="lbl">위치</div><div class="val">${a.location||'-'}</div></div>
+    <div class="info-cell"><div class="lbl">제품</div><div class="val">${a.products||'-'}</div></div>
+    <div class="info-cell"><div class="lbl">납품 FC</div><div class="val">${a.monthly_fc||'-'}</div></div>
+    <div class="info-cell"><div class="lbl">YTD 달성율</div><div class="val">${a.ytd_rate||'-'}</div></div>
+    <div class="info-cell"><div class="lbl">비고</div><div class="val">${a.note||'-'}</div></div>`;
+  renderTimeline(id);
+  document.getElementById('detailPanel').classList.add('open');
+  document.getElementById('aiText').innerHTML='<span class="ai-loading">분석 중...</span>';
+  getAISummary(id, a);
+}
+
+function closeDetail(){
+  selectedId=null;
+  document.querySelectorAll('.card').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('detailPanel').classList.remove('open');
+}
+
+function renderTimeline(id){
+  const tl=document.getElementById('dpTimeline');
+  const items=logs[id]||[];
+  if(items.length===0){tl.innerHTML='<div class="tl-empty">컨택 기록 없음</div>';return;}
+  tl.innerHTML=items.map((l,i)=>`
+    <div class="tl-item">
+      <div class="tl-dot${i===0?' new':''}"></div>
+      <div class="tl-date">${new Date(l.created_at).toLocaleDateString('ko-KR')}</div>
+      <div class="tl-text">${l.content}</div>
+      <div class="tl-by">${l.logged_by||'DJ'}</div>
+    </div>`).join('');
+}
+
+// ===== 단계 변경 =====
+async function changeStage(newStage){
+  if(!selectedId) return;
+  const a=accounts.find(x=>x.id===selectedId);
+  await sb.from('accounts').update({stage:newStage,updated_at:new Date()}).eq('id',selectedId);
+  showToast(`${a.name} → ${STAGES.find(s=>s.id===newStage)?.label||newStage}`);
+  await loadAll();
+  document.getElementById('dpSub').textContent=(a.location||'-')+' · '+(STAGES.find(s=>s.id===newStage)?.label||newStage);
+}
+
+// ===== 컨택 저장 =====
+async function saveContact(){
+  const content=document.getElementById('contactInput').value.trim();
+  const loggedBy=document.getElementById('loggedBy').value;
+  if(!content||!selectedId) return;
+  await sb.from('contact_logs').insert({account_id:selectedId,content,logged_by:loggedBy});
+  document.getElementById('contactInput').value='';
+  await loadAll();
+  renderTimeline(selectedId);
+  showToast('컨택 기록 저장됨');
+  getAISummary(selectedId, accounts.find(a=>a.id===selectedId));
+}
+
+// ===== 신규 거래처 =====
+function openNewModal(){document.getElementById('newModal').style.display='flex';}
+function closeNewModal(){document.getElementById('newModal').style.display='none';}
+async function createAccount(){
+  const name=document.getElementById('nName').value.trim();
+  if(!name){showToast('거래처명을 입력해주세요');return;}
+  await sb.from('accounts').insert({
+    name,
+    flag:document.getElementById('nFlag').value,
+    stage:document.getElementById('nStage').value,
+    location:document.getElementById('nLoc').value,
+    products:document.getElementById('nProducts').value,
+    contact_person:document.getElementById('nContact').value,
+    note:document.getElementById('nNote').value,
+  });
+  closeNewModal();
+  ['nName','nLoc','nProducts','nContact','nNote'].forEach(id=>document.getElementById(id).value='');
+  await loadAll();
+  showToast(`${name} 추가됨`);
+}
+
+// ===== AI 요약 =====
+async function getAISummary(id, a){
+  const logItems=logs[id]||[];
+  const el=document.getElementById('aiText');
+  const systemPrompt=`당신은 영업 CRM 어시스턴트입니다. 거래처 정보와 컨택 로그를 바탕으로 2-3문장으로 현황을 요약하고 다음 액션을 제안하세요. 한국어로 간결하게 답변하세요.`;
+  let userMsg=`거래처: ${a.name} (${a.stage} 단계, ${a.location||'위치 미상'})\n제품: ${a.products||'미정'}\n`;
+  if(logItems.length===0){
+    userMsg+='컨택 기록: 없음';
+  } else {
+    const last3=logItems.slice(0,3).map(l=>`[${new Date(l.created_at).toLocaleDateString('ko-KR')}] ${l.content}`).join('\n');
+    userMsg+=`최근 컨택 로그:\n${last3}`;
+  }
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:300,
+        system:systemPrompt,
+        messages:[{role:'user',content:userMsg}]
+      })
+    });
+    const data=await res.json();
+    const text=data.content?.[0]?.text||'분석 불가';
+    el.textContent=text;
+  } catch(e){
+    el.textContent='AI 분석을 불러올 수 없습니다.';
+  }
+}
+
+// ===== Realtime 구독 =====
+sb.channel('crm-changes')
+  .on('postgres_changes',{event:'*',schema:'public',table:'accounts'},()=>{loadAll();})
+  .on('postgres_changes',{event:'*',schema:'public',table:'contact_logs'},()=>{loadAll();if(selectedId) renderTimeline(selectedId);})
+  .subscribe();
+
+// ===== 토스트 =====
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+// 시작
+loadAll();
+</script>
+</body>
+</html>
