@@ -70,7 +70,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 /* 칸반 보드 */
 .board-wrap{padding:14px 20px;}
 .board{display:flex;gap:10px;width:100%;}
-.col{background:var(--surface);border:0.5px solid var(--border);border-radius:10px;flex:1;min-width:160px;display:flex;flex-direction:column;}
+.col{background:var(--surface);border:0.5px solid var(--border);border-radius:10px;flex:1;min-width:130px;display:flex;flex-direction:column;}
 .col-head{padding:9px 11px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
 .col-name{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
 .col-meta{display:flex;align-items:center;gap:5px;}
@@ -199,7 +199,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 .cal-cell.today{background:var(--text);color:#fff;font-weight:600;}
 .cal-cell.other{color:var(--hint);}
 .cal-tooltip{margin-top:6px;font-size:10px;color:var(--muted);min-height:16px;}
-.sb-sec{background:var(--s1);border-radius:var(--r);padding:9px;}
+.sb-sec{background:var(--s1);border-radius:var(--r);padding:9px;min-height:0;}
 .sb-sec.grow{flex:1;display:flex;flex-direction:column;overflow:hidden;}
 .sb-sec.grow #memoList{flex:1;overflow-y:auto;margin-bottom:6px;}
 .sb-hd{display:flex;align-items:center;justify-content:space-between;font-size:10px;font-weight:600;color:var(--hint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px;}
@@ -208,7 +208,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 .sb-loading{font-size:11px;color:var(--hint);text-align:center;padding:8px 0;}
 /* 공지 */
 .notice-item{padding:6px 8px;border-radius:6px;margin-bottom:5px;font-size:11px;line-height:1.5;position:relative;}
-#noticeList{max-height:160px;overflow-y:auto;}
+
 .notice-item:last-child{margin-bottom:0;}
 .notice-urgent{background:var(--danger-bg);border-left:2.5px solid var(--danger);}
 .notice-normal{background:var(--blue-bg);border-left:2.5px solid var(--blue);}
@@ -273,37 +273,42 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 </div>
 
 <!-- 오른쪽 사이드바 -->
-<div id="rightSidebar" style="width:220px;flex-shrink:0;border-left:0.5px solid var(--border);background:var(--surface);height:calc(100vh - 200px);padding:10px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;position:sticky;top:200px;">
+<div id="rightSidebar" style="width:420px;flex-shrink:0;border-left:0.5px solid var(--border);background:var(--surface);height:calc(100vh - 200px);padding:10px;overflow-y:auto;position:sticky;top:200px;">
 
-  <!-- 공지/지시사항 -->
-  <div class="sb-sec">
-    <div class="sb-hd">
-      <span>📢 공지 · 지시사항</span>
-      <button class="sb-add-btn" onclick="openNoticeModal()">+</button>
+  <!-- 2x2 그리드 -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:8px;height:100%;">
+
+    <!-- 공지/지시사항 -->
+    <div class="sb-sec" style="display:flex;flex-direction:column;overflow:hidden;">
+      <div class="sb-hd">
+        <span>📢 공지 · 지시사항</span>
+        <button class="sb-add-btn" onclick="openNoticeModal()">+</button>
+      </div>
+      <div id="noticeList" style="flex:1;overflow-y:auto;"><div class="sb-loading">로드 중...</div></div>
     </div>
-    <div id="noticeList"><div class="sb-loading">로드 중...</div></div>
-  </div>
 
-  <!-- 이번 주 액션 -->
-  <div class="sb-sec">
-    <div class="sb-hd"><span>이번 주 액션</span></div>
-    <div id="actionList"><div class="sb-loading">로드 중...</div></div>
-  </div>
-
-  <!-- 미니 캘린더 -->
-  <div class="sb-sec">
-    <div class="sb-hd"><span>액션 캘린더</span></div>
-    <div id="miniCal"></div>
-  </div>
-
-  <!-- 퀵 메모 -->
-  <div class="sb-sec grow">
-    <div class="sb-hd"><span>📝 퀵 메모</span></div>
-    <div id="memoList"><div class="sb-loading">로드 중...</div></div>
-    <div style="display:flex;gap:4px;margin-top:6px;">
-      <input id="memoInput" type="text" placeholder="메모 추가..." style="flex:1;padding:5px 7px;font-size:11px;border:0.5px solid var(--border);border-radius:var(--r);background:var(--s1);color:var(--text);font-family:inherit;" onkeydown="if(event.key==='Enter')saveMemo()">
-      <button class="btn" onclick="saveMemo()" style="padding:4px 8px;font-size:11px;">+</button>
+    <!-- 이번 주 액션 -->
+    <div class="sb-sec" style="display:flex;flex-direction:column;overflow:hidden;">
+      <div class="sb-hd"><span>이번 주 액션</span></div>
+      <div id="actionList" style="flex:1;overflow-y:auto;"><div class="sb-loading">로드 중...</div></div>
     </div>
+
+    <!-- 액션 캘린더 -->
+    <div class="sb-sec" style="display:flex;flex-direction:column;overflow:hidden;">
+      <div class="sb-hd"><span>액션 캘린더</span></div>
+      <div id="miniCal"></div>
+    </div>
+
+    <!-- 퀵 메모 -->
+    <div class="sb-sec" style="display:flex;flex-direction:column;overflow:hidden;">
+      <div class="sb-hd"><span>📝 퀵 메모</span></div>
+      <div id="memoList" style="flex:1;overflow-y:auto;margin-bottom:6px;"><div class="sb-loading">로드 중...</div></div>
+      <div style="display:flex;gap:4px;flex-shrink:0;">
+        <input id="memoInput" type="text" placeholder="메모 추가..." style="flex:1;padding:5px 7px;font-size:11px;border:0.5px solid var(--border);border-radius:var(--r);background:var(--s1);color:var(--text);font-family:inherit;" onkeydown="if(event.key==='Enter')saveMemo()">
+        <button class="btn" onclick="saveMemo()" style="padding:4px 8px;font-size:11px;">+</button>
+      </div>
+    </div>
+
   </div>
 
 
