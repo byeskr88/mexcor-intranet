@@ -156,6 +156,7 @@ tr:last-child td{border-bottom:none;}
         </table></div>
       </div>
       <div id="mty-perf" style="display:none;">
+        <div id="mtyPerfCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-bottom:12px;"></div>
         <div class="legend">
           <span><span class="ldot" style="background:#E1F5EE;border:0.5px solid #5DCAA5;"></span>≥100%</span>
           <span><span class="ldot" style="background:#FAEEDA;border:0.5px solid #EF9F27;"></span>80~99%</span>
@@ -179,6 +180,7 @@ tr:last-child td{border-bottom:none;}
         </div>
         <div id="mty-io-out">
           <div class="filter-bar" id="mtyFilter"></div>
+          <div class="filter-bar" id="mtyItemFilter" style="margin-top:-4px;"></div>
           <div class="tbl-wrap"><table>
             <thead><tr><th>NO</th><th>월</th><th>거래처</th><th>PO NO</th><th>납품일</th><th>품목</th><th>단위</th><th class="r">수량</th><th class="r">총 KG</th></tr></thead>
             <tbody id="mtyOutBody"></tbody>
@@ -213,6 +215,7 @@ tr:last-child td{border-bottom:none;}
         </table></div>
       </div>
       <div id="qro-perf" style="display:none;">
+        <div id="qroPerfCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-bottom:12px;"></div>
         <div class="legend">
           <span><span class="ldot" style="background:#E1F5EE;border:0.5px solid #5DCAA5;"></span>≥100%</span>
           <span><span class="ldot" style="background:#FAEEDA;border:0.5px solid #EF9F27;"></span>80~99%</span>
@@ -271,6 +274,14 @@ let G={};
 let mtyTypeFilter='ALL';
 let qroTypeFilter='ALL';
 
+function timeAgo(date){
+  const mins=Math.floor((Date.now()-date)/60000);
+  if(mins<1) return '방금 전';
+  if(mins<60) return mins+'분 전';
+  const hrs=Math.floor(mins/60);
+  if(hrs<24) return hrs+'시간 전';
+  return Math.floor(hrs/24)+'일 전';
+}
 async function load(){
   try{
     const [iM,iQ,inM,oM,inQ,oQ,fcI,fcP]=await Promise.all([
@@ -295,26 +306,42 @@ async function load(){
 
     // 출고 실적 집계 - normalized key
     const mtyRes={};
+    const mtyRes25={};
     oM.data.filter(r=>r[3]||r[1]).forEach(r=>{
-      const mes=toN(r[2]),cl=(r[3]||'').trim(),it=(r[6]||'').trim(),qty=toN(r[8]);
+      const yr=toN(r[1]),mes=toN(r[2]),cl=(r[3]||'').trim(),it=(r[6]||'').trim(),qty=toN(r[8]);
       if(mes>=1&&mes<=12&&cl&&it){
         const k=`${norm(cl)}|${norm(it)}`;
-        if(!mtyRes[k]) mtyRes[k]=new Array(12).fill(0);
-        mtyRes[k][mes-1]+=qty;
+        if(yr===2026||(!yr)){
+          if(!mtyRes[k]) mtyRes[k]=new Array(12).fill(0);
+          mtyRes[k][mes-1]+=qty;
+        }
+        if(yr===2025){
+          if(!mtyRes25[k]) mtyRes25[k]=new Array(12).fill(0);
+          mtyRes25[k][mes-1]+=qty;
+        }
       }
     });
     function getMR(cl,it){return mtyRes[`${norm(cl)}|${norm(it)}`]||new Array(12).fill(0);}
+    function getMR25(cl,it){return mtyRes25[`${norm(cl)}|${norm(it)}`]||new Array(12).fill(0);}
 
     const qroRes={};
+    const qroRes25={};
     oQ.data.filter(r=>r[3]||r[1]).forEach(r=>{
-      const mes=toN(r[2]),cl=(r[3]||'').trim(),it=(r[6]||'').trim(),qty=toN(r[8]);
+      const yr=toN(r[1]),mes=toN(r[2]),cl=(r[3]||'').trim(),it=(r[6]||'').trim(),qty=toN(r[8]);
       if(mes>=1&&mes<=12&&cl&&it){
         const k=`${norm(cl)}|${norm(it)}`;
-        if(!qroRes[k]) qroRes[k]=new Array(12).fill(0);
-        qroRes[k][mes-1]+=qty;
+        if(yr===2026||(!yr)){
+          if(!qroRes[k]) qroRes[k]=new Array(12).fill(0);
+          qroRes[k][mes-1]+=qty;
+        }
+        if(yr===2025){
+          if(!qroRes25[k]) qroRes25[k]=new Array(12).fill(0);
+          qroRes25[k][mes-1]+=qty;
+        }
       }
     });
     function getQR(cl,it){return qroRes[`${norm(cl)}|${norm(it)}`]||new Array(12).fill(0);}
+    function getQR25(cl,it){return qroRes25[`${norm(cl)}|${norm(it)}`]||new Array(12).fill(0);}
 
     // 현재 월
     const CUR=new Date().getMonth(); // 0-indexed
@@ -415,18 +442,21 @@ async function load(){
         const fc=d?.fc||[];
         const unit=d?.unit||'';
         const res=getMR(c,it);
+        const res25=getMR25(c,it);
         ph+=`<tr>`;
         if(idx===0) ph+=`<td class="lbl client-cell" rowspan="${rs}">${cl}</td>`;
         ph+=`<td class="ilbl">${it}<br><small style="color:#ccc;">(${unit})</small></td>`;
         for(let m=0;m<12;m++){
-          const f=fc[m]||0,r=res[m]||0,fut=(m>=CUR&&r===0);
+          const f=fc[m]||0,r=res[m]||0,r25=res25[m]||0,fut=(m>=CUR&&r===0);
+          const diff=r25>0?Math.round((r-r25)/r25*100):null;
+          const diffStr=diff===null?'':diff>0?`<span style="color:var(--text-success);font-size:9px;">↑${diff}%</span>`:`<span style="color:var(--text-danger);font-size:9px;">↓${Math.abs(diff)}%</span>`;
           if(fut){ph+=`<td class="rc cn"><span class="rv vn">-</span><span class="rf">FC:${f}</span><span class="rp" style="color:#ccc;">예정</span></td>`;continue;}
           if(r===0){ph+=`<td class="rc cn"><span class="rv vn">0</span><span class="rf">FC:${f}</span><span class="rp pb">▼0%</span></td>`;continue;}
           const p=f>0?Math.round(r/f*100):0;
           const cc=p>=100?'cg':p>=80?'cw':'cb';
           const vc=p>=100?'vg':p>=80?'vw':'vb';
           const pc=p>=100?'pg':p>=80?'pw':'pb';
-          ph+=`<td class="rc ${cc}"><span class="rv ${vc}">${r}</span><span class="rf">FC:${f}</span><span class="rp ${pc}">${p>=100?'▲':'▼'}${p}%</span></td>`;
+          ph+=`<td class="rc ${cc}"><span class="rv ${vc}">${r}</span><span class="rf">FC:${f} ${diffStr}</span><span class="rp ${pc}">${p>=100?'▲':'▼'}${p}%</span></td>`;
         }
         ph+=`</tr>`;
       });
@@ -443,6 +473,25 @@ async function load(){
       ph+=`</tr>`;
     });
     document.getElementById('mtyPerfBody').innerHTML=ph;
+    // YTD 달성율 카드
+    const mtyPerfCardHTML=mtyClients.map(cl=>{
+      const its=mtyPerfKeys.filter(k=>k.split('|')[1]===cl);
+      const rates=its.map(k=>{
+        const d=fcRaw[k];const [,c,it]=k.split('|');
+        const fc_ytd=d?.fc.slice(0,CUR).reduce((s,v)=>s+v,0)||0;
+        const res_ytd=getMR(c,it).slice(0,CUR).reduce((s,v)=>s+v,0)||0;
+        return fc_ytd>0?Math.round(res_ytd/fc_ytd*100):null;
+      }).filter(v=>v!==null);
+      const avg=rates.length>0?Math.round(rates.reduce((s,v)=>s+v,0)/rates.length):null;
+      const clr=avg===null?'var(--text-muted)':avg>=100?'var(--text-success)':avg>=80?'var(--text-warning)':'var(--text-danger)';
+      const bg=avg===null?'var(--surface-1)':avg>=100?'var(--bg-success)':avg>=80?'var(--bg-warning)':'var(--bg-danger)';
+      return `<div style="background:${bg};border-radius:8px;padding:8px 10px;text-align:center;">
+        <div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;">${cl}</div>
+        <div style="font-size:16px;font-weight:500;color:${clr};">${avg!==null?avg+'%':'-'}</div>
+        <div style="font-size:9px;color:var(--text-muted);margin-top:1px;">YTD</div>
+      </div>`;
+    }).join('');
+    document.getElementById('mtyPerfCards').innerHTML=mtyPerfCardHTML;
 
     // ===== QRO 재고 =====
     // 시트 컬럼: NO(0), ORIGIN(1), ITEM(2), TYPE(3), CLIENT(4), INVENTORY(5), OPEN_ITEMS(6), REORDER_PT(7), NOTE(8)
@@ -490,18 +539,21 @@ async function load(){
         const fc=d?.fc||[];
         const unit=d?.unit||'';
         const res=getQR(c,it);
+        const res25q=getQR25(c,it);
         qph+=`<tr>`;
         if(idx===0) qph+=`<td class="lbl client-cell" rowspan="${rs}">${cl}</td>`;
         qph+=`<td class="ilbl">${it}<br><small style="color:#ccc;">(${unit})</small></td>`;
         for(let m=0;m<12;m++){
-          const f=fc[m]||0,r=res[m]||0,fut=(m>=CUR&&r===0);
+          const f=fc[m]||0,r=res[m]||0,r25=res25q[m]||0,fut=(m>=CUR&&r===0);
+          const diff=r25>0?Math.round((r-r25)/r25*100):null;
+          const diffStr=diff===null?'':diff>0?`<span style="color:var(--text-success);font-size:9px;">↑${diff}%</span>`:`<span style="color:var(--text-danger);font-size:9px;">↓${Math.abs(diff)}%</span>`;
           if(fut){qph+=`<td class="rc cn"><span class="rv vn">-</span><span class="rf">FC:${f}</span><span class="rp" style="color:#ccc;">예정</span></td>`;continue;}
           if(r===0){qph+=`<td class="rc cn"><span class="rv vn">0</span><span class="rf">FC:${f}</span><span class="rp pb">▼0%</span></td>`;continue;}
           const p=f>0?Math.round(r/f*100):0;
           const cc=p>=100?'cg':p>=80?'cw':'cb';
           const vc=p>=100?'vg':p>=80?'vw':'vb';
           const pc=p>=100?'pg':p>=80?'pw':'pb';
-          qph+=`<td class="rc ${cc}"><span class="rv ${vc}">${r}</span><span class="rf">FC:${f}</span><span class="rp ${pc}">${p>=100?'▲':'▼'}${p}%</span></td>`;
+          qph+=`<td class="rc ${cc}"><span class="rv ${vc}">${r}</span><span class="rf">FC:${f} ${diffStr}</span><span class="rp ${pc}">${p>=100?'▲':'▼'}${p}%</span></td>`;
         }
         qph+=`</tr>`;
       });
@@ -517,6 +569,24 @@ async function load(){
       qph+=`</tr>`;
     });
     document.getElementById('qroPerfBody').innerHTML=qph;
+    const qroPerfCardHTML=qroClients.map(cl=>{
+      const its=qroPerfKeys.filter(k=>k.split('|')[1]===cl);
+      const rates=its.map(k=>{
+        const d=fcRaw[k];const [,c,it]=k.split('|');
+        const fc_ytd=d?.fc.slice(0,CUR).reduce((s,v)=>s+v,0)||0;
+        const res_ytd=getQR(c,it).slice(0,CUR).reduce((s,v)=>s+v,0)||0;
+        return fc_ytd>0?Math.round(res_ytd/fc_ytd*100):null;
+      }).filter(v=>v!==null);
+      const avg=rates.length>0?Math.round(rates.reduce((s,v)=>s+v,0)/rates.length):null;
+      const clr=avg===null?'var(--text-muted)':avg>=100?'var(--text-success)':avg>=80?'var(--text-warning)':'var(--text-danger)';
+      const bg=avg===null?'var(--surface-1)':avg>=100?'var(--bg-success)':avg>=80?'var(--bg-warning)':'var(--bg-danger)';
+      return `<div style="background:${bg};border-radius:8px;padding:8px 10px;text-align:center;">
+        <div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;">${cl}</div>
+        <div style="font-size:16px;font-weight:500;color:${clr};">${avg!==null?avg+'%':'-'}</div>
+        <div style="font-size:9px;color:var(--text-muted);margin-top:1px;">YTD</div>
+      </div>`;
+    }).join('');
+    document.getElementById('qroPerfCards').innerHTML=qroPerfCardHTML;
 
     // ===== 입출고 =====
     function renderOutTbl(data,id){
@@ -539,15 +609,28 @@ async function load(){
     // MTY 출고 필터
     const mtyOutRows=oM.data.filter(r=>r[3]||r[1]);
     const mtyC=[...new Set(mtyOutRows.map(r=>r[3]).filter(Boolean))];
-    document.getElementById('mtyFilter').innerHTML=
-      `<button class="active" onclick="fOut('all',this)">전체</button>`+
-      mtyC.map(c=>`<button onclick="fOut('${c}',this)">${c}</button>`).join('');
+    const mtyItems=[...new Set(mtyOutRows.map(r=>r[6]).filter(Boolean))];
     window._mOut=mtyOutRows;
-    window.fOut=(c,btn)=>{
-      document.querySelectorAll('#mtyFilter button').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      renderOutTbl(c==='all'?window._mOut:window._mOut.filter(r=>r[3]===c),'mtyOutBody');
-    };
+    window._mOutCFilter='all';
+    window._mOutIFilter='all';
+    function mtyOutFiltered(){
+      return window._mOut.filter(r=>{
+        if(window._mOutCFilter!=='all'&&r[3]!==window._mOutCFilter) return false;
+        if(window._mOutIFilter!=='all'&&r[6]!==window._mOutIFilter) return false;
+        return true;
+      });
+    }
+    function renderMtyFilters(){
+      document.getElementById('mtyFilter').innerHTML=
+        `<button class="${window._mOutCFilter==='all'?'active':''}" onclick="fOutC('all',this)">전체거래처</button>`+
+        mtyC.map(c=>`<button class="${window._mOutCFilter===c?'active':''}" onclick="fOutC('${c}',this)">${c}</button>`).join('');
+      document.getElementById('mtyItemFilter').innerHTML=
+        `<button class="${window._mOutIFilter==='all'?'active':''}" onclick="fOutI('all',this)">전체품목</button>`+
+        mtyItems.map(i=>`<button class="${window._mOutIFilter===i?'active':''}" onclick="fOutI('${i.replace(/'/g,"\'")}',this)">${i}</button>`).join('');
+    }
+    window.fOutC=(c,btn)=>{window._mOutCFilter=c;renderMtyFilters();renderOutTbl(mtyOutFiltered(),'mtyOutBody');};
+    window.fOutI=(i,btn)=>{window._mOutIFilter=i;renderMtyFilters();renderOutTbl(mtyOutFiltered(),'mtyOutBody');};
+    renderMtyFilters();
     renderOutTbl(mtyOutRows,'mtyOutBody');
     renderInTbl(inM.data,'mtyInBody');
     renderOutTbl(oQ.data,'qroOutBody');
@@ -555,7 +638,9 @@ async function load(){
 
     document.getElementById('sbar').className='sbar ok';
     document.getElementById('sbar').textContent='✓ 구글 시트 연동 성공';
-    document.getElementById('ts').textContent='최종 업데이트: '+new Date().toLocaleString('ko-KR');
+    const now=new Date();
+    document.getElementById('ts').innerHTML='최종 업데이트: '+now.toLocaleString('ko-KR')+' <span style="color:var(--text-muted);">·</span> <span style="color:var(--text-secondary);">'+timeAgo(now)+'</span>';
+    setInterval(()=>{document.getElementById('ts').innerHTML='최종 업데이트: '+now.toLocaleString('ko-KR')+' <span style="color:var(--text-muted);">·</span> <span style="color:var(--text-secondary);">'+timeAgo(now)+'</span>';},60000);
     document.getElementById('main').style.display='block';
 
   }catch(e){
