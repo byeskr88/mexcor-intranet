@@ -431,7 +431,7 @@ async function load(){
         ph+=`</tr>`;
       });
       // TOTAL
-      ph+=`<tr class="total-row"><td class="lbl" colspan="2">TOTAL 달성율(단순평균)</td>`;
+      ph+=`<tr class="total-row"><td class="lbl" colspan="1">TOTAL 달성율(단순평균)</td>`;
       for(let m=0;m<12;m++){
         const rates=its.map(k=>{const d=fcRaw[k];const f=d?.fc[m]||0;const [,c,it]=k.split('|');const r=getMR(c,it)[m]||0;return f>0?r/f*100:null;}).filter(v=>v!==null);
         if(m>=CUR&&its.every(k=>getMR(k.split('|')[1],k.split('|')[2])[m]===0)){ph+=`<td style="color:#ccc;">-</td>`;continue;}
@@ -505,7 +505,7 @@ async function load(){
         }
         qph+=`</tr>`;
       });
-      qph+=`<tr class="total-row"><td class="lbl" colspan="2">TOTAL 달성율(단순평균)</td>`;
+      qph+=`<tr class="total-row"><td class="lbl" colspan="1">TOTAL 달성율(단순평균)</td>`;
       for(let m=0;m<12;m++){
         const rates=its.map(k=>{const d=fcRaw[k];const f=d?.fc[m]||0;const [,c,it]=k.split('|');const r=getQR(c,it)[m]||0;return f>0?r/f*100:null;}).filter(v=>v!==null);
         if(m>=CUR&&its.every(k=>getQR(k.split('|')[1],k.split('|')[2])[m]===0)){qph+=`<td style="color:#ccc;">-</td>`;continue;}
