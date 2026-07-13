@@ -68,9 +68,9 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 .feed-divider{width:0.5px;height:32px;background:var(--border);flex-shrink:0;}
 
 /* 칸반 보드 */
-.board-wrap{padding:14px 20px;overflow-x:auto;}
-.board{display:flex;gap:10px;min-width:900px;}
-.col{background:var(--surface);border:0.5px solid var(--border);border-radius:10px;width:195px;flex-shrink:0;display:flex;flex-direction:column;}
+.board-wrap{padding:14px 20px;}
+.board{display:flex;gap:10px;width:100%;}
+.col{background:var(--surface);border:0.5px solid var(--border);border-radius:10px;flex:1;min-width:160px;display:flex;flex-direction:column;}
 .col-head{padding:9px 11px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
 .col-name{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
 .col-meta{display:flex;align-items:center;gap:5px;}
@@ -266,7 +266,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 </div>
 
 <div style="display:flex;gap:0;align-items:flex-start;">
-<div class="board-wrap" style="flex:1;min-width:0;">
+<div class="board-wrap" style="flex:1;min-width:0;overflow-x:auto;">
   <div class="board" id="board">
     <div class="loading"><span class="spin"></span>불러오는 중...</div>
   </div>
