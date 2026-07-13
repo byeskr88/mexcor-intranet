@@ -199,6 +199,37 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 .cal-cell.today{background:var(--text);color:#fff;font-weight:600;}
 .cal-cell.other{color:var(--hint);}
 .cal-tooltip{margin-top:6px;font-size:10px;color:var(--muted);min-height:16px;}
+.sb-sec{background:var(--s1);border-radius:var(--r);padding:9px;}
+.sb-hd{display:flex;align-items:center;justify-content:space-between;font-size:10px;font-weight:600;color:var(--hint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px;}
+.sb-add-btn{background:none;border:0.5px solid var(--border);border-radius:4px;padding:1px 6px;font-size:13px;cursor:pointer;color:var(--muted);line-height:1.3;}
+.sb-add-btn:hover{background:var(--s2);}
+.sb-loading{font-size:11px;color:var(--hint);text-align:center;padding:8px 0;}
+/* 공지 */
+.notice-item{padding:6px 8px;border-radius:6px;margin-bottom:5px;font-size:11px;line-height:1.5;position:relative;}
+.notice-item:last-child{margin-bottom:0;}
+.notice-urgent{background:var(--danger-bg);border-left:2.5px solid var(--danger);}
+.notice-normal{background:var(--blue-bg);border-left:2.5px solid var(--blue);}
+.notice-info{background:var(--ok-bg);border-left:2.5px solid var(--ok);}
+.notice-label{font-size:9px;font-weight:600;text-transform:uppercase;margin-bottom:2px;}
+.notice-urgent .notice-label{color:var(--danger-text);}
+.notice-normal .notice-label{color:var(--blue-text);}
+.notice-info .notice-label{color:var(--ok-text);}
+.notice-content{color:var(--text);}
+.notice-meta{font-size:9px;color:var(--hint);margin-top:2px;display:flex;align-items:center;justify-content:space-between;}
+.notice-del{background:none;border:none;cursor:pointer;font-size:11px;color:var(--hint);padding:0 2px;opacity:.5;}
+.notice-del:hover{opacity:1;color:var(--danger-text);}
+/* 메모 */
+.memo-item{padding:5px 7px;background:var(--surface);border:0.5px solid var(--border);border-radius:5px;margin-bottom:4px;font-size:11px;display:flex;align-items:flex-start;gap:6px;}
+.memo-item:last-child{margin-bottom:0;}
+.memo-content{flex:1;line-height:1.4;}
+.memo-del{background:none;border:none;cursor:pointer;font-size:11px;color:var(--hint);padding:0;opacity:.4;}
+.memo-del:hover{opacity:1;color:var(--danger-text);}
+.memo-date{font-size:9px;color:var(--hint);}
+/* 제품맵 */
+.prod-row{display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:0.5px solid var(--border);font-size:11px;}
+.prod-row:last-child{border-bottom:none;}
+.prod-name{color:var(--muted);font-size:10px;flex:1;}
+.prod-cnt{font-weight:600;color:var(--blue-text);background:var(--blue-bg);padding:1px 6px;border-radius:20px;font-size:10px;}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1f1e1c;color:#fff;padding:9px 16px;border-radius:var(--r);font-size:12px;z-index:999;opacity:0;transition:opacity .2s;pointer-events:none;}
 .toast.show{opacity:1;}
 </style>
@@ -243,16 +274,66 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 </div>
 
 <!-- 오른쪽 사이드바 -->
-<div id="rightSidebar" style="width:220px;flex-shrink:0;border-left:0.5px solid var(--border);background:var(--surface);min-height:calc(100vh - 200px);padding:12px;">
-  <!-- D-day 액션 리스트 -->
-  <div style="margin-bottom:16px;">
-    <div style="font-size:10px;font-weight:600;color:var(--hint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">이번 주 액션</div>
-    <div id="actionList"><div style="font-size:11px;color:var(--hint);text-align:center;padding:12px 0;">로드 중...</div></div>
+<div id="rightSidebar" style="width:220px;flex-shrink:0;border-left:0.5px solid var(--border);background:var(--surface);min-height:calc(100vh - 200px);padding:10px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;">
+
+  <!-- 공지/지시사항 -->
+  <div class="sb-sec">
+    <div class="sb-hd">
+      <span>📢 공지 · 지시사항</span>
+      <button class="sb-add-btn" onclick="openNoticeModal()">+</button>
+    </div>
+    <div id="noticeList"><div class="sb-loading">로드 중...</div></div>
   </div>
+
+  <!-- 이번 주 액션 -->
+  <div class="sb-sec">
+    <div class="sb-hd"><span>이번 주 액션</span></div>
+    <div id="actionList"><div class="sb-loading">로드 중...</div></div>
+  </div>
+
   <!-- 미니 캘린더 -->
-  <div>
-    <div style="font-size:10px;font-weight:600;color:var(--hint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">액션 캘린더</div>
+  <div class="sb-sec">
+    <div class="sb-hd"><span>액션 캘린더</span></div>
     <div id="miniCal"></div>
+  </div>
+
+  <!-- 퀵 메모 -->
+  <div class="sb-sec">
+    <div class="sb-hd"><span>📝 퀵 메모</span></div>
+    <div id="memoList"><div class="sb-loading">로드 중...</div></div>
+    <div style="display:flex;gap:4px;margin-top:6px;">
+      <input id="memoInput" type="text" placeholder="메모 추가..." style="flex:1;padding:5px 7px;font-size:11px;border:0.5px solid var(--border);border-radius:var(--r);background:var(--s1);color:var(--text);font-family:inherit;" onkeydown="if(event.key==='Enter')saveMemo()">
+      <button class="btn" onclick="saveMemo()" style="padding:4px 8px;font-size:11px;">+</button>
+    </div>
+  </div>
+
+  <!-- 제품별 거래처 -->
+  <div class="sb-sec">
+    <div class="sb-hd"><span>제품별 거래처</span></div>
+    <div id="productMap"><div class="sb-loading">로드 중...</div></div>
+  </div>
+
+</div>
+
+<!-- 공지 추가 모달 -->
+<div class="modal-bg" id="noticeModal" style="display:none;" onclick="if(event.target===this)closeNoticeModal()">
+  <div class="modal">
+    <h2>공지 · 지시사항 추가</h2>
+    <div class="form-row"><label>유형</label>
+      <select id="nType">
+        <option value="urgent">🔴 긴급</option>
+        <option value="normal" selected>🔵 지시</option>
+        <option value="info">🟢 공지</option>
+      </select>
+    </div>
+    <div class="form-row"><label>내용 *</label><textarea id="nContent" rows="3" placeholder="공지 내용 입력..."></textarea></div>
+    <div class="form-row"><label>작성자</label>
+      <select id="nAuthor"><option>DJ</option><option>QRO 담당</option><option>회계팀</option></select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeNoticeModal()">취소</button>
+      <button class="btn btn-primary" onclick="saveNotice()">저장</button>
+    </div>
   </div>
 </div>
 </div>
@@ -679,8 +760,11 @@ async function createAccount(){
 }
 
 // ===== Realtime =====
-sb.channel('crm').on('postgres_changes',{event:'*',schema:'public',table:'accounts'},()=>loadAll())
+sb.channel('crm')
+  .on('postgres_changes',{event:'*',schema:'public',table:'accounts'},()=>loadAll())
   .on('postgres_changes',{event:'*',schema:'public',table:'contact_logs'},()=>loadAll())
+  .on('postgres_changes',{event:'*',schema:'public',table:'notices'},()=>loadNotices())
+  .on('postgres_changes',{event:'*',schema:'public',table:'quick_notes'},()=>loadMemos())
   .subscribe();
 
 function showToast(msg){
@@ -824,6 +908,86 @@ async function loadAllPatched(){
 }
 // override - add sidebar render after loadAll
 const origLoad = window.loadAll;
+// ===== 공지/지시사항 =====
+async function loadNotices(){
+  const {data}=await sb.from('notices').select('*').order('created_at',{ascending:false}).limit(5);
+  const el=document.getElementById('noticeList');
+  if(!data||data.length===0){el.innerHTML='<div class="sb-loading">없음</div>';return;}
+  const typeMap={urgent:['긴급','notice-urgent'],normal:['지시','notice-normal'],info:['공지','notice-info']};
+  el.innerHTML=data.map(n=>{
+    const [lbl,cls]=typeMap[n.type]||['공지','notice-info'];
+    const date=new Date(n.created_at).toLocaleDateString('ko-KR',{month:'numeric',day:'numeric'});
+    return `<div class="notice-item ${cls}">
+      <div class="notice-label">${lbl}</div>
+      <div class="notice-content">${n.content}</div>
+      <div class="notice-meta"><span>${n.author} · ${date}</span><button class="notice-del" onclick="deleteNotice('${n.id}')">✕</button></div>
+    </div>`;
+  }).join('');
+}
+function openNoticeModal(){document.getElementById('noticeModal').style.display='flex';}
+function closeNoticeModal(){document.getElementById('noticeModal').style.display='none';}
+async function saveNotice(){
+  const content=document.getElementById('nContent').value.trim();
+  if(!content){showToast('내용을 입력해주세요');return;}
+  await sb.from('notices').insert({type:document.getElementById('nType').value,content,author:document.getElementById('nAuthor').value});
+  document.getElementById('nContent').value='';
+  closeNoticeModal();
+  loadNotices();
+  showToast('공지 저장됨');
+}
+async function deleteNotice(id){
+  if(!confirm('삭제할까요?')) return;
+  await sb.from('notices').delete().eq('id',id);
+  loadNotices();
+  showToast('삭제됨');
+}
+
+// ===== 퀵 메모 =====
+async function loadMemos(){
+  const {data}=await sb.from('quick_notes').select('*').order('created_at',{ascending:false}).limit(10);
+  const el=document.getElementById('memoList');
+  if(!data||data.length===0){el.innerHTML='<div class="sb-loading">메모 없음</div>';return;}
+  el.innerHTML=data.map(m=>{
+    const date=new Date(m.created_at).toLocaleDateString('ko-KR',{month:'numeric',day:'numeric'});
+    return `<div class="memo-item">
+      <div class="memo-content">${m.content}<div class="memo-date">${m.author} · ${date}</div></div>
+      <button class="memo-del" onclick="deleteMemo('${m.id}')">✕</button>
+    </div>`;
+  }).join('');
+}
+async function saveMemo(){
+  const inp=document.getElementById('memoInput');
+  const content=inp.value.trim();
+  if(!content) return;
+  await sb.from('quick_notes').insert({content,author:'DJ'});
+  inp.value='';
+  loadMemos();
+  showToast('메모 저장됨');
+}
+async function deleteMemo(id){
+  await sb.from('quick_notes').delete().eq('id',id);
+  loadMemos();
+}
+
+// ===== 제품별 거래처 맵 =====
+function renderProductMap(){
+  const el=document.getElementById('productMap');
+  const prodMap={};
+  accounts.forEach(a=>{
+    if(!a.products) return;
+    a.products.split(/[,\/]/).map(p=>p.trim()).filter(Boolean).forEach(p=>{
+      const key=p.length>18?p.slice(0,18)+'…':p;
+      if(!prodMap[key]) prodMap[key]=new Set();
+      prodMap[key].add(a.name);
+    });
+  });
+  const sorted=Object.entries(prodMap).sort((a,b)=>b[1].size-a[1].size);
+  if(sorted.length===0){el.innerHTML='<div class="sb-loading">데이터 없음</div>';return;}
+  el.innerHTML=sorted.map(([p,clients])=>
+    `<div class="prod-row"><span class="prod-name">${p}</span><span class="prod-cnt">${clients.size}사</span></div>`
+  ).join('');
+}
+
 window.loadAll = async function(){
   const {data:acc}=await sb.from('accounts').select('*').order('name');
   if(acc) accounts=acc;
@@ -835,6 +999,9 @@ window.loadAll = async function(){
   renderAll();updateStats();renderAlerts();renderPipeline();renderFeed();
   renderActionList();
   renderMiniCal();
+  renderProductMap();
+  loadNotices();
+  loadMemos();
   document.getElementById('lastUpdate').textContent='업데이트 '+new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
 };
 
