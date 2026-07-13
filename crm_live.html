@@ -200,12 +200,15 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 .cal-cell.other{color:var(--hint);}
 .cal-tooltip{margin-top:6px;font-size:10px;color:var(--muted);min-height:16px;}
 .sb-sec{background:var(--s1);border-radius:var(--r);padding:9px;}
+.sb-sec.grow{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.sb-sec.grow #memoList{flex:1;overflow-y:auto;margin-bottom:6px;}
 .sb-hd{display:flex;align-items:center;justify-content:space-between;font-size:10px;font-weight:600;color:var(--hint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px;}
 .sb-add-btn{background:none;border:0.5px solid var(--border);border-radius:4px;padding:1px 6px;font-size:13px;cursor:pointer;color:var(--muted);line-height:1.3;}
 .sb-add-btn:hover{background:var(--s2);}
 .sb-loading{font-size:11px;color:var(--hint);text-align:center;padding:8px 0;}
 /* 공지 */
 .notice-item{padding:6px 8px;border-radius:6px;margin-bottom:5px;font-size:11px;line-height:1.5;position:relative;}
+#noticeList{max-height:160px;overflow-y:auto;}
 .notice-item:last-child{margin-bottom:0;}
 .notice-urgent{background:var(--danger-bg);border-left:2.5px solid var(--danger);}
 .notice-normal{background:var(--blue-bg);border-left:2.5px solid var(--blue);}
@@ -225,11 +228,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 .memo-del{background:none;border:none;cursor:pointer;font-size:11px;color:var(--hint);padding:0;opacity:.4;}
 .memo-del:hover{opacity:1;color:var(--danger-text);}
 .memo-date{font-size:9px;color:var(--hint);}
-/* 제품맵 */
-.prod-row{display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:0.5px solid var(--border);font-size:11px;}
-.prod-row:last-child{border-bottom:none;}
-.prod-name{color:var(--muted);font-size:10px;flex:1;}
-.prod-cnt{font-weight:600;color:var(--blue-text);background:var(--blue-bg);padding:1px 6px;border-radius:20px;font-size:10px;}
+
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1f1e1c;color:#fff;padding:9px 16px;border-radius:var(--r);font-size:12px;z-index:999;opacity:0;transition:opacity .2s;pointer-events:none;}
 .toast.show{opacity:1;}
 </style>
@@ -274,7 +273,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 </div>
 
 <!-- 오른쪽 사이드바 -->
-<div id="rightSidebar" style="width:220px;flex-shrink:0;border-left:0.5px solid var(--border);background:var(--surface);min-height:calc(100vh - 200px);padding:10px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;">
+<div id="rightSidebar" style="width:220px;flex-shrink:0;border-left:0.5px solid var(--border);background:var(--surface);height:calc(100vh - 200px);padding:10px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;position:sticky;top:200px;">
 
   <!-- 공지/지시사항 -->
   <div class="sb-sec">
@@ -298,7 +297,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
   </div>
 
   <!-- 퀵 메모 -->
-  <div class="sb-sec">
+  <div class="sb-sec grow">
     <div class="sb-hd"><span>📝 퀵 메모</span></div>
     <div id="memoList"><div class="sb-loading">로드 중...</div></div>
     <div style="display:flex;gap:4px;margin-top:6px;">
@@ -307,11 +306,6 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
     </div>
   </div>
 
-  <!-- 제품별 거래처 -->
-  <div class="sb-sec">
-    <div class="sb-hd"><span>제품별 거래처</span></div>
-    <div id="productMap"><div class="sb-loading">로드 중...</div></div>
-  </div>
 
 </div>
 
@@ -969,24 +963,7 @@ async function deleteMemo(id){
   loadMemos();
 }
 
-// ===== 제품별 거래처 맵 =====
-function renderProductMap(){
-  const el=document.getElementById('productMap');
-  const prodMap={};
-  accounts.forEach(a=>{
-    if(!a.products) return;
-    a.products.split(/[,\/]/).map(p=>p.trim()).filter(Boolean).forEach(p=>{
-      const key=p.length>18?p.slice(0,18)+'…':p;
-      if(!prodMap[key]) prodMap[key]=new Set();
-      prodMap[key].add(a.name);
-    });
-  });
-  const sorted=Object.entries(prodMap).sort((a,b)=>b[1].size-a[1].size);
-  if(sorted.length===0){el.innerHTML='<div class="sb-loading">데이터 없음</div>';return;}
-  el.innerHTML=sorted.map(([p,clients])=>
-    `<div class="prod-row"><span class="prod-name">${p}</span><span class="prod-cnt">${clients.size}사</span></div>`
-  ).join('');
-}
+
 
 window.loadAll = async function(){
   const {data:acc}=await sb.from('accounts').select('*').order('name');
@@ -999,7 +976,6 @@ window.loadAll = async function(){
   renderAll();updateStats();renderAlerts();renderPipeline();renderFeed();
   renderActionList();
   renderMiniCal();
-  renderProductMap();
   loadNotices();
   loadMemos();
   document.getElementById('lastUpdate').textContent='업데이트 '+new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
