@@ -174,6 +174,31 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 .loading{text-align:center;padding:30px;color:var(--hint);}
 .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:5px;}
 @keyframes spin{to{transform:rotate(360deg)}}
+.edit-input{width:100%;padding:5px 8px;font-size:12px;border:0.5px solid var(--blue);border-radius:5px;font-family:inherit;background:var(--blue-bg);color:var(--text);}
+.edit-input:focus{outline:none;}
+.edit-mode .info-cell{background:var(--blue-bg);border:0.5px solid var(--blue);}
+/* 액션 리스트 */
+.action-item{display:flex;align-items:flex-start;gap:7px;padding:7px 0;border-bottom:0.5px solid var(--border);cursor:pointer;}
+.action-item:last-child{border-bottom:none;}
+.action-item:hover{opacity:.8;}
+.ad{font-size:10px;font-weight:600;padding:2px 5px;border-radius:4px;white-space:nowrap;min-width:32px;text-align:center;flex-shrink:0;}
+.ad-over{background:var(--danger-bg);color:var(--danger-text);}
+.ad-soon{background:var(--warn-bg);color:var(--warn-text);}
+.ad-ok{background:var(--ok-bg);color:var(--ok-text);}
+.an{font-size:11px;font-weight:500;line-height:1.3;}
+.at{font-size:10px;color:var(--muted);margin-top:1px;line-height:1.3;}
+/* 캘린더 */
+.cal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.cal-month{font-size:12px;font-weight:500;}
+.cal-nav{background:none;border:none;cursor:pointer;font-size:14px;color:var(--muted);padding:2px 4px;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.cal-dh{text-align:center;font-size:9px;color:var(--hint);padding:2px 0;}
+.cal-cell{height:24px;display:flex;align-items:center;justify-content:center;border-radius:4px;font-size:10px;cursor:default;}
+.cal-cell.has{background:var(--blue-bg);color:var(--blue-text);font-weight:600;cursor:pointer;}
+.cal-cell.has:hover{background:var(--blue-bg);opacity:.7;}
+.cal-cell.today{background:var(--text);color:#fff;font-weight:600;}
+.cal-cell.other{color:var(--hint);}
+.cal-tooltip{margin-top:6px;font-size:10px;color:var(--muted);min-height:16px;}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1f1e1c;color:#fff;padding:9px 16px;border-radius:var(--r);font-size:12px;z-index:999;opacity:0;transition:opacity .2s;pointer-events:none;}
 .toast.show{opacity:1;}
 </style>
@@ -210,10 +235,26 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
   <div class="feed-bar" id="feedBar"><span style="font-size:12px;color:var(--hint);">활동 피드 로드 중...</span></div>
 </div>
 
-<div class="board-wrap">
+<div style="display:flex;gap:0;align-items:flex-start;">
+<div class="board-wrap" style="flex:1;min-width:0;">
   <div class="board" id="board">
     <div class="loading"><span class="spin"></span>불러오는 중...</div>
   </div>
+</div>
+
+<!-- 오른쪽 사이드바 -->
+<div id="rightSidebar" style="width:220px;flex-shrink:0;border-left:0.5px solid var(--border);background:var(--surface);min-height:calc(100vh - 200px);padding:12px;">
+  <!-- D-day 액션 리스트 -->
+  <div style="margin-bottom:16px;">
+    <div style="font-size:10px;font-weight:600;color:var(--hint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">이번 주 액션</div>
+    <div id="actionList"><div style="font-size:11px;color:var(--hint);text-align:center;padding:12px 0;">로드 중...</div></div>
+  </div>
+  <!-- 미니 캘린더 -->
+  <div>
+    <div style="font-size:10px;font-weight:600;color:var(--hint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">액션 캘린더</div>
+    <div id="miniCal"></div>
+  </div>
+</div>
 </div>
 
 <!-- 상세 패널 -->
@@ -224,6 +265,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
       <div class="dp-name" id="dpName">-</div>
       <div class="dp-sub" id="dpSub">-</div>
     </div>
+    <button class="btn" id="dpEditBtn" onclick="toggleEdit()" style="font-size:11px;padding:4px 9px;margin-right:4px;">✏️ 수정</button>
     <button class="dp-close" onclick="closeDetail()">✕</button>
   </div>
   <div class="dp-body">
@@ -646,6 +688,155 @@ function showToast(msg){
   t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2000);
 }
+
+loadAll();
+
+// ===== 편집 모드 =====
+let editMode = false;
+function toggleEdit(){
+  editMode = !editMode;
+  const btn = document.getElementById('dpEditBtn');
+  if(editMode){
+    btn.textContent = '💾 저장';
+    btn.style.background = 'var(--text)';
+    btn.style.color = '#fff';
+    renderEditMode();
+  } else {
+    btn.textContent = '✏️ 수정';
+    btn.style.background = '';
+    btn.style.color = '';
+    saveEdit();
+  }
+}
+
+function renderEditMode(){
+  if(!selectedId) return;
+  const a = accounts.find(x=>x.id===selectedId);
+  if(!a) return;
+  document.getElementById('dpInfo').innerHTML = `
+    <div class="info-cell"><div class="lbl">담당자</div><input class="edit-input" id="ei_contact_person" value="${a.contact_person||''}"></div>
+    <div class="info-cell"><div class="lbl">위치</div><input class="edit-input" id="ei_location" value="${a.location||''}"></div>
+    <div class="info-cell"><div class="lbl">산업군</div><input class="edit-input" id="ei_industry" value="${a.industry||''}"></div>
+    <div class="info-cell"><div class="lbl">예상 금액 (USD)</div><input class="edit-input" id="ei_expected_value" type="number" value="${a.expected_value||0}"></div>
+    <div class="info-cell"><div class="lbl">수주 확률 (%)</div><input class="edit-input" id="ei_win_probability" type="number" min="0" max="100" value="${a.win_probability||0}"></div>
+    <div class="info-cell"><div class="lbl">납품 FC</div><input class="edit-input" id="ei_monthly_fc" value="${a.monthly_fc||''}"></div>
+    <div class="info-cell"><div class="lbl">YTD 달성율</div><input class="edit-input" id="ei_ytd_rate" value="${a.ytd_rate||''}"></div>
+    <div class="info-cell"><div class="lbl">제품</div><input class="edit-input" id="ei_products" value="${a.products||''}"></div>
+    <div class="info-cell" style="grid-column:1/-1;"><div class="lbl">다음 액션</div><input class="edit-input" id="ei_next_action" value="${a.next_action||''}"></div>
+    <div class="info-cell"><div class="lbl">액션 마감일</div><input class="edit-input" id="ei_next_action_date" type="date" value="${a.next_action_date||''}"></div>
+    <div class="info-cell"><div class="lbl">비고</div><input class="edit-input" id="ei_note" value="${a.note||''}"></div>`;
+}
+
+async function saveEdit(){
+  if(!selectedId) return;
+  const fields = ['contact_person','location','industry','expected_value','win_probability','monthly_fc','ytd_rate','products','next_action','next_action_date','note'];
+  const updates = {updated_at: new Date()};
+  fields.forEach(f=>{
+    const el = document.getElementById('ei_'+f);
+    if(!el) return;
+    if(f==='expected_value'||f==='win_probability'){
+      updates[f] = parseFloat(el.value)||0;
+    } else {
+      updates[f] = el.value;
+    }
+  });
+  await sb.from('accounts').update(updates).eq('id', selectedId);
+  await loadAll();
+  openDetail(selectedId);
+  showToast('수정 저장됨');
+}
+
+// ===== 액션 D-day 리스트 =====
+function renderActionList(){
+  const now = Date.now();
+  const items = accounts
+    .filter(a=>a.next_action && a.next_action_date && a.stage!=='won' && a.stage!=='lost')
+    .map(a=>({...a, days: Math.ceil((new Date(a.next_action_date)-now)/86400000)}))
+    .sort((a,b)=>a.days-b.days)
+    .slice(0,8);
+  const el = document.getElementById('actionList');
+  if(items.length===0){el.innerHTML='<div style="font-size:11px;color:var(--hint);text-align:center;padding:12px 0;">액션 없음</div>';return;}
+  el.innerHTML = items.map(a=>{
+    const cls = a.days<0?'ad-over':a.days<=3?'ad-soon':'ad-ok';
+    const txt = a.days<0?`D+${Math.abs(a.days)}`:a.days===0?'오늘':`D-${a.days}`;
+    return `<div class="action-item" onclick="openDetail('${a.id}')">
+      <span class="ad ${cls}">${txt}</span>
+      <div><div class="an">${a.name}</div><div class="at">${a.next_action}</div></div>
+    </div>`;
+  }).join('');
+}
+
+// ===== 미니 캘린더 =====
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+
+function renderMiniCal(){
+  const el = document.getElementById('miniCal');
+  const today = new Date();
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  // 이달 액션 날짜들
+  const actionDates = {};
+  accounts.filter(a=>a.next_action_date).forEach(a=>{
+    const d = new Date(a.next_action_date);
+    if(d.getFullYear()===calYear && d.getMonth()===calMonth){
+      const day = d.getDate();
+      if(!actionDates[day]) actionDates[day]=[];
+      actionDates[day].push(a.name);
+    }
+  });
+  const monthNames=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  let html = `<div class="cal-hd">
+    <button class="cal-nav" onclick="calNav(-1)">‹</button>
+    <span class="cal-month">${calYear}년 ${monthNames[calMonth]}</span>
+    <button class="cal-nav" onclick="calNav(1)">›</button>
+  </div>
+  <div class="cal-grid">
+    <div class="cal-dh">일</div><div class="cal-dh">월</div><div class="cal-dh">화</div><div class="cal-dh">수</div><div class="cal-dh">목</div><div class="cal-dh">금</div><div class="cal-dh">토</div>`;
+  for(let i=0;i<firstDay;i++) html+=`<div class="cal-cell other"></div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const isToday=calYear===today.getFullYear()&&calMonth===today.getMonth()&&d===today.getDate();
+    const hasAction=actionDates[d];
+    const cls=isToday?'today':hasAction?'has':'';
+    const onclick=hasAction?`onclick="calClick(${d}, '${actionDates[d].join(', ')}')"` :'';
+    html+=`<div class="cal-cell ${cls}" ${onclick} title="${hasAction?hasAction.join(', '):''}"> ${d}</div>`;
+  }
+  html+=`</div><div class="cal-tooltip" id="calTip"></div>`;
+  el.innerHTML=html;
+}
+
+function calNav(dir){
+  calMonth+=dir;
+  if(calMonth<0){calMonth=11;calYear--;}
+  if(calMonth>11){calMonth=0;calYear++;}
+  renderMiniCal();
+}
+function calClick(day, names){
+  document.getElementById('calTip').textContent=`${day}일: ${names}`;
+}
+
+// 기존 renderAll 뒤에 사이드바 렌더 추가
+const _origRenderAll = renderAll;
+// patch loadAll to also render sidebar
+const _origLoadAll = loadAll;
+async function loadAllPatched(){
+  await _origLoadAll.call(this);
+}
+// override - add sidebar render after loadAll
+const origLoad = window.loadAll;
+window.loadAll = async function(){
+  const {data:acc}=await sb.from('accounts').select('*').order('name');
+  if(acc) accounts=acc;
+  const {data:lg}=await sb.from('contact_logs').select('*').order('created_at',{ascending:false});
+  if(lg){
+    allLogs=lg;logs={};
+    lg.forEach(l=>{if(!logs[l.account_id])logs[l.account_id]=[];logs[l.account_id].push(l);});
+  }
+  renderAll();updateStats();renderAlerts();renderPipeline();renderFeed();
+  renderActionList();
+  renderMiniCal();
+  document.getElementById('lastUpdate').textContent='업데이트 '+new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+};
 
 loadAll();
 </script>
