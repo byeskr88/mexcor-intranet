@@ -156,7 +156,7 @@ tr:last-child td{border-bottom:none;}
         </table></div>
       </div>
       <div id="mty-perf" style="display:none;">
-        <div id="mtyPerfCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-bottom:12px;"></div>
+        
         <div class="legend">
           <span><span class="ldot" style="background:#E1F5EE;border:0.5px solid #5DCAA5;"></span>≥100%</span>
           <span><span class="ldot" style="background:#FAEEDA;border:0.5px solid #EF9F27;"></span>80~99%</span>
@@ -215,7 +215,7 @@ tr:last-child td{border-bottom:none;}
         </table></div>
       </div>
       <div id="qro-perf" style="display:none;">
-        <div id="qroPerfCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-bottom:12px;"></div>
+        
         <div class="legend">
           <span><span class="ldot" style="background:#E1F5EE;border:0.5px solid #5DCAA5;"></span>≥100%</span>
           <span><span class="ldot" style="background:#FAEEDA;border:0.5px solid #EF9F27;"></span>80~99%</span>
@@ -473,25 +473,7 @@ async function load(){
       ph+=`</tr>`;
     });
     document.getElementById('mtyPerfBody').innerHTML=ph;
-    // YTD 달성율 카드
-    const mtyPerfCardHTML=mtyClients.map(cl=>{
-      const its=mtyPerfKeys.filter(k=>k.split('|')[1]===cl);
-      const rates=its.map(k=>{
-        const d=fcRaw[k];const [,c,it]=k.split('|');
-        const fc_ytd=d?.fc.slice(0,CUR).reduce((s,v)=>s+v,0)||0;
-        const res_ytd=getMR(c,it).slice(0,CUR).reduce((s,v)=>s+v,0)||0;
-        return fc_ytd>0?Math.round(res_ytd/fc_ytd*100):null;
-      }).filter(v=>v!==null);
-      const avg=rates.length>0?Math.round(rates.reduce((s,v)=>s+v,0)/rates.length):null;
-      const clr=avg===null?'var(--text-muted)':avg>=100?'var(--text-success)':avg>=80?'var(--text-warning)':'var(--text-danger)';
-      const bg=avg===null?'var(--surface-1)':avg>=100?'var(--bg-success)':avg>=80?'var(--bg-warning)':'var(--bg-danger)';
-      return `<div style="background:${bg};border-radius:8px;padding:8px 10px;text-align:center;">
-        <div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;">${cl}</div>
-        <div style="font-size:16px;font-weight:500;color:${clr};">${avg!==null?avg+'%':'-'}</div>
-        <div style="font-size:9px;color:var(--text-muted);margin-top:1px;">YTD</div>
-      </div>`;
-    }).join('');
-    document.getElementById('mtyPerfCards').innerHTML=mtyPerfCardHTML;
+
 
     // ===== QRO 재고 =====
     // 시트 컬럼: NO(0), ORIGIN(1), ITEM(2), TYPE(3), CLIENT(4), INVENTORY(5), OPEN_ITEMS(6), REORDER_PT(7), NOTE(8)
@@ -569,24 +551,7 @@ async function load(){
       qph+=`</tr>`;
     });
     document.getElementById('qroPerfBody').innerHTML=qph;
-    const qroPerfCardHTML=qroClients.map(cl=>{
-      const its=qroPerfKeys.filter(k=>k.split('|')[1]===cl);
-      const rates=its.map(k=>{
-        const d=fcRaw[k];const [,c,it]=k.split('|');
-        const fc_ytd=d?.fc.slice(0,CUR).reduce((s,v)=>s+v,0)||0;
-        const res_ytd=getQR(c,it).slice(0,CUR).reduce((s,v)=>s+v,0)||0;
-        return fc_ytd>0?Math.round(res_ytd/fc_ytd*100):null;
-      }).filter(v=>v!==null);
-      const avg=rates.length>0?Math.round(rates.reduce((s,v)=>s+v,0)/rates.length):null;
-      const clr=avg===null?'var(--text-muted)':avg>=100?'var(--text-success)':avg>=80?'var(--text-warning)':'var(--text-danger)';
-      const bg=avg===null?'var(--surface-1)':avg>=100?'var(--bg-success)':avg>=80?'var(--bg-warning)':'var(--bg-danger)';
-      return `<div style="background:${bg};border-radius:8px;padding:8px 10px;text-align:center;">
-        <div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;">${cl}</div>
-        <div style="font-size:16px;font-weight:500;color:${clr};">${avg!==null?avg+'%':'-'}</div>
-        <div style="font-size:9px;color:var(--text-muted);margin-top:1px;">YTD</div>
-      </div>`;
-    }).join('');
-    document.getElementById('qroPerfCards').innerHTML=qroPerfCardHTML;
+
 
     // ===== 입출고 =====
     function renderOutTbl(data,id){
