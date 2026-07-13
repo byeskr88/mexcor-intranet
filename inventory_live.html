@@ -431,13 +431,12 @@ async function load(){
         ph+=`</tr>`;
       });
       // TOTAL
-      ph+=`<tr class="total-row"><td class="lbl" colspan="2">TOTAL 달성율(중량기준)</td>`;
+      ph+=`<tr class="total-row"><td class="lbl" colspan="2">TOTAL 달성율(단순평균)</td>`;
       for(let m=0;m<12;m++){
-        const fk=its.reduce((s,k)=>{const d=fcRaw[k];const u=d?.unit||'';return s+(d?.fc[m]||0)*(u==='DRUM'?300:15);},0);
-        const rk=its.reduce((s,k)=>{const [,c,it]=k.split('|');const u=fcRaw[k]?.unit||'';return s+(getMR(c,it)[m]||0)*(u==='DRUM'?300:15);},0);
-        if(m>=CUR&&rk===0){ph+=`<td style="color:#ccc;">-</td>`;continue;}
-        if(fk===0){ph+=`<td>-</td>`;continue;}
-        const p=Math.round(rk/fk*100);
+        const rates=its.map(k=>{const d=fcRaw[k];const f=d?.fc[m]||0;const [,c,it]=k.split('|');const r=getMR(c,it)[m]||0;return f>0?r/f*100:null;}).filter(v=>v!==null);
+        if(m>=CUR&&its.every(k=>getMR(k.split('|')[1],k.split('|')[2])[m]===0)){ph+=`<td style="color:#ccc;">-</td>`;continue;}
+        if(rates.length===0){ph+=`<td>-</td>`;continue;}
+        const p=Math.round(rates.reduce((s,v)=>s+v,0)/rates.length);
         const c=p>=100?'#085041':p>=80?'#854F0B':'#791F1F';
         ph+=`<td style="color:${c};">${p}%</td>`;
       }
@@ -506,13 +505,12 @@ async function load(){
         }
         qph+=`</tr>`;
       });
-      qph+=`<tr class="total-row"><td class="lbl" colspan="2">TOTAL 달성율(중량기준)</td>`;
+      qph+=`<tr class="total-row"><td class="lbl" colspan="2">TOTAL 달성율(단순평균)</td>`;
       for(let m=0;m<12;m++){
-        const fk=its.reduce((s,k)=>{const d=fcRaw[k];const u=d?.unit||'';return s+(d?.fc[m]||0)*(u==='DRUM'?300:15);},0);
-        const rk=its.reduce((s,k)=>{const [,c,it]=k.split('|');const u=fcRaw[k]?.unit||'';return s+(getQR(c,it)[m]||0)*(u==='DRUM'?300:15);},0);
-        if(m>=CUR&&rk===0){qph+=`<td style="color:#ccc;">-</td>`;continue;}
-        if(fk===0){qph+=`<td>-</td>`;continue;}
-        const p=Math.round(rk/fk*100);
+        const rates=its.map(k=>{const d=fcRaw[k];const f=d?.fc[m]||0;const [,c,it]=k.split('|');const r=getQR(c,it)[m]||0;return f>0?r/f*100:null;}).filter(v=>v!==null);
+        if(m>=CUR&&its.every(k=>getQR(k.split('|')[1],k.split('|')[2])[m]===0)){qph+=`<td style="color:#ccc;">-</td>`;continue;}
+        if(rates.length===0){qph+=`<td>-</td>`;continue;}
+        const p=Math.round(rates.reduce((s,v)=>s+v,0)/rates.length);
         const c=p>=100?'#085041':p>=80?'#854F0B':'#791F1F';
         qph+=`<td style="color:${c};">${p}%</td>`;
       }
