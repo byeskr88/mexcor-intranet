@@ -213,33 +213,44 @@ async function load(){
     window.parent?.postMessage({type:'tabStatus',tab:'ar',status:usd>100000?'danger':usd>0?'warn':'ok',label:usd>0?fmtK(usd):'정상'},'*');
   }catch(e){errs.push('AR:'+e.message);}
 
-  // ===== 매출 =====
+  // ===== 매출 — sales_live.html 동일 로직 =====
   try{
-    const s=await tsvObj('sales');
-    const rows=s.data;
+    const salesRes=await fetch(BASE.replace('{G}',GIDS['sales']));
+    if(!salesRes.ok) throw new Error('sales '+salesRes.status);
+    const salesText=await salesRes.text();
+    // sales_live.html과 동일한 parseTSV
+    const sLines=salesText.replace(/\r/g,'').split('\n');
+    const sHdr=sLines[0].split('\t').map(h=>h.trim());
+    const sRows=sLines.slice(1).filter(l=>l.trim()).map(line=>{
+      const vals=line.split('\t');
+      const obj={};
+      sHdr.forEach((h,i)=>obj[h]=(vals[i]||'').trim());
+      return obj;
+    });
+    // 월별 컬럼 키 유연하게 찾기
+    const sKeys=Object.keys(sRows[0]||{});
+    const monthKeys=MONTHS.map(m=>sKeys.find(k=>k.trim()===m||k.trim()===m.replace('월','')+'월')||m);
     // 계획 행
-    const planRow=rows.find(r=>(r['COMPANY']||'').includes('계획'));
-    const planVals=MONTHS.map(m=>toN(planRow?.[m]||0));
-    const totalPlan=planVals.reduce((a,v)=>a+v,0);
+    const planRow=sRows.find(r=>r['COMPANY']==='계획(USD)');
+    const planVals=monthKeys.map(k=>toN(planRow?.[k]||0));
+    const totalPlan=planVals.reduce((s,v)=>s+v,0);
     // 거래처 행
-    const clientRows=rows.filter(r=>{
+    const clientRows=sRows.filter(r=>{
       const c=r['COMPANY']||'';
-      return c&&!['계획(USD)','합계','달성률','YTD','-',''].some(x=>c.includes(x));
+      return c&&!['계획(USD)','합계','달성률(%)','YTD','-'].includes(c);
     });
     const mtyRows=clientRows.filter(r=>r['LOC']==='MTY');
     const qroRows=clientRows.filter(r=>r['LOC']==='QRO');
-    const sum=(arr,m)=>arr.reduce((s,r)=>s+toN(r[m]||0),0);
-    const mtyM=MONTHS.map(m=>sum(mtyRows,m));
-    const qroM=MONTHS.map(m=>sum(qroRows,m));
+    const mtyM=MONTHS.map((_,mi)=>mtyRows.reduce((s,r)=>s+toN(r[monthKeys[mi]]||0),0));
+    const qroM=MONTHS.map((_,mi)=>qroRows.reduce((s,r)=>s+toN(r[monthKeys[mi]]||0),0));
     const totM=MONTHS.map((_,i)=>mtyM[i]+qroM[i]);
-    // 현재 달 - 연속 실적이 있는 마지막 달 (최대 현재월)
-    const nowM=new Date().getMonth(); // 0-indexed
+    // 실적 있는 마지막 달
     let curM=0;
-    for(let i=0;i<=nowM;i++){if(totM[i]>0)curM=i+1;}
-    const mtyYtd=mtyM.slice(0,curM).reduce((a,v)=>a+v,0);
-    const qroYtd=qroM.slice(0,curM).reduce((a,v)=>a+v,0);
-    const ytdAct=totM.slice(0,curM).reduce((a,v)=>a+v,0);
-    const ytdPlan=planVals.slice(0,curM).reduce((a,v)=>a+v,0);
+    totM.forEach((v,i)=>{if(v>0)curM=i+1;});
+    const mtyYtd=mtyM.reduce((s,v)=>s+v,0);
+    const qroYtd=qroM.reduce((s,v)=>s+v,0);
+    const ytdAct=totM.reduce((s,v)=>s+v,0);
+    const ytdPlan=planVals.slice(0,curM).reduce((s,v)=>s+v,0);
     const ytdPct=ytdPlan>0?Math.round(ytdAct/ytdPlan*100):0;
     document.getElementById('kYtd').textContent=ytdPct+'%';
     document.getElementById('kYtd').style.color=ytdPct>=100?'var(--ok-text)':ytdPct>=80?'var(--warn-text)':'var(--danger-text)';
@@ -248,18 +259,16 @@ async function load(){
     document.getElementById('kPlan').textContent=fmtK(totalPlan);
     document.getElementById('kMtySub').textContent=`MTY 1~${curM}월`;
     document.getElementById('kQroSub').textContent=`QRO 1~${curM}월`;
-    // 월별 바
-    const maxV=Math.max(...totM.filter((v,i)=>i<curM&&v>0),1);
+    // 월별 바 (curM 달까지만 표시)
+    const maxV=Math.max(...totM.slice(0,curM).filter(v=>v>0),1);
     document.getElementById('monthBars').innerHTML=MONTHS.map((m,i)=>{
-      const act=totM[i], plan=planVals[i]||0;
+      const act=totM[i],plan=planVals[i]||0;
       const pct=plan>0?Math.round(act/plan*100):0;
       const isFut=i>=curM;
       const clr=isFut?'var(--s2)':pct>=100?'var(--ok)':pct>=80?'var(--warn)':'var(--danger)';
       const h=isFut?0:Math.max(Math.round(act/maxV*65),act>0?3:0);
-      const pctTxt=isFut?'-':pct+'%';
-      const pctClr=isFut?'var(--hint)':pct>=100?'var(--ok-text)':pct>=80?'var(--warn-text)':'var(--danger-text)';
       return `<div class="mbar-col">
-        <div class="mbar-pct" style="color:${pctClr};">${pctTxt}</div>
+        <div class="mbar-pct" style="color:${isFut?'var(--hint)':pct>=100?'var(--ok-text)':pct>=80?'var(--warn-text)':'var(--danger-text)'};">${isFut?'-':pct+'%'}</div>
         <div class="mbar-track"><div class="mbar-fill" style="height:${h}px;background:${clr};"></div></div>
         <div class="mbar-lbl">${i+1}월</div>
       </div>`;
