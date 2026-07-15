@@ -18,433 +18,341 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text);padding:20px;}
 .wrap{max-width:1200px;margin:0 auto;background:var(--surface);border:0.5px solid var(--border);border-radius:12px;padding:20px;}
-
-/* 헤더 */
-.page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
 .page-title{font-size:18px;font-weight:500;}
-.page-ts{font-size:12px;color:var(--hint);}
-.sbar{padding:7px 14px;border-radius:var(--r);font-size:12px;margin-bottom:16px;}
+.page-ts{font-size:12px;color:var(--hint);margin-top:2px;}
+.sbar{padding:7px 14px;border-radius:var(--r);font-size:12px;margin-bottom:18px;}
 .sbar.loading{background:var(--s1);color:var(--muted);}
 .sbar.ok{background:var(--ok-bg);color:var(--ok-text);}
 .sbar.err{background:var(--danger-bg);color:var(--danger-text);}
-
-/* 섹션 */
-.sec-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--hint);margin:18px 0 10px;}
-.sec-title:first-of-type{margin-top:0;}
-.divider{border:none;border-top:0.5px solid var(--border);margin:18px 0;}
-
-
-/* KPI 카드 */
-.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
-.kpi-card{background:var(--s1);border-radius:var(--r);padding:14px;}
-.kpi-card .lbl{font-size:11px;color:var(--muted);margin-bottom:4px;}
-.kpi-card .val{font-size:22px;font-weight:600;}
-.kpi-card .sub{font-size:11px;color:var(--muted);margin-top:3px;}
-.kpi-card .trend{font-size:11px;font-weight:500;margin-top:4px;}
-
-/* 매출 달성율 바 */
-.month-bars{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;}
-.mbar-col{display:flex;flex-direction:column;align-items:center;gap:4px;}
-.mbar-track{width:100%;height:80px;background:var(--s2);border-radius:4px;overflow:hidden;display:flex;align-items:flex-end;}
-.mbar-fill{width:100%;border-radius:4px;transition:height .4s;}
-.mbar-lbl{font-size:10px;color:var(--muted);}
-.mbar-val{font-size:10px;font-weight:600;}
-
+.sec{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--hint);margin:20px 0 10px;}
+.sec:first-of-type{margin-top:0;}
+hr{border:none;border-top:0.5px solid var(--border);margin:18px 0;}
+/* 카드 */
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.card{background:var(--s1);border-radius:var(--r);padding:14px;}
+.card .lbl{font-size:11px;color:var(--muted);margin-bottom:4px;}
+.card .val{font-size:22px;font-weight:600;}
+.card .sub{font-size:11px;color:var(--muted);margin-top:3px;}
+/* 매출 바 */
+.mbars{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;align-items:end;}
+.mbar-col{display:flex;flex-direction:column;align-items:center;gap:3px;}
+.mbar-pct{font-size:10px;font-weight:600;min-height:14px;}
+.mbar-track{width:100%;height:70px;background:var(--s2);border-radius:4px 4px 0 0;overflow:hidden;display:flex;align-items:flex-end;}
+.mbar-fill{width:100%;transition:height .3s;}
+.mbar-lbl{font-size:9px;color:var(--muted);}
 /* 알림 */
 .alerts{display:flex;flex-direction:column;gap:5px;}
-.alert-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:var(--r);font-size:12px;}
-.alert-item .a-tag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
-.alert-item .a-text{flex:1;}
-.alert-item .a-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
-.al-danger{background:var(--danger-bg);}
-.al-warn{background:var(--warn-bg);}
-.al-blue{background:var(--blue-bg);}
-.at-danger{background:var(--danger-text);color:#fff;}
-.at-warn{background:var(--warn-text);color:#fff;}
-.at-blue{background:var(--blue-text);color:#fff;}
-.ab-danger{background:rgba(163,45,45,.1);color:var(--danger-text);}
-.ab-warn{background:rgba(186,117,23,.1);color:var(--warn-text);}
-.ab-blue{background:rgba(42,120,214,.1);color:var(--blue-text);}
-
-/* 2단 레이아웃 */
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
-
-/* AR·AP 카드 */
-.fin-card{background:var(--s1);border-radius:var(--r);padding:12px 14px;}
-.fin-card .lbl{font-size:11px;color:var(--muted);margin-bottom:4px;}
-.fin-card .val{font-size:18px;font-weight:600;}
-.fin-card .sub{font-size:11px;color:var(--muted);margin-top:3px;}
-
-/* CRM 파이프라인 */
-.pipe-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border);}
-.pipe-row:last-child{border-bottom:none;}
-.pipe-stage{font-size:11px;color:var(--muted);width:90px;flex-shrink:0;}
-.pipe-track{flex:1;height:5px;background:var(--s2);border-radius:3px;overflow:hidden;}
+.al{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:var(--r);font-size:12px;}
+.al-d{background:var(--danger-bg);} .al-w{background:var(--warn-bg);} .al-b{background:var(--blue-bg);}
+.al .tag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;white-space:nowrap;}
+.tag-d{background:var(--danger-text);color:#fff;} .tag-w{background:var(--warn-text);color:#fff;} .tag-b{background:var(--blue-text);color:#fff;}
+.al .txt{flex:1;}
+.al .bdg{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;background:rgba(0,0,0,.08);white-space:nowrap;}
+/* 파이프라인 */
+.pipe{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:11px;}
+.pipe:last-child{border-bottom:none;}
+.pipe-lbl{width:90px;color:var(--muted);flex-shrink:0;}
+.pipe-tr{flex:1;height:5px;background:var(--s2);border-radius:3px;overflow:hidden;}
 .pipe-fill{height:100%;border-radius:3px;}
-.pipe-meta{font-size:11px;font-weight:500;width:60px;text-align:right;flex-shrink:0;}
-
-/* CRM 액션 */
-.action-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:11px;}
-.action-item:last-child{border-bottom:none;}
-.action-d{font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;flex-shrink:0;}
-.ad-over{background:var(--danger-bg);color:var(--danger-text);}
-.ad-soon{background:var(--warn-bg);color:var(--warn-text);}
-.ad-ok{background:var(--ok-bg);color:var(--ok-text);}
-
-/* 재고 알림 */
-.inv-item{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:11px;}
-.inv-item:last-child{border-bottom:none;}
+.pipe-val{width:70px;text-align:right;font-weight:500;font-size:10px;flex-shrink:0;}
+/* 액션 */
+.action{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:11px;}
+.action:last-child{border-bottom:none;}
+.d-pill{font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;flex-shrink:0;}
+.d-over{background:var(--danger-bg);color:var(--danger-text);}
+.d-soon{background:var(--warn-bg);color:var(--warn-text);}
+.d-ok{background:var(--ok-bg);color:var(--ok-text);}
+/* 재고 */
+.inv-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:11px;}
+.inv-row:last-child{border-bottom:none;}
 .moh-pill{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;}
-.moh-danger{background:var(--danger-bg);color:var(--danger-text);}
-.moh-warn{background:var(--warn-bg);color:var(--warn-text);}
-
-.inner-card{background:var(--surface);border-radius:var(--r);padding:12px 14px;border:0.5px solid var(--border);}
-.inner-lbl{font-size:10px;font-weight:600;color:var(--hint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;}
+.moh-d{background:var(--danger-bg);color:var(--danger-text);}
+.moh-w{background:var(--warn-bg);color:var(--warn-text);}
+.inner{background:var(--surface);border-radius:var(--r);padding:12px 14px;border:0.5px solid var(--border);}
 </style>
 </head>
 <body>
 <div class="wrap">
-
   <div class="page-head">
     <div>
       <div class="page-title">MEXCOR 인트라넷</div>
       <div class="page-ts" id="pageTs">데이터 불러오는 중...</div>
     </div>
-    <div style="font-size:12px;color:var(--hint);" id="statusLabel"></div>
   </div>
   <div class="sbar loading" id="sbar">데이터 불러오는 중...</div>
 
-  <!-- 매출 KPI -->
-  <div class="sec-title">📊 매출 현황</div>
-  <div class="kpi-grid" style="margin-bottom:14px;" id="salesKpi">
-    <div class="kpi-card"><div class="lbl">YTD 달성율</div><div class="val" id="kpiYtd">-</div><div class="sub">계획 대비 실적</div></div>
-    <div class="kpi-card"><div class="lbl">MTY YTD</div><div class="val" id="kpiMty">-</div><div class="sub" id="kpiMtySub">-</div></div>
-    <div class="kpi-card"><div class="lbl">QRO YTD</div><div class="val" id="kpiQro">-</div><div class="sub" id="kpiQroSub">-</div></div>
-    <div class="kpi-card"><div class="lbl">연간 계획</div><div class="val" id="kpiPlan">-</div><div class="sub">2026년 전체</div></div>
+  <!-- 매출 -->
+  <div class="sec">📊 매출 현황</div>
+  <div class="grid4" style="margin-bottom:14px;">
+    <div class="card"><div class="lbl">YTD 달성율</div><div class="val" id="kYtd">-</div><div class="sub">계획 대비 실적</div></div>
+    <div class="card"><div class="lbl">MTY YTD</div><div class="val" id="kMty">-</div><div class="sub" id="kMtySub">-</div></div>
+    <div class="card"><div class="lbl">QRO YTD</div><div class="val" id="kQro">-</div><div class="sub" id="kQroSub">-</div></div>
+    <div class="card"><div class="lbl">연간 계획</div><div class="val" id="kPlan">-</div><div class="sub">2026년 전체</div></div>
   </div>
-  <div class="inner-card" style="margin-bottom:4px;">
-    <div class="inner-lbl">월별 달성율</div>
-    <div class="month-bars" id="monthBars">
-      <div style="text-align:center;font-size:11px;color:var(--hint);grid-column:1/-1;padding:16px 0;">불러오는 중...</div>
-    </div>
+  <div class="inner" style="margin-bottom:4px;">
+    <div style="font-size:10px;color:var(--hint);margin-bottom:8px;">월별 달성율 (막대 높이 = 실적 크기)</div>
+    <div class="mbars" id="monthBars"><div style="font-size:11px;color:var(--hint);grid-column:1/-1;text-align:center;padding:16px;">로드 중...</div></div>
   </div>
 
-  <hr class="divider">
+  <hr>
 
-  <!-- 긴급 알림 + AR/AP -->
-  <div class="two-col">
+  <!-- 알림 + AR -->
+  <div class="grid2">
     <div>
-      <div class="sec-title">🚨 긴급 알림</div>
-      <div class="alerts" id="alertsList">
-        <div style="font-size:12px;color:var(--hint);padding:8px 0;">불러오는 중...</div>
-      </div>
+      <div class="sec" style="margin-top:0;">🚨 긴급 알림</div>
+      <div class="alerts" id="alertsList"><div style="font-size:12px;color:var(--hint);">로드 중...</div></div>
     </div>
     <div>
-      <div class="sec-title">💰 AR · AP 현황</div>
-      <div class="three-col" style="gap:8px;" id="finCards">
-        <div class="fin-card"><div class="lbl">미수금 USD</div><div class="val" id="arUsd">-</div><div class="sub" id="arUsdSub">-</div></div>
-        <div class="fin-card"><div class="lbl">미수금 MXN</div><div class="val" id="arMxn">-</div><div class="sub" id="arMxnSub">-</div></div>
-        <div class="fin-card"><div class="lbl">미수금 총 건수</div><div class="val" id="arCnt">-</div><div class="sub">PENDIENTE</div></div>
+      <div class="sec" style="margin-top:0;">💰 AR 미수금</div>
+      <div class="grid3">
+        <div class="card"><div class="lbl">USD</div><div class="val" id="arUsd">-</div><div class="sub" id="arUsdSub">-</div></div>
+        <div class="card"><div class="lbl">MXN</div><div class="val" id="arMxn">-</div><div class="sub" id="arMxnSub">-</div></div>
+        <div class="card"><div class="lbl">총 건수</div><div class="val" id="arCnt">-</div><div class="sub">PENDIENTE</div></div>
       </div>
     </div>
   </div>
 
-  <hr class="divider">
+  <hr>
 
   <!-- CRM -->
-  <div class="two-col">
+  <div class="grid2">
     <div>
-      <div class="sec-title">🤝 CRM 파이프라인</div>
-      <div class="inner-card">
-        <div id="pipelineRows"><div style="font-size:12px;color:var(--hint);">불러오는 중...</div></div>
-      </div>
+      <div class="sec" style="margin-top:0;">🤝 CRM 파이프라인</div>
+      <div class="inner"><div id="pipeRows"><div style="font-size:12px;color:var(--hint);">로드 중...</div></div></div>
     </div>
     <div>
-      <div class="sec-title">📅 이번 주 액션</div>
-      <div class="inner-card">
-        <div id="actionRows"><div style="font-size:12px;color:var(--hint);">불러오는 중...</div></div>
-      </div>
+      <div class="sec" style="margin-top:0;">📅 이번 주 액션</div>
+      <div class="inner"><div id="actionRows"><div style="font-size:12px;color:var(--hint);">로드 중...</div></div></div>
     </div>
   </div>
 
-  <hr class="divider">
+  <hr>
 
-  <!-- 재고 현황 -->
-  <div class="two-col">
+  <!-- 재고 -->
+  <div class="grid2">
     <div>
-      <div class="sec-title">📦 MTY 재고 — 재주문 필요</div>
-      <div class="inner-card" id="mtyInvAlerts"><div style="font-size:12px;color:var(--hint);">불러오는 중...</div></div>
+      <div class="sec" style="margin-top:0;">📦 MTY 재고 — 재주문 필요</div>
+      <div class="inner" id="mtyInv"><div style="font-size:12px;color:var(--hint);">로드 중...</div></div>
     </div>
     <div>
-      <div class="sec-title">📦 QRO 재고 현황</div>
-      <div class="inner-card" id="qroInvAlerts"><div style="font-size:12px;color:var(--hint);">불러오는 중...</div></div>
+      <div class="sec" style="margin-top:0;">📦 QRO 재고 현황</div>
+      <div class="inner" id="qroInv"><div style="font-size:12px;color:var(--hint);">로드 중...</div></div>
     </div>
   </div>
-
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 const BASE='https://docs.google.com/spreadsheets/d/e/2PACX-1vRfv4TFloZqAVKyJXAoGCjP5xec3MvPGjTagc1btjwQzKXvICTmREywHrT1wNSl_6JN7vA_gsY2w8kB/pub?gid={G}&single=true&output=tsv';
-const GIDS={
-  ar:'1428414690',
-  sales:'609736586',
-  inv_mty:'1055215705',
-  inv_qro:'1072433103',
-  fc_inv:'118513204',
-};
-const SURL='https://oezergrrqcinclorwvnk.supabase.co';
-const SKEY='sb_publishable_1eqTksIg-IetXykOBHf0rg_19ourTmF';
-const sb=supabase.createClient(SURL,SKEY);
+const GIDS={ar:'1428414690',sales:'609736586',inv_mty:'1055215705',inv_qro:'1072433103',fc_inv:'118513204'};
+const sb=supabase.createClient('https://oezergrrqcinclorwvnk.supabase.co','sb_publishable_1eqTksIg-IetXykOBHf0rg_19ourTmF');
 
-function url(k){return BASE.replace('{G}',GIDS[k]);}
-async function tsv(k){
-  const r=await fetch(url(k));
-  if(!r.ok) throw new Error(k+' '+r.status);
-  const t=await r.text();
-  const rows=t.trim().split('\n').map(l=>l.split('\t').map(v=>v.trim()));
-  return {hdr:rows[0],data:rows.slice(1).filter(r=>r.some(v=>v))};
+// TSV → 오브젝트 배열로 파싱
+async function tsvObj(key){
+  const r=await fetch(BASE.replace('{G}',GIDS[key]));
+  if(!r.ok) throw new Error(key+' '+r.status);
+  const text=await r.text();
+  const lines=text.trim().split('\n').map(l=>l.split('\t').map(v=>v.trim()));
+  const hdr=lines[0];
+  const data=lines.slice(1).filter(l=>l.some(v=>v)).map(l=>{
+    const obj={};
+    hdr.forEach((h,i)=>obj[h]=(l[i]||''));
+    return obj;
+  });
+  return {hdr,data};
 }
+// TSV → raw 배열
+async function tsvRaw(key){
+  const r=await fetch(BASE.replace('{G}',GIDS[key]));
+  if(!r.ok) throw new Error(key+' '+r.status);
+  const text=await r.text();
+  const lines=text.trim().split('\n').map(l=>l.split('\t').map(v=>v.trim()));
+  return {hdr:lines[0],data:lines.slice(1).filter(l=>l.some(v=>v))};
+}
+
 function toN(v){const n=parseFloat(String(v||'').replace(/,/g,''));return isNaN(n)?0:n;}
 function fmtK(v){
   const n=Math.round(toN(v));
-  if(n===0) return '-';
+  if(!n) return '-';
   if(Math.abs(n)>=1000000) return '$'+(n/1000000).toFixed(1)+'M';
   if(Math.abs(n)>=1000) return '$'+(n/1000).toFixed(0)+'K';
   return '$'+n.toLocaleString();
 }
-function fmtPct(v){return Math.round(toN(v))+'%';}
 
+const MONTHS=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 const alerts=[];
 
-async function loadAll(){
-  const errors=[];
+async function load(){
+  const errs=[];
+
+  // ===== AR =====
   try{
-    // ===== AR =====
-    const ar=await tsv('ar');
-    // AR 시트 컬럼: 헤더 자동 감지
-    const arH=ar.hdr;
-    const findCol=(names)=>arH.findIndex(h=>names.some(n=>h.toUpperCase().trim().includes(n.toUpperCase())));
-    const psI=findCol(['PAYMENT STATUS','STATUS']);
-    const totalI=findCol(['TOTAL']);
-    const curI=findCol(['CURRENCY']);
-    // 숫자형 rows만 (NO가 숫자인 행)
-    const validAr=ar.data.filter(r=>r[0]&&!isNaN(r[0]));
-    const pending=validAr.filter(r=>(r[psI]||'').toUpperCase()==='PENDIENTE'||(r[15]||'').toUpperCase()==='PENDIENTE');
-    const getCur=r=>r[curI]||r[10]||'';
-    const getTotal=r=>toN(r[totalI]||r[14]||0);
-    const usdAr=Math.round(pending.filter(r=>getCur(r)==='USD').reduce((s,r)=>s+getTotal(r),0));
-    const mxnAr=Math.round(pending.filter(r=>getCur(r)==='MXN').reduce((s,r)=>s+getTotal(r),0));
-    document.getElementById('arUsd').textContent='$'+usdAr.toLocaleString();
-    document.getElementById('arUsd').style.color=usdAr>100000?'var(--danger-text)':usdAr>50000?'var(--warn-text)':'var(--text)';
-    document.getElementById('arMxn').textContent='$'+mxnAr.toLocaleString();
-    document.getElementById('arCnt').textContent=pending.length+'건';
+    // AR raw: col0=skip, col1=NO, col2=YEAR ... col10=CURRENCY, col13=TOTAL, col14=PAYMENT STATUS
+    const ar=await tsvRaw('ar');
+    const hdr=ar.hdr;
+    // 헤더에서 컬럼 인덱스 찾기
+    const CI=hdr.findIndex(h=>h.toUpperCase()==='CURRENCY');
+    const TI=hdr.findIndex(h=>h.toUpperCase()==='TOTAL');
+    const SI=hdr.findIndex(h=>h.toUpperCase().includes('PAYMENT'));
+    // NO가 숫자인 행만
+    const rows=ar.data.filter(r=>!isNaN(r[1])&&r[1]);
+    const pend=rows.filter(r=>(r[SI]||r[hdr.length-6]||'').toUpperCase()==='PENDIENTE');
+    const usd=Math.round(pend.filter(r=>r[CI]==='USD').reduce((s,r)=>s+toN(r[TI]),0));
+    const mxn=Math.round(pend.filter(r=>r[CI]==='MXN').reduce((s,r)=>s+toN(r[TI]),0));
+    document.getElementById('arUsd').textContent='$'+usd.toLocaleString();
+    document.getElementById('arUsd').style.color=usd>100000?'var(--danger-text)':usd>0?'var(--warn-text)':'var(--text)';
+    document.getElementById('arMxn').textContent=mxn>0?'$'+mxn.toLocaleString():'-';
+    document.getElementById('arCnt').textContent=pend.length+'건';
     document.getElementById('arUsdSub').textContent='PENDIENTE';
     document.getElementById('arMxnSub').textContent='PENDIENTE';
-    // AR 알림
-    if(usdAr>100000) alerts.push({type:'danger',tag:'AR',text:`USD 미수금 ${fmtK(usdAr)} — 주의 필요`,badge:'긴급'});
-    else if(usdAr>0) alerts.push({type:'warn',tag:'AR',text:`USD 미수금 ${fmtK(usdAr)} — ${pending.length}건`,badge:'확인'});
-    // 탭 링크 상태
-  } catch(e){ errors.push('AR: '+e.message); }
+    if(usd>100000) alerts.push({t:'danger',tag:'AR',txt:`USD 미수금 ${fmtK(usd)} — 주의 필요`,bdg:'긴급'});
+    else if(usd>0) alerts.push({t:'warn',tag:'AR',txt:`USD 미수금 ${fmtK(usd)} (${pend.length}건)`,bdg:'확인'});
+    window.parent?.postMessage({type:'tabStatus',tab:'ar',status:usd>100000?'danger':usd>0?'warn':'ok',label:usd>0?fmtK(usd):'정상'},'*');
+  }catch(e){errs.push('AR:'+e.message);}
 
+  // ===== 매출 =====
   try{
-    // ===== 매출 — sales_live.html과 동일 구조 =====
-    const sales=await tsv('sales');
-    const rows=sales.data;
-    const hdr=sales.hdr;
-    const MONTHS=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-
-    // 컬럼 키 찾기
-    const keys=hdr;
-    const monthKeys=MONTHS.map(m=>keys.find(k=>k.trim()===m)||m);
-
+    const s=await tsvObj('sales');
+    const rows=s.data;
     // 계획 행
-    const planRow=rows.find(r=>r[keys.indexOf('COMPANY')]?.includes('계획'));
-    const planVals=monthKeys.map(k=>toN(planRow?.[k]||planRow?.[keys.indexOf(k)]||0));
-    const totalPlan=planVals.reduce((s,v)=>s+v,0);
-
+    const planRow=rows.find(r=>(r['COMPANY']||'').includes('계획'));
+    const planVals=MONTHS.map(m=>toN(planRow?.[m]||0));
+    const totalPlan=planVals.reduce((a,v)=>a+v,0);
     // 거래처 행
-    const compI=keys.indexOf('COMPANY');
-    const locI=keys.indexOf('LOC');
     const clientRows=rows.filter(r=>{
-      const c=r[compI]||'';
-      return c&&!['계획(USD)','합계','달성률(%)','YTD','-',''].includes(c.trim());
+      const c=r['COMPANY']||'';
+      return c&&!['계획(USD)','합계','달성률','YTD','-',''].some(x=>c.includes(x));
     });
-    const mtyRows2=clientRows.filter(r=>r[locI]==='MTY');
-    const qroRows2=clientRows.filter(r=>r[locI]==='QRO');
-    const mtyMonthly=MONTHS.map((_,mi)=>mtyRows2.reduce((s,r)=>s+toN(r[monthKeys[mi]]||r[mi+4]||0),0));
-    const qroMonthly=MONTHS.map((_,mi)=>qroRows2.reduce((s,r)=>s+toN(r[monthKeys[mi]]||r[mi+4]||0),0));
-    const totalMonthly=MONTHS.map((_,i)=>mtyMonthly[i]+qroMonthly[i]);
-
-    // curMonth: 실적이 있는 연속된 마지막 달 (갑자기 튀는 달 제외)
-    let curMonth=0;
-    for(let i=0;i<12;i++){
-      if(totalMonthly[i]>0) curMonth=i+1;
-      else if(i>0&&totalMonthly[i-1]>0) break; // 연속성 끊기면 중단
-    }
-    // 최대 현재 달까지만
-    curMonth=Math.min(curMonth, new Date().getMonth()+1);
-
-    const mtyYtd=mtyMonthly.slice(0,curMonth).reduce((s,v)=>s+v,0);
-    const qroYtd=qroMonthly.slice(0,curMonth).reduce((s,v)=>s+v,0);
-    const ytdActual=totalMonthly.slice(0,curMonth).reduce((s,v)=>s+v,0);
-    const ytdPlan=planVals.slice(0,curMonth).reduce((s,v)=>s+v,0);
-    const ytdPct=ytdPlan>0?Math.round(ytdActual/ytdPlan*100):0;
-
-    document.getElementById('kpiYtd').textContent=ytdPct+'%';
-    document.getElementById('kpiYtd').style.color=ytdPct>=100?'var(--ok-text)':ytdPct>=80?'var(--warn-text)':'var(--danger-text)';
-    document.getElementById('kpiPlan').textContent=fmtK(totalPlan);
-    document.getElementById('kpiMty').textContent=fmtK(mtyYtd);
-    document.getElementById('kpiQro').textContent=fmtK(qroYtd);
-    document.getElementById('kpiMtySub').textContent=`MTY 1~${curMonth}월`;
-    document.getElementById('kpiQroSub').textContent=`QRO 1~${curMonth}월`;
-
+    const mtyRows=clientRows.filter(r=>r['LOC']==='MTY');
+    const qroRows=clientRows.filter(r=>r['LOC']==='QRO');
+    const sum=(arr,m)=>arr.reduce((s,r)=>s+toN(r[m]||0),0);
+    const mtyM=MONTHS.map(m=>sum(mtyRows,m));
+    const qroM=MONTHS.map(m=>sum(qroRows,m));
+    const totM=MONTHS.map((_,i)=>mtyM[i]+qroM[i]);
+    // 현재 달 - 연속 실적이 있는 마지막 달 (최대 현재월)
+    const nowM=new Date().getMonth(); // 0-indexed
+    let curM=0;
+    for(let i=0;i<=nowM;i++){if(totM[i]>0)curM=i+1;}
+    const mtyYtd=mtyM.slice(0,curM).reduce((a,v)=>a+v,0);
+    const qroYtd=qroM.slice(0,curM).reduce((a,v)=>a+v,0);
+    const ytdAct=totM.slice(0,curM).reduce((a,v)=>a+v,0);
+    const ytdPlan=planVals.slice(0,curM).reduce((a,v)=>a+v,0);
+    const ytdPct=ytdPlan>0?Math.round(ytdAct/ytdPlan*100):0;
+    document.getElementById('kYtd').textContent=ytdPct+'%';
+    document.getElementById('kYtd').style.color=ytdPct>=100?'var(--ok-text)':ytdPct>=80?'var(--warn-text)':'var(--danger-text)';
+    document.getElementById('kMty').textContent=fmtK(mtyYtd);
+    document.getElementById('kQro').textContent=fmtK(qroYtd);
+    document.getElementById('kPlan').textContent=fmtK(totalPlan);
+    document.getElementById('kMtySub').textContent=`MTY 1~${curM}월`;
+    document.getElementById('kQroSub').textContent=`QRO 1~${curM}월`;
     // 월별 바
-    const maxVal=Math.max(...totalMonthly.filter(v=>v>0),1);
-    document.getElementById('monthBars').innerHTML=totalMonthly.map((actual,i)=>{
-      const plan=planVals[i]||0;
-      const rawPct=plan>0?Math.round(actual/plan*100):0;
-      const pct=Math.min(rawPct,150); // 150% 캡
-      const isFuture=i>=curMonth;
-      const color=isFuture?'var(--s2)':pct>=100?'var(--ok)':pct>=80?'var(--warn)':'var(--danger)';
-      const h=isFuture?0:Math.max(Math.round(actual/maxVal*80),actual>0?2:0);
+    const maxV=Math.max(...totM.filter((v,i)=>i<curM&&v>0),1);
+    document.getElementById('monthBars').innerHTML=MONTHS.map((m,i)=>{
+      const act=totM[i], plan=planVals[i]||0;
+      const pct=plan>0?Math.round(act/plan*100):0;
+      const isFut=i>=curM;
+      const clr=isFut?'var(--s2)':pct>=100?'var(--ok)':pct>=80?'var(--warn)':'var(--danger)';
+      const h=isFut?0:Math.max(Math.round(act/maxV*65),act>0?3:0);
+      const pctTxt=isFut?'-':pct+'%';
+      const pctClr=isFut?'var(--hint)':pct>=100?'var(--ok-text)':pct>=80?'var(--warn-text)':'var(--danger-text)';
       return `<div class="mbar-col">
-        <div class="mbar-val" style="color:${isFuture?'var(--hint)':color};">${isFuture?'-':pct+'%'}</div>
-        <div class="mbar-track"><div class="mbar-fill" style="height:${h}px;background:${color};"></div></div>
+        <div class="mbar-pct" style="color:${pctClr};">${pctTxt}</div>
+        <div class="mbar-track"><div class="mbar-fill" style="height:${h}px;background:${clr};"></div></div>
         <div class="mbar-lbl">${i+1}월</div>
       </div>`;
     }).join('');
+    if(ytdPct<80) alerts.push({t:'danger',tag:'매출',txt:`YTD 달성율 ${ytdPct}% — 목표 미달`,bdg:'주의'});
+    else if(ytdPct<100) alerts.push({t:'warn',tag:'매출',txt:`YTD 달성율 ${ytdPct}% — 목표 추격 중`,bdg:'확인'});
+    window.parent?.postMessage({type:'tabStatus',tab:'sales',status:ytdPct>=100?'ok':ytdPct>=80?'warn':'danger',label:ytdPct+'%'},'*');
+  }catch(e){errs.push('매출:'+e.message);}
 
-    const ytdStatus=ytdPct>=100?'ok':ytdPct>=80?'warn':'danger';
-    if(ytdPct<80) alerts.push({type:'danger',tag:'매출',text:`YTD 달성율 ${ytdPct}% — 목표 미달`,badge:'주의'});
-    else if(ytdPct<100) alerts.push({type:'warn',tag:'매출',text:`YTD 달성율 ${ytdPct}% — 목표 추격 중`,badge:'확인'});
-
-  } catch(e){ errors.push('매출: '+e.message); }
-
+  // ===== 재고 =====
   try{
-    // ===== 재고 =====
-    const invMty=await tsv('inv_mty');
-    const fcInv=await tsv('fc_inv');
-
-    // FC맵
+    const fcData=await tsvRaw('fc_inv');
     const fcMap={};
-    fcInv.data.forEach(r=>{if(r[1]) fcMap[r[1].toLowerCase().replace(/\s+/g,'')]=toN(r[3]);});
-    function getFC(item){return fcMap[(item||'').toLowerCase().replace(/\s+/g,'')]||0;}
+    fcData.data.forEach(r=>{if(r[1])fcMap[r[1].toLowerCase().replace(/\s+/g,'')]=toN(r[3]);});
+    const getFC=item=>fcMap[(item||'').toLowerCase().replace(/\s+/g,'')]||0;
+    const mtyInv=await tsvRaw('inv_mty');
+    const mtyItems=mtyInv.data.filter(r=>r[2]&&r[2].trim()).map(r=>({item:r[2],stock:toN(r[5]),fc:getFC(r[2])}));
+    const reorders=mtyItems.filter(r=>r.fc>0&&r.stock/r.fc<3);
+    const warns=mtyItems.filter(r=>r.fc>0&&r.stock/r.fc>=3&&r.stock/r.fc<6);
+    document.getElementById('mtyInv').innerHTML=[
+      ...reorders.map(r=>`<div class="inv-row"><span>${r.item}</span><span class="moh-pill moh-d">MOH ${(r.stock/r.fc).toFixed(1)}</span></div>`),
+      ...warns.map(r=>`<div class="inv-row"><span>${r.item}</span><span class="moh-pill moh-w">MOH ${(r.stock/r.fc).toFixed(1)}</span></div>`)
+    ].join('')||'<div style="font-size:12px;color:var(--ok-text);">✓ 전체 정상</div>';
+    if(reorders.length>0) alerts.push({t:'danger',tag:'재고',txt:`MTY 재주문 필요 ${reorders.length}건 — MOH 3개월 미만`,bdg:`${reorders.length}건`});
+    window.parent?.postMessage({type:'tabStatus',tab:'inv',status:reorders.length>0?'danger':warns.length>0?'warn':'ok',label:reorders.length>0?`재주문 ${reorders.length}건`:warns.length>0?`주의 ${warns.length}건`:'정상'},'*');
+    const qroInv=await tsvRaw('inv_qro');
+    document.getElementById('qroInv').innerHTML=qroInv.data.filter(r=>r[2]&&r[2].trim()).map(r=>{
+      const fc=getFC(r[2]),stock=toN(r[5]),moh=fc>0?(stock/fc).toFixed(1):'-';
+      const cls=moh!=='-'&&parseFloat(moh)<2?'moh-d':moh!=='-'&&parseFloat(moh)<4?'moh-w':'';
+      return `<div class="inv-row"><span>${r[2]}</span><span class="moh-pill ${cls}">MOH ${moh}</span></div>`;
+    }).join('')||'<div style="font-size:12px;color:var(--hint);">데이터 없음</div>';
+  }catch(e){errs.push('재고:'+e.message);}
 
-    // MTY 재고: NO,ORIGIN,ITEM,TYPE,CLIENT,INVENTORY,OPEN,REORDER_PT,NOTE
-    const mtyInv=invMty.data.filter(r=>r[2]&&r[2].trim()).map(r=>({
-      item:r[2],type:r[3],stock:toN(r[5]),fc:getFC(r[2])
-    }));
-    const reorders=mtyInv.filter(r=>r.fc>0&&(r.stock/r.fc)<3);
-    const warns=mtyInv.filter(r=>r.fc>0&&(r.stock/r.fc)>=3&&(r.stock/r.fc)<6);
-
-    document.getElementById('mtyInvAlerts').innerHTML=reorders.length===0&&warns.length===0
-      ?'<div style="font-size:12px;color:var(--ok-text);">✓ 전체 정상</div>'
-      :[...reorders.map(r=>{
-          const moh=(r.stock/r.fc).toFixed(1);
-          return `<div class="inv-item"><span style="font-size:11px;">${r.item}</span><span class="moh-pill moh-danger">MOH ${moh}</span></div>`;
-        }),
-        ...warns.map(r=>{
-          const moh=(r.stock/r.fc).toFixed(1);
-          return `<div class="inv-item"><span style="font-size:11px;">${r.item}</span><span class="moh-pill moh-warn">MOH ${moh}</span></div>`;
-        })].join('');
-
-    if(reorders.length>0) alerts.push({type:'danger',tag:'재고',text:`MTY 재주문 필요 ${reorders.length}건 — MOH 3개월 미만`,badge:`${reorders.length}건`});
-    else if(warns.length>0) alerts.push({type:'warn',tag:'재고',text:`MTY 재고 주의 ${warns.length}건 — MOH 6개월 미만`,badge:`${warns.length}건`});
-
-
-    // QRO 재고
-    const invQro=await tsv('inv_qro');
-    const qroInv=invQro.data.filter(r=>r[2]&&r[2].trim()).map(r=>({
-      item:r[2],type:r[3],stock:toN(r[5]),fc:getFC(r[2])
-    }));
-    document.getElementById('qroInvAlerts').innerHTML=qroInv.map(r=>{
-      const moh=r.fc>0?(r.stock/r.fc).toFixed(1):'-';
-      const cls=moh!=='-'&&parseFloat(moh)<2?'moh-danger':moh!=='-'&&parseFloat(moh)<4?'moh-warn':'moh-pill';
-      return `<div class="inv-item"><span style="font-size:11px;">${r.item}</span><span class="moh-pill ${cls}">MOH ${moh}</span></div>`;
-    }).join('') || '<div style="font-size:12px;color:var(--hint);">데이터 없음</div>';
-
-  } catch(e){ errors.push('재고: '+e.message); }
-
+  // ===== CRM =====
   try{
-    // ===== CRM (Supabase) =====
-    const {data:accounts}=await sb.from('accounts').select('*').order('name');
+    const {data:accs}=await sb.from('accounts').select('*').order('name');
     const {data:logs}=await sb.from('contact_logs').select('*').order('created_at',{ascending:false});
     const logMap={};
     (logs||[]).forEach(l=>{if(!logMap[l.account_id])logMap[l.account_id]=[];logMap[l.account_id].push(l);});
-
     const stages=[
-      {id:'active',label:'Active',color:'var(--ok)'},
-      {id:'prospect',label:'Prospect',color:'var(--s2)'},
-      {id:'qualified',label:'Qualified',color:'var(--blue)'},
-      {id:'proposal',label:'Proposal',color:'var(--purple)'},
-      {id:'negotiation',label:'Negotiation',color:'var(--warn)'},
+      {id:'active',lbl:'Active',clr:'var(--ok)'},
+      {id:'prospect',lbl:'Prospect',clr:'var(--s2)'},
+      {id:'qualified',lbl:'Qualified',clr:'var(--blue)'},
+      {id:'proposal',lbl:'Proposal',clr:'var(--purple)'},
+      {id:'negotiation',lbl:'Negotiation',clr:'var(--warn)'},
     ];
-    const maxCnt=Math.max(...stages.map(s=>(accounts||[]).filter(a=>a.stage===s.id).length),1);
-    document.getElementById('pipelineRows').innerHTML=stages.map(s=>{
-      const cnt=(accounts||[]).filter(a=>a.stage===s.id).length;
-      const val=(accounts||[]).filter(a=>a.stage===s.id).reduce((ss,a)=>ss+(a.expected_value||0),0);
-      const pct=Math.round(cnt/maxCnt*100);
-      return `<div class="pipe-row">
-        <span class="pipe-stage">${s.label}</span>
-        <div class="pipe-track"><div class="pipe-fill" style="width:${pct}%;background:${s.color};"></div></div>
-        <span class="pipe-meta">${cnt}개사${val>0?' · $'+(val/1000).toFixed(0)+'K':''}</span>
+    const maxC=Math.max(...stages.map(s=>(accs||[]).filter(a=>a.stage===s.id).length),1);
+    document.getElementById('pipeRows').innerHTML=stages.map(s=>{
+      const cnt=(accs||[]).filter(a=>a.stage===s.id).length;
+      const val=(accs||[]).filter(a=>a.stage===s.id).reduce((ss,a)=>ss+(a.expected_value||0),0);
+      return `<div class="pipe">
+        <span class="pipe-lbl">${s.lbl}</span>
+        <div class="pipe-tr"><div class="pipe-fill" style="width:${Math.round(cnt/maxC*100)}%;background:${s.clr};"></div></div>
+        <span class="pipe-val">${cnt}개사${val?` · $${(val/1000).toFixed(0)}K`:''}</span>
       </div>`;
     }).join('');
-
-    // 이번 주 액션
     const now=Date.now();
-    const actions=(accounts||[])
-      .filter(a=>a.next_action&&a.next_action_date&&a.stage!=='won'&&a.stage!=='lost')
+    const actions=(accs||[]).filter(a=>a.next_action&&a.next_action_date&&a.stage!=='won'&&a.stage!=='lost')
       .map(a=>({...a,days:Math.ceil((new Date(a.next_action_date)-now)/86400000)}))
       .sort((a,b)=>a.days-b.days).slice(0,5);
-    document.getElementById('actionRows').innerHTML=actions.length===0
-      ?'<div style="font-size:12px;color:var(--hint);">예정 액션 없음</div>'
-      :actions.map(a=>{
-          const cls=a.days<0?'ad-over':a.days<=3?'ad-soon':'ad-ok';
-          const txt=a.days<0?`D+${Math.abs(a.days)}`:a.days===0?'오늘':`D-${a.days}`;
-          return `<div class="action-item">
-            <span class="action-d ${cls}">${txt}</span>
-            <div><div style="font-size:11px;font-weight:500;">${a.name}</div><div style="font-size:10px;color:var(--muted);">${a.next_action}</div></div>
-          </div>`;
-        }).join('');
-
-    // 팔로업 알림
-    const followup=(accounts||[]).filter(a=>{
-      if(a.stage==='won'||a.stage==='lost') return false;
-      const logs=logMap[a.id]||[];
-      const days=logs.length>0?Math.floor((Date.now()-new Date(logs[0].created_at))/86400000):999;
-      return days>30;
+    document.getElementById('actionRows').innerHTML=actions.length
+      ?actions.map(a=>{
+        const cls=a.days<0?'d-over':a.days<=3?'d-soon':'d-ok';
+        const txt=a.days<0?`D+${Math.abs(a.days)}`:a.days===0?'오늘':`D-${a.days}`;
+        return `<div class="action"><span class="d-pill ${cls}">${txt}</span><div><div style="font-weight:500;">${a.name}</div><div style="font-size:10px;color:var(--muted);">${a.next_action}</div></div></div>`;
+      }).join('')
+      :'<div style="font-size:12px;color:var(--hint);">예정 액션 없음</div>';
+    const followup=(accs||[]).filter(a=>{
+      if(a.stage==='won'||a.stage==='lost')return false;
+      const lg=logMap[a.id]||[];
+      const d=lg.length>0?Math.floor((Date.now()-new Date(lg[0].created_at))/86400000):999;
+      return d>30;
     });
-    if(followup.length>0) alerts.push({type:'warn',tag:'CRM',text:`팔로업 필요 ${followup.length}개사 — 30일 이상 컨택 없음`,badge:`${followup.length}건`});
-
-
-    document.getElementById('link-aviso').textContent='확인';
-    document.getElementById('link-aviso').className='tl-status s-gray';
-    document.getElementById('link-ap').textContent='확인';
-    document.getElementById('link-ap').className='tl-status s-gray';
-  } catch(e){ errors.push('CRM: '+e.message); }
+    if(followup.length>0) alerts.push({t:'warn',tag:'CRM',txt:`팔로업 필요 ${followup.length}개사 — 30일 이상 컨택 없음`,bdg:`${followup.length}건`});
+    window.parent?.postMessage({type:'tabStatus',tab:'crm',status:followup.length>0?'warn':'ok',label:followup.length>0?`팔로업 ${followup.length}건`:'정상'},'*');
+  }catch(e){errs.push('CRM:'+e.message);}
 
   // 알림 렌더
-  const colorMap={danger:'al-danger',warn:'al-warn',info:'al-blue'};
-  const tagMap={danger:'at-danger',warn:'at-warn',info:'at-blue'};
-  const badgeMap={danger:'ab-danger',warn:'ab-warn',info:'ab-blue'};
-  document.getElementById('alertsList').innerHTML=alerts.length===0
-    ?'<div style="font-size:12px;color:var(--ok-text);padding:8px 0;">✓ 전체 정상 — 긴급 사항 없음</div>'
-    :alerts.map(a=>`<div class="alert-item ${colorMap[a.type]||'al-blue'}">
-        <span class="a-tag ${tagMap[a.type]||'at-blue'}">${a.tag}</span>
-        <span class="a-text">${a.text}</span>
-        <span class="a-badge ${badgeMap[a.type]||'ab-blue'}">${a.badge}</span>
-      </div>`).join('');
+  const clrMap={danger:'al-d',warn:'al-w',info:'al-b'};
+  const tagMap={danger:'tag-d',warn:'tag-w',info:'tag-b'};
+  document.getElementById('alertsList').innerHTML=alerts.length
+    ?alerts.map(a=>`<div class="al ${clrMap[a.t]||'al-b'}">
+        <span class="tag ${tagMap[a.t]||'tag-b'}">${a.tag}</span>
+        <span class="txt">${a.txt}</span>
+        <span class="bdg">${a.bdg}</span>
+      </div>`).join('')
+    :'<div style="font-size:12px;color:var(--ok-text);padding:8px 0;">✓ 전체 정상</div>';
 
-  // 완료
   document.getElementById('sbar').className='sbar ok';
-  document.getElementById('sbar').textContent='✓ 데이터 연동 성공'+(errors.length>0?' (일부 실패: '+errors.join(', ')+')':'');
+  document.getElementById('sbar').textContent='✓ 데이터 연동 성공'+(errs.length?' (오류: '+errs.join(', ')+')':'');
   document.getElementById('pageTs').textContent='최종 업데이트: '+new Date().toLocaleString('ko-KR');
 }
-
-loadAll();
+load();
 </script>
 </body>
 </html>
