@@ -62,6 +62,24 @@
   .overdue-warn{color:var(--warning-text);font-weight:500;}
   .overdue-dday{color:#1565C0;font-weight:500;}
   .overdue-ok{color:var(--text-secondary);}
+
+  .expand-btn{background:none;border:none;cursor:pointer;font-size:12px;color:var(--text-secondary);padding:0 4px;transition:transform .15s;display:inline-block;}
+  .expand-row{display:none;}
+  .expand-row.open{display:table-row;}
+  .expand-inner{padding:10px 16px;background:var(--surface-1);}
+  .expand-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+  .eg-cell{background:var(--surface);border-radius:6px;padding:8px 10px;}
+  .eg-lbl{font-size:10px;color:var(--text-secondary);margin-bottom:2px;}
+  .eg-val{font-size:12px;font-weight:500;}
+  .payment-section{margin-bottom:16px;}
+  .payment-tabs{display:flex;gap:4px;}
+  .ptab{padding:4px 12px;font-size:11px;border:0.5px solid var(--border);background:transparent;border-radius:var(--radius);cursor:pointer;font-family:inherit;color:var(--text-secondary);}
+  .ptab.active{background:var(--text);color:#fff;border-color:var(--text);}
+  .recent-pay-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px;}
+  .rp-card{background:var(--success-bg);border-radius:var(--radius);padding:10px 12px;border:0.5px solid #5DCAA5;}
+  .rp-card .lbl{font-size:10px;color:var(--success-text);margin-bottom:2px;}
+  .rp-card .val{font-size:15px;font-weight:500;color:var(--success-text);}
+  .rp-card .sub2{font-size:10px;color:var(--success-text);opacity:.7;margin-top:2px;}
 </style>
 </head>
 <body>
@@ -116,7 +134,28 @@
       <button class="download-btn" onclick="downloadCSV()">⬇ 엑셀 다운로드</button>
     </div>
 
-    <div class="tbl-wrap">
+    <!-- 최근 입금 내역 -->
+  <div class="payment-section" id="paymentSection">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <span style="font-size:13px;font-weight:500;">최근 입금 내역</span>
+      <div class="payment-tabs">
+        <button class="ptab active" onclick="setPayPeriod(1,this)">1개월</button>
+        <button class="ptab" onclick="setPayPeriod(3,this)">3개월</button>
+        <button class="ptab" onclick="setPayPeriod(6,this)">6개월</button>
+      </div>
+    </div>
+    <div class="recent-pay-grid" id="recentPayGrid"></div>
+    <div class="tbl-wrap" style="margin-bottom:16px;">
+      <table>
+        <thead><tr>
+          <th>거래처</th><th>FACTURA NO</th><th>발행일</th>
+          <th>통화</th><th class="num">금액</th><th>실입금일</th><th>비고</th>
+        </tr></thead>
+        <tbody id="recentPayBody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="tbl-wrap">
       <table id="mainTable">
         <thead>
           <tr>
@@ -229,6 +268,7 @@ async function loadData(){
     document.getElementById('lastUpdate').textContent = '최종 업데이트: '+new Date().toLocaleString('ko-KR');
     document.getElementById('mainContent').style.display = 'block';
     applyFilters();
+  renderPayments();
   } catch(e){
     document.getElementById('statusBox').className = 'status-bar error';
     document.getElementById('statusBox').textContent = '❌ 연동 실패 — '+e.message;
@@ -270,6 +310,7 @@ function setYear(val, btn){
   document.querySelectorAll('#yearFilter button').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   applyFilters();
+  renderPayments();
 }
 
 function setStatus(val, btn){
@@ -277,6 +318,7 @@ function setStatus(val, btn){
   document.querySelectorAll('#statusFilter button').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   applyFilters();
+  renderPayments();
 }
 
 function sortTable(th, col){
@@ -291,18 +333,23 @@ function sortTable(th, col){
   const icon=th.querySelector('.sort-icon');
   if(icon) icon.textContent=sortDir===1?'↑':'↓';
   applyFilters();
+  renderPayments();
 }
 
 function renderTable(rows){
   if(rows.length===0){
-    document.getElementById('tableBody').innerHTML='<tr><td colspan="16" style="text-align:center;padding:20px;color:var(--text-secondary);">해당 조건의 데이터가 없습니다</td></tr>';
+    document.getElementById('tableBody').innerHTML='<tr><td colspan="17" style="text-align:center;padding:20px;color:var(--text-secondary);">해당 조건의 데이터가 없습니다</td></tr>';
     return;
   }
-  document.getElementById('tableBody').innerHTML=rows.map(r=>{
+  document.getElementById('tableBody').innerHTML=rows.map((r,i)=>{
     const status=r['PAYMENT_STATUS'];
     const bucket=r['BUCKET'];
     const days=r['OVERDUE_DAYS'];
-    return `<tr class="${getRowClass(status,bucket,days)}">
+    const eid=`exp-${i}`;
+    const isPend = status==='PENDIENTE';
+    const isPaid = status==='PAGADO';
+    return `<tr class="${getRowClass(status,bucket,days)}" style="cursor:pointer;" onclick="toggleExpand('${eid}', this)">
+      <td><span class="expand-btn" id="btn-${eid}">▶</span></td>
       <td>${fmt(r['NO'])}</td>
       <td>${fmt(r['FACTURA_MONTH'])}</td>
       <td>${fmt(r['CLIENTE'])}</td>
@@ -319,8 +366,82 @@ function renderTable(rows){
       <td class="${getOverdueClass(bucket,days)}">${getOverdueDisplay(days)}</td>
       <td><span class="badge ${getBadgeClass(status,bucket)}">${fmt(status)}</span></td>
       <td style="font-size:11px;color:var(--text-secondary);">${fmt(r['NOTE'])}</td>
+    </tr>
+    <tr class="expand-row" id="${eid}">
+      <td colspan="17">
+        <div class="expand-inner">
+          <div class="expand-grid">
+            <div class="eg-cell"><div class="eg-lbl">통화</div><div class="eg-val">${fmt(r['CURRENCY'])}</div></div>
+            <div class="eg-cell"><div class="eg-lbl">SUB TOTAL</div><div class="eg-val">${fmtNum(r['SUB_TOTAL'])}</div></div>
+            <div class="eg-cell"><div class="eg-lbl">IVA 16%</div><div class="eg-val">${fmtNum(r['IVA'])}</div></div>
+            <div class="eg-cell"><div class="eg-lbl">TOTAL</div><div class="eg-val" style="color:${isPend?'var(--danger-text)':isPaid?'var(--success-text)':'var(--text)'};">${fmtNum(r['TOTAL'])}</div></div>
+            <div class="eg-cell"><div class="eg-lbl">크레딧 기간</div><div class="eg-val">${fmt(r['CREDIT_DAYS'])}일</div></div>
+            <div class="eg-cell"><div class="eg-lbl">결제 예정일 1</div><div class="eg-val">${fmt(r['PAYMENT_PLAN_DATE'])}</div></div>
+            <div class="eg-cell"><div class="eg-lbl">결제 예정일 2</div><div class="eg-val">${fmt(r['PAYMENT_PLAN_DATE2'])||'-'}</div></div>
+            <div class="eg-cell"><div class="eg-lbl">실제 입금일</div><div class="eg-val" style="color:${isPaid?'var(--success-text)':'var(--text)'};">${isPaid?'✓ ':''} ${fmt(r['ACTUAL_PAYMENT_DATE'])}</div></div>
+            <div class="eg-cell"><div class="eg-lbl">FACTURA NO</div><div class="eg-val">${fmt(r['FACTURA_NO'])}</div></div>
+            <div class="eg-cell"><div class="eg-lbl">비고</div><div class="eg-val" style="font-size:11px;">${fmt(r['NOTE'])||'-'}</div></div>
+          </div>
+        </div>
+      </td>
     </tr>`;
   }).join('');
+}
+
+function toggleExpand(id, tr){
+  const row = document.getElementById(id);
+  const btn = document.getElementById('btn-'+id);
+  if(!row) return;
+  const isOpen = row.classList.contains('open');
+  // 전체 닫기
+  document.querySelectorAll('.expand-row.open').forEach(r=>r.classList.remove('open'));
+  document.querySelectorAll('.expand-btn').forEach(b=>b.style.transform='');
+  if(!isOpen){
+    row.classList.add('open');
+    if(btn) btn.style.transform='rotate(90deg)';
+  }
+}
+
+// 입금 내역
+let payPeriod = 1;
+function setPayPeriod(m, btn){
+  payPeriod = m;
+  document.querySelectorAll('.ptab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPayments();
+}
+
+function renderPayments(){
+  if(!window.allData) return;
+  const now = new Date();
+  const cutoff = new Date(now.getFullYear(), now.getMonth()-payPeriod, now.getDate());
+  const paid = window.allData.filter(r=>
+    r['PAYMENT_STATUS']==='PAGADO' && r['ACTUAL_PAYMENT_DATE'] && r['ACTUAL_PAYMENT_DATE']!=='-'
+  ).filter(r=>{
+    const d = new Date(r['ACTUAL_PAYMENT_DATE']);
+    return d >= cutoff;
+  }).sort((a,b)=>new Date(b['ACTUAL_PAYMENT_DATE'])-new Date(a['ACTUAL_PAYMENT_DATE']));
+
+  const usdTotal = paid.filter(r=>r['CURRENCY']==='USD').reduce((s,r)=>s+(r['TOTAL']||0),0);
+  const mxnTotal = paid.filter(r=>r['CURRENCY']==='MXN').reduce((s,r)=>s+(r['TOTAL']||0),0);
+  const cnt = paid.length;
+
+  document.getElementById('recentPayGrid').innerHTML = `
+    <div class="rp-card"><div class="lbl">입금 건수</div><div class="val">${cnt}건</div><div class="sub2">최근 ${payPeriod}개월</div></div>
+    <div class="rp-card"><div class="lbl">USD 입금</div><div class="val">$${usdTotal.toLocaleString('en',{maximumFractionDigits:0})}</div><div class="sub2">${paid.filter(r=>r['CURRENCY']==='USD').length}건</div></div>
+    <div class="rp-card"><div class="lbl">MXN 입금</div><div class="val">$${mxnTotal.toLocaleString('en',{maximumFractionDigits:0})}</div><div class="sub2">${paid.filter(r=>r['CURRENCY']==='MXN').length}건</div></div>
+    <div class="rp-card"><div class="lbl">거래처 수</div><div class="val">${new Set(paid.map(r=>r['CLIENTE'])).size}개사</div><div class="sub2">기간 내</div></div>`;
+
+  document.getElementById('recentPayBody').innerHTML = paid.slice(0,20).map(r=>`
+    <tr>
+      <td>${fmt(r['CLIENTE'])}</td>
+      <td>${fmt(r['FACTURA_NO'])}</td>
+      <td>${fmt(r['FACTURA_DATE'])}</td>
+      <td><span style="font-size:10px;padding:1px 6px;border-radius:20px;background:${r['CURRENCY']==='USD'?'var(--blue-bg,#E6F1FB)':'var(--warning-bg)'};color:${r['CURRENCY']==='USD'?'#0C447C':'var(--warning-text)'};">${r['CURRENCY']}</span></td>
+      <td class="num" style="color:var(--success-text);font-weight:500;">${fmtNum(r['TOTAL'])}</td>
+      <td style="color:var(--success-text);">✓ ${fmt(r['ACTUAL_PAYMENT_DATE'])}</td>
+      <td style="font-size:11px;color:var(--text-secondary);">${fmt(r['NOTE'])}</td>
+    </tr>`).join('') || '<tr><td colspan="7" style="text-align:center;padding:16px;color:var(--text-secondary);">해당 기간 입금 내역 없음</td></tr>';
 }
 
 function downloadCSV(){
