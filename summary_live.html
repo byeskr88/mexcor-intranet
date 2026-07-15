@@ -271,10 +271,14 @@ async function loadAll(){
   try{
     // ===== AR =====
     const ar=await tsv('ar');
-    const pending=ar.data.filter(r=>r[ar.hdr.indexOf('PAYMENT STATUS')]==='PENDIENTE');
-    const usdI=ar.hdr.indexOf('TOTAL'), curI=ar.hdr.indexOf('CURRENCY');
-    const usdAr=Math.round(pending.filter(r=>r[curI]==='USD').reduce((s,r)=>s+toN(r[usdI]),0));
-    const mxnAr=Math.round(pending.filter(r=>r[curI]==='MXN').reduce((s,r)=>s+toN(r[usdI]),0));
+    // AR: NO,YEAR,MONTH,MES,CLIENTE,FACTURA NO,FACTURA DATE,CONCEPT,UNIT,CURRENCY,SUB TOTAL,IVA,IVA RET,TOTAL,PAYMENT STATUS
+    const arHdr=ar.hdr;
+    const psI=arHdr.findIndex(h=>h.toUpperCase().includes('PAYMENT STATUS'));
+    const totalI=arHdr.findIndex(h=>h.toUpperCase()==='TOTAL');
+    const curI=arHdr.findIndex(h=>h.toUpperCase()==='CURRENCY');
+    const pending=ar.data.filter(r=>(r[psI]||'').toUpperCase()==='PENDIENTE');
+    const usdAr=Math.round(pending.filter(r=>r[curI]==='USD').reduce((s,r)=>s+toN(r[totalI]),0));
+    const mxnAr=Math.round(pending.filter(r=>r[curI]==='MXN').reduce((s,r)=>s+toN(r[totalI]),0));
     document.getElementById('arUsd').textContent='$'+usdAr.toLocaleString();
     document.getElementById('arUsd').style.color=usdAr>100000?'var(--danger-text)':usdAr>50000?'var(--warn-text)':'var(--text)';
     document.getElementById('arMxn').textContent='$'+mxnAr.toLocaleString();
@@ -285,54 +289,66 @@ async function loadAll(){
     if(usdAr>100000) alerts.push({type:'danger',tag:'AR',text:`USD 미수금 ${fmtK(usdAr)} — 주의 필요`,badge:'긴급'});
     else if(usdAr>0) alerts.push({type:'warn',tag:'AR',text:`USD 미수금 ${fmtK(usdAr)} — ${pending.length}건`,badge:'확인'});
     // 탭 링크 상태
+    window.parent?.postMessage({type:'tabStatus',tab:'ar',status:usdAr>100000?'danger':usdAr>0?'warn':'ok',label:usdAr>0?'$'+Math.round(usdAr/1000)+'K':'정상'},'*');
     const el=document.getElementById('link-ar');
     el.textContent=usdAr>100000?'미수금 주의':usdAr>0?`$${Math.round(usdAr/1000)}K`:'정상';
     el.className='tl-status '+(usdAr>100000?'s-danger':usdAr>0?'s-warn':'s-ok');
   } catch(e){ errors.push('AR: '+e.message); }
 
   try{
-    // ===== 매출 =====
+    // ===== 매출 — sales_live.html과 동일 구조 =====
     const sales=await tsv('sales');
+    const rows=sales.data;
     const hdr=sales.hdr;
-    const rows=sales.data.filter(r=>r[0]);
-    // 매출 시트 구조: CLIENTE, ITEM, CONCEPT, UNIT, YEARLY PLAN, 1월~12월
-    const planI=hdr.indexOf('YEARLY PLAN')||4;
-    const months=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-    const monthIdxs=months.map(m=>hdr.indexOf(m));
-    const curMonth=new Date().getMonth(); // 0-indexed
+    const MONTHS=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 
-    // QTY KG 또는 SALES AMOUNT 행에서 합계
-    const salesRows=rows.filter(r=>r[2]==='SALES AMOUNT'||r[2]==='SALES AMOUNT ');
-    const totalPlan=salesRows.reduce((s,r)=>s+toN(r[planI]),0);
-    const monthTotals=months.map((_,mi)=>({
-      plan: salesRows.reduce((s,r)=>s+toN(r[planI]),0)/12,
-      actual: salesRows.reduce((s,r)=>s+toN(r[monthIdxs[mi]]),0)
-    }));
-    const ytdActual=monthTotals.slice(0,curMonth).reduce((s,m)=>s+m.actual,0);
-    const ytdPlan=monthTotals.slice(0,curMonth).reduce((s,m)=>s+m.plan,0);
+    // 컬럼 키 찾기
+    const keys=hdr;
+    const monthKeys=MONTHS.map(m=>keys.find(k=>k.trim()===m)||m);
+
+    // 계획 행
+    const planRow=rows.find(r=>r[keys.indexOf('COMPANY')]?.includes('계획'));
+    const planVals=monthKeys.map(k=>toN(planRow?.[k]||planRow?.[keys.indexOf(k)]||0));
+    const totalPlan=planVals.reduce((s,v)=>s+v,0);
+
+    // 거래처 행
+    const compI=keys.indexOf('COMPANY');
+    const locI=keys.indexOf('LOC');
+    const clientRows=rows.filter(r=>{
+      const c=r[compI]||'';
+      return c&&!['계획(USD)','합계','달성률(%)','YTD','-',''].includes(c.trim());
+    });
+    const mtyRows2=clientRows.filter(r=>r[locI]==='MTY');
+    const qroRows2=clientRows.filter(r=>r[locI]==='QRO');
+    const mtyMonthly=MONTHS.map((_,mi)=>mtyRows2.reduce((s,r)=>s+toN(r[monthKeys[mi]]||r[mi+4]||0),0));
+    const qroMonthly=MONTHS.map((_,mi)=>qroRows2.reduce((s,r)=>s+toN(r[monthKeys[mi]]||r[mi+4]||0),0));
+    const totalMonthly=MONTHS.map((_,i)=>mtyMonthly[i]+qroMonthly[i]);
+
+    let curMonth=0;
+    totalMonthly.forEach((v,i)=>{if(v>0)curMonth=i+1;});
+
+    const mtyYtd=mtyMonthly.slice(0,curMonth).reduce((s,v)=>s+v,0);
+    const qroYtd=qroMonthly.slice(0,curMonth).reduce((s,v)=>s+v,0);
+    const ytdActual=totalMonthly.slice(0,curMonth).reduce((s,v)=>s+v,0);
+    const ytdPlan=planVals.slice(0,curMonth).reduce((s,v)=>s+v,0);
     const ytdPct=ytdPlan>0?Math.round(ytdActual/ytdPlan*100):0;
 
     document.getElementById('kpiYtd').textContent=ytdPct+'%';
     document.getElementById('kpiYtd').style.color=ytdPct>=100?'var(--ok-text)':ytdPct>=80?'var(--warn-text)':'var(--danger-text)';
     document.getElementById('kpiPlan').textContent=fmtK(totalPlan);
-
-    // MTY/QRO 분리 (CONCEPT='QRO' 있는지 확인)
-    const mtyRows=salesRows.filter(r=>!r[0]?.includes('QRO')&&!r[1]?.includes('MT'));
-    const qroRows=salesRows.filter(r=>r[0]?.includes('METALSA')||r[1]?.includes('MT'));
-    const mtyYtd=mtyRows.length>0?mtyRows.reduce((s,r)=>s+months.slice(0,curMonth).reduce((ss,_,mi)=>ss+toN(r[monthIdxs[mi]]),0),0):ytdActual*0.3;
-    const qroYtd=qroRows.length>0?qroRows.reduce((s,r)=>s+months.slice(0,curMonth).reduce((ss,_,mi)=>ss+toN(r[monthIdxs[mi]]),0),0):ytdActual*0.7;
-    document.getElementById('kpiMty').textContent=fmtK(mtyYtd||ytdActual*0.32);
-    document.getElementById('kpiQro').textContent=fmtK(qroYtd||ytdActual*0.68);
-    document.getElementById('kpiMtySub').textContent='MTY YTD';
-    document.getElementById('kpiQroSub').textContent='QRO YTD';
+    document.getElementById('kpiMty').textContent=fmtK(mtyYtd);
+    document.getElementById('kpiQro').textContent=fmtK(qroYtd);
+    document.getElementById('kpiMtySub').textContent=`MTY 1~${curMonth}월`;
+    document.getElementById('kpiQroSub').textContent=`QRO 1~${curMonth}월`;
 
     // 월별 바
-    const maxVal=Math.max(...monthTotals.map(m=>Math.max(m.plan,m.actual)),1);
-    document.getElementById('monthBars').innerHTML=monthTotals.map((m,i)=>{
-      const pct=m.plan>0?Math.round(m.actual/m.plan*100):0;
-      const isFuture=i>=curMonth;
+    const maxVal=Math.max(...totalMonthly.filter(v=>v>0),1);
+    document.getElementById('monthBars').innerHTML=totalMonthly.map((actual,i)=>{
+      const plan=planVals[i]||0;
+      const pct=plan>0?Math.round(actual/plan*100):0;
+      const isFuture=actual===0&&i>=curMonth;
       const color=isFuture?'var(--s2)':pct>=100?'var(--ok)':pct>=80?'var(--warn)':'var(--danger)';
-      const h=Math.round(m.actual/maxVal*80);
+      const h=Math.max(Math.round(actual/maxVal*80),isFuture?0:2);
       return `<div class="mbar-col">
         <div class="mbar-val" style="color:${isFuture?'var(--hint)':color};">${isFuture?'-':pct+'%'}</div>
         <div class="mbar-track"><div class="mbar-fill" style="height:${h}px;background:${color};"></div></div>
@@ -340,12 +356,14 @@ async function loadAll(){
       </div>`;
     }).join('');
 
+    const ytdStatus=ytdPct>=100?'ok':ytdPct>=80?'warn':'danger';
     if(ytdPct<80) alerts.push({type:'danger',tag:'매출',text:`YTD 달성율 ${ytdPct}% — 목표 미달`,badge:'주의'});
     else if(ytdPct<100) alerts.push({type:'warn',tag:'매출',text:`YTD 달성율 ${ytdPct}% — 목표 추격 중`,badge:'확인'});
 
     const sl=document.getElementById('link-sales');
     sl.textContent=ytdPct+'%';
     sl.className='tl-status '+(ytdPct>=100?'s-ok':ytdPct>=80?'s-warn':'s-danger');
+    window.parent?.postMessage({type:'tabStatus',tab:'sales',status:ytdStatus,label:ytdPct+'%'},'*');
   } catch(e){ errors.push('매출: '+e.message); }
 
   try{
@@ -382,6 +400,7 @@ async function loadAll(){
     const invL=document.getElementById('link-inv');
     invL.textContent=reorders.length>0?`재주문 ${reorders.length}건`:warns.length>0?`주의 ${warns.length}건`:'정상';
     invL.className='tl-status '+(reorders.length>0?'s-danger':warns.length>0?'s-warn':'s-ok');
+    window.parent?.postMessage({type:'tabStatus',tab:'inv',status:reorders.length>0?'danger':warns.length>0?'warn':'ok',label:reorders.length>0?`재주문 ${reorders.length}건`:warns.length>0?`주의 ${warns.length}건`:'정상'},'*');
 
     // QRO 재고
     const invQro=await tsv('inv_qro');
@@ -451,6 +470,7 @@ async function loadAll(){
     const crmL=document.getElementById('link-crm');
     crmL.textContent=followup.length>0?`팔로업 ${followup.length}건`:'정상';
     crmL.className='tl-status '+(followup.length>0?'s-warn':'s-ok');
+    window.parent?.postMessage({type:'tabStatus',tab:'crm',status:followup.length>0?'warn':'ok',label:followup.length>0?`팔로업 ${followup.length}건`:'정상'},'*');
 
     document.getElementById('link-aviso').textContent='확인';
     document.getElementById('link-aviso').className='tl-status s-gray';
