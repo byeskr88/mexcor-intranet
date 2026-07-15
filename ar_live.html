@@ -90,7 +90,29 @@
 
   <div id="mainContent" style="display:none;">
 
-    <div class="summary">
+    <!-- 최근 입금 내역 -->
+  <div class="payment-section" id="paymentSection">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <span style="font-size:13px;font-weight:500;">최근 입금 내역</span>
+      <div class="payment-tabs">
+        <button class="ptab active" onclick="setPayPeriod(1,this)">1개월</button>
+        <button class="ptab" onclick="setPayPeriod(3,this)">3개월</button>
+        <button class="ptab" onclick="setPayPeriod(6,this)">6개월</button>
+      </div>
+    </div>
+    <div class="recent-pay-grid" id="recentPayGrid"></div>
+    <div class="tbl-wrap" style="margin-bottom:16px;">
+      <table>
+        <thead><tr>
+          <th>거래처</th><th>FACTURA NO</th><th>발행일</th>
+          <th>통화</th><th class="num">금액</th><th>실입금일</th><th>비고</th>
+        </tr></thead>
+        <tbody id="recentPayBody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div style="border-top:0.5px solid var(--border);margin:16px 0;"></div>
+  <div class="summary">
       <div class="card">
         <p class="lbl">미수금 (USD)</p>
         <p class="val" id="totalUSD">-</p>
@@ -134,28 +156,7 @@
       <button class="download-btn" onclick="downloadCSV()">⬇ 엑셀 다운로드</button>
     </div>
 
-    <!-- 최근 입금 내역 -->
-  <div class="payment-section" id="paymentSection">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-      <span style="font-size:13px;font-weight:500;">최근 입금 내역</span>
-      <div class="payment-tabs">
-        <button class="ptab active" onclick="setPayPeriod(1,this)">1개월</button>
-        <button class="ptab" onclick="setPayPeriod(3,this)">3개월</button>
-        <button class="ptab" onclick="setPayPeriod(6,this)">6개월</button>
-      </div>
-    </div>
-    <div class="recent-pay-grid" id="recentPayGrid"></div>
-    <div class="tbl-wrap" style="margin-bottom:16px;">
-      <table>
-        <thead><tr>
-          <th>거래처</th><th>FACTURA NO</th><th>발행일</th>
-          <th>통화</th><th class="num">금액</th><th>실입금일</th><th>비고</th>
-        </tr></thead>
-        <tbody id="recentPayBody"></tbody>
-      </table>
-    </div>
-  </div>
-  <div class="tbl-wrap">
+    <div class="tbl-wrap">
       <table id="mainTable">
         <thead>
           <tr>
@@ -210,6 +211,11 @@ function fmtNum(v){
   const n=parseFloat(String(v).replace(/,/g,''));
   if(isNaN(n)||n===0) return '-';
   return n.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+}
+function fmtMoney(v){
+  const n=Math.round(parseFloat(String(v||'0').replace(/,/g,''))||0);
+  if(n===0) return '-';
+  return '$'+n.toLocaleString('en-US');
 }
 
 function getRowClass(status, bucket, days){
@@ -429,14 +435,16 @@ function renderPayments(){
     return db-da;
   });
 
-  const usdTotal = paid.filter(r=>r['CURRENCY']==='USD').reduce((s,r)=>s+(r['TOTAL']||0),0);
-  const mxnTotal = paid.filter(r=>r['CURRENCY']==='MXN').reduce((s,r)=>s+(r['TOTAL']||0),0);
+  const usdTotal = paid.filter(r=>r['CURRENCY']==='USD').reduce((s,r)=>s+(Math.round(parseFloat(String(r['TOTAL']||'0').replace(/,/g,''))||0)),0);
+  const mxnTotal = paid.filter(r=>r['CURRENCY']==='MXN').reduce((s,r)=>s+(Math.round(parseFloat(String(r['TOTAL']||'0').replace(/,/g,''))||0)),0);
   const cnt = paid.length;
 
+  const usdCnt=paid.filter(r=>r['CURRENCY']==='USD').length;
+  const mxnCnt=paid.filter(r=>r['CURRENCY']==='MXN').length;
   document.getElementById('recentPayGrid').innerHTML = `
     <div class="rp-card"><div class="lbl">입금 건수</div><div class="val">${cnt}건</div><div class="sub2">최근 ${payPeriod}개월</div></div>
-    <div class="rp-card"><div class="lbl">USD 입금</div><div class="val">$${usdTotal.toLocaleString('en',{maximumFractionDigits:0})}</div><div class="sub2">${paid.filter(r=>r['CURRENCY']==='USD').length}건</div></div>
-    <div class="rp-card"><div class="lbl">MXN 입금</div><div class="val">$${mxnTotal.toLocaleString('en',{maximumFractionDigits:0})}</div><div class="sub2">${paid.filter(r=>r['CURRENCY']==='MXN').length}건</div></div>
+    <div class="rp-card"><div class="lbl">USD 입금</div><div class="val">${fmtMoney(usdTotal)}</div><div class="sub2">${usdCnt}건</div></div>
+    <div class="rp-card"><div class="lbl">MXN 입금</div><div class="val">${fmtMoney(mxnTotal)}</div><div class="sub2">${mxnCnt}건</div></div>
     <div class="rp-card"><div class="lbl">거래처 수</div><div class="val">${new Set(paid.map(r=>r['CLIENTE'])).size}개사</div><div class="sub2">기간 내</div></div>`;
 
   document.getElementById('recentPayBody').innerHTML = paid.slice(0,20).map(r=>`
