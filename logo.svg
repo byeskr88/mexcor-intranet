@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 140">
+  <!-- 왼쪽 기둥 -->
+  <rect x="10" y="10" width="38" height="95" rx="19" fill="#2d2d7a"/>
+  <!-- 왼쪽 기둥 하단 삼각 -->
+  <polygon points="10,80 48,80 10,125" fill="#2d2d7a"/>
+  <!-- 가운데 기둥 -->
+  <rect x="81" y="10" width="38" height="95" rx="19" fill="#2d2d7a"/>
+  <!-- 가운데 기둥 하단 삼각 -->
+  <polygon points="81,80 119,80 81,125" fill="#2d2d7a"/>
+  <!-- 오른쪽 기둥 -->
+  <rect x="152" y="10" width="38" height="95" rx="19" fill="#2d2d7a"/>
+  <!-- 오른쪽 기둥 하단 삼각 -->
+  <polygon points="152,80 190,80 152,125" fill="#2d2d7a"/>
+  <!-- 파란 스웨시 곡선 -->
+  <path d="M 5,90 Q 100,120 195,70" stroke="#2a6cb7" stroke-width="9" fill="none" stroke-linecap="round"/>
+  <path d="M 5,98 Q 100,128 195,78" stroke="white" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.6"/>
+</svg>

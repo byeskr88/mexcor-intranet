@@ -40,10 +40,10 @@
     .mn-right { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
     .mn-time { font-size: 11px; color: #555; }
     .mn-lang {
-      background: none; border: 0.5px solid #3a4070; border-radius: 5px;
-      color: #777; padding: 3px 9px; font-size: 11px; cursor: pointer; font-family: inherit;
+      background: #2a3060; border: 0.5px solid #5a6090; border-radius: 5px;
+      color: #ccc; padding: 4px 10px; font-size: 12px; cursor: pointer; font-family: inherit; font-weight: 500;
     }
-    .mn-lang:hover { border-color: #666; color: #ccc; }
+    .mn-lang:hover { background:#3a4070; color: #fff; }
     .mn-s-ok { background: #1a5c3c; color: #5DCAA5; }
     .mn-s-warn { background: #5c3a0a; color: #EF9F27; }
     .mn-s-danger { background: #5c1a1a; color: #F09595; }
@@ -56,7 +56,7 @@
   nav.id = 'mexcor-nav';
   nav.innerHTML = `
     <div class="mn-logo">
-      <img src="logo.png" alt="MEXCOR" onerror="this.outerHTML='<span style=\"color:#fff;font-weight:700;font-size:14px;letter-spacing:.05em;\">MEXCOR</span>'">
+      <img src="logo.svg" alt="MEXCOR" onerror="this.outerHTML='<span style=\"color:#fff;font-weight:700;font-size:14px;letter-spacing:.05em;\">MEXCOR</span>'">
     </div>
     <div class="mn-tabs">
       ${PAGES.map(p=>`<a class="mn-tab${p.file===curFile?' active':''}" href="${p.file}" data-id="${p.id}">
