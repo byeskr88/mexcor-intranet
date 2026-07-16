@@ -206,6 +206,16 @@ const alerts=[];
 
 async function load(){
   const errs=[];
+  // 연결 테스트
+  try{
+    const test=await fetch(BASE.replace('{G}',GIDS['ar']),{signal:AbortSignal.timeout(8000)});
+    if(!test.ok) throw new Error('HTTP '+test.status);
+  }catch(e){
+    document.getElementById('sbar').className='sbar err';
+    document.getElementById('sbar').textContent='❌ 구글 시트 연결 실패: '+e.message;
+    document.getElementById('pageTs').textContent='연결 오류 — 네트워크 확인 필요';
+    return;
+  }
 
   // ===== AR =====
   try{
@@ -390,8 +400,14 @@ async function load(){
 
   // 탭 상태 배지 업데이트
   try{ window._mexcorSetStatus?.('ar', usdAr>100000?'danger':usdAr>0?'warn':'ok', usdAr>0?'$'+Math.round(usdAr/1000)+'K':'정상'); }catch(e){}
-  document.getElementById('sbar').className='sbar ok';
-  document.getElementById('sbar').textContent='✓ 데이터 연동 성공'+(errs.length?' (오류: '+errs.join(', ')+')':'');
+  const sbarEl=document.getElementById('sbar');
+  if(errs.length){
+    sbarEl.className='sbar err';
+    sbarEl.textContent='⚠ 일부 오류: '+errs.join(' / ');
+  } else {
+    sbarEl.className='sbar ok';
+    sbarEl.textContent='✓ 데이터 연동 성공';
+  }
   document.getElementById('pageTs').textContent='최종 업데이트: '+new Date().toLocaleString('ko-KR');
 }
 load();
