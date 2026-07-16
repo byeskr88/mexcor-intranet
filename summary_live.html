@@ -206,6 +206,7 @@ const alerts=[];
 
 async function load(){
   const errs=[];
+  let usdAr=0;
 
 
   // ===== AR =====
@@ -221,6 +222,7 @@ async function load(){
     const rows=ar.data.filter(r=>!isNaN(r[1])&&r[1]);
     const pend=rows.filter(r=>(r[SI]||r[hdr.length-6]||'').toUpperCase()==='PENDIENTE');
     const usd=Math.round(pend.filter(r=>r[CI]==='USD').reduce((s,r)=>s+toN(r[TI]),0));
+    usdAr=usd;
     const mxn=Math.round(pend.filter(r=>r[CI]==='MXN').reduce((s,r)=>s+toN(r[TI]),0));
     document.getElementById('arUsd').textContent='$'+usd.toLocaleString();
     document.getElementById('arUsd').style.color=usd>100000?'var(--danger-text)':usd>0?'var(--warn-text)':'var(--text)';
@@ -306,7 +308,7 @@ async function load(){
       </div>`;
     }).join('');
     if(ytdRate<80) alerts.push({t:'danger',tag:'매출',txt:`YTD 달성율 ${ytdRate}% — 목표 미달`,bdg:'주의'});
-    else else if(ytdRate<100) alerts.push({t:'warn',tag:'매출',txt:`YTD 달성율 ${ytdRate}% — 목표 추격 중`,bdg:'확인'});
+    else if(ytdRate<100) alerts.push({t:'warn',tag:'매출',txt:`YTD 달성율 ${ytdRate}% — 목표 추격 중`,bdg:'확인'});
     window.parent?.postMessage({type:'tabStatus',tab:'sales',status:ytdRate>=100?'ok':ytdPct>=80?'warn':'danger',label:ytdRate+'%'},'*');
   }catch(e){errs.push('매출:'+e.message);}
 
