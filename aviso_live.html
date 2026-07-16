@@ -61,22 +61,22 @@
 <script src="nav.js"></script>
 
 <div class="wrap">
-  <h1>AVISO 탭 — 구글 시트 실시간 연동</h1>
-  <p class="sub" id="lastUpdate">데이터 불러오는 중...</p>
-  <div class="status loading" id="statusBox">구글 시트에서 데이터를 불러오는 중...</div>
+  <h1 data-ko="AVISO 탭 — 구글 시트 실시간 연동" data-es="AVISO — Sincronización en Vivo">AVISO 탭 — 구글 시트 실시간 연동</h1>
+  <p class="sub" id="lastUpdate" data-ko="데이터 불러오는 중..." data-es="Cargando datos...">데이터 불러오는 중...</p>
+  <div class="status loading" id="statusBox" data-ko="구글 시트에서 데이터를 불러오는 중..." data-es="Cargando datos de Google Sheets...">구글 시트에서 데이터를 불러오는 중...</div>
 
   <div class="summary" id="summaryBox" style="display:none;">
-    <div class="card"><p class="lbl">전체 PEDIDO</p><p class="val" id="totalCount">-</p></div>
+    <div class="card"><p class="lbl" data-ko="전체 PEDIDO" data-es="Total PEDIDO">전체 PEDIDO</p><p class="val" id="totalCount">-</p></div>
     <div class="card"><p class="lbl">OK</p><p class="val" id="okCount" style="color:var(--success);">-</p></div>
-    <div class="card"><p class="lbl">진행중(PROCESO)</p><p class="val" id="procesoCount" style="color:var(--warning);">-</p></div>
-    <div class="card"><p class="lbl">비용합계 총액</p><p class="val" id="totalCost" style="font-size:15px;">-</p></div>
+    <div class="card"><p class="lbl" data-ko="진행중(PROCESO)" data-es="En Proceso">진행중(PROCESO)</p><p class="val" id="procesoCount" style="color:var(--warning);">-</p></div>
+    <div class="card"><p class="lbl" data-ko="비용합계 총액" data-es="Costo Total">비용합계 총액</p><p class="val" id="totalCost" style="font-size:15px;">-</p></div>
   </div>
 
   <div class="filterbar" id="filterbar" style="display:none;">
-    <button class="active" onclick="filterData('all',this)">전체</button>
+    <button class="active" onclick="filterData('all',this)" data-ko="전체" data-es="Todos">전체</button>
     <button onclick="filterData('OK',this)">OK</button>
-    <button onclick="filterData('PROCESO',this)">진행중</button>
-    <button onclick="filterData('PENDING',this)" style="color:#A32D2D;">대기</button>
+    <button onclick="filterData('PROCESO',this)" data-ko="진행중" data-es="En Proceso">진행중</button>
+    <button onclick="filterData('PENDING',this)" style="color:#A32D2D;" data-ko="대기" data-es="Pendiente">대기</button>
   </div>
 
   <div class="tbl-wrap" id="tableWrap" style="display:none;">
@@ -104,6 +104,12 @@
 <script>
 const TSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRfv4TFloZqAVKyJXAoGCjP5xec3MvPGjTagc1btjwQzKXvICTmREywHrT1wNSl_6JN7vA_gsY2w8kB/pub?gid=0&single=true&output=tsv';
 let groups = [];
+
+let curLang = localStorage.getItem('mexcor_lang')||'ko';
+const T_KO={cnt:'건',syncOk:n=>`✓ 구글 시트 연동 성공 — PEDIDO ${n}건 불러옴`,syncFail:m=>'❌ 연동 실패 — '+m,lastUpd:'최종 업데이트: '};
+const T_ES={cnt:'',syncOk:n=>`✓ Sincronizado — ${n} PEDIDO cargados`,syncFail:m=>'❌ Error de sincronización — '+m,lastUpd:'Última actualización: '};
+function T(){ return curLang==='es'?T_ES:T_KO; }
+document.addEventListener('mexcorLangChange',function(e){ curLang=e.detail.lang; if(groups.length) renderSummary(); });
 
 function parseTSV(text){
   const lines = text.replace(/\r/g,'').split('\n');
@@ -158,29 +164,32 @@ async function loadData(){
     const text = await res.text();
     const rows = parseTSV(text).filter(r=>r['PEDIDO']&&r['PEDIDO']!=='-'&&r['PEDIDO']!=='PEDIDO');
     groups = groupRows(rows);
-
-    const okG = groups.filter(g=>g.estatus==='OK').length;
-    const proG = groups.filter(g=>g.estatus==='PROCESO').length;
-    const totalCost = groups.reduce((s,g)=>{
-      const n=parseFloat((g.total||'0').replace(/,/g,''));
-      return s+(isNaN(n)?0:n);
-    },0);
-
-    document.getElementById('totalCount').textContent = groups.length+'건';
-    document.getElementById('okCount').textContent = okG+'건';
-    document.getElementById('procesoCount').textContent = proG+'건';
-    document.getElementById('totalCost').textContent = '$'+totalCost.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
-    document.getElementById('summaryBox').style.display = 'grid';
-    document.getElementById('filterbar').style.display = 'flex';
-    document.getElementById('tableWrap').style.display = 'block';
-    document.getElementById('statusBox').className = 'status success';
-    document.getElementById('statusBox').textContent = '✓ 구글 시트 연동 성공 — PEDIDO '+groups.length+'건 불러옴';
-    document.getElementById('lastUpdate').textContent = '최종 업데이트: '+new Date().toLocaleString('ko-KR');
+    renderSummary();
     renderTable(groups);
   } catch(e){
     document.getElementById('statusBox').className = 'status error';
-    document.getElementById('statusBox').textContent = '❌ 연동 실패 — '+e.message;
+    document.getElementById('statusBox').textContent = T().syncFail(e.message);
   }
+}
+
+function renderSummary(){
+  const okG = groups.filter(g=>g.estatus==='OK').length;
+  const proG = groups.filter(g=>g.estatus==='PROCESO').length;
+  const totalCost = groups.reduce((s,g)=>{
+    const n=parseFloat((g.total||'0').replace(/,/g,''));
+    return s+(isNaN(n)?0:n);
+  },0);
+
+  document.getElementById('totalCount').textContent = groups.length+T().cnt;
+  document.getElementById('okCount').textContent = okG+T().cnt;
+  document.getElementById('procesoCount').textContent = proG+T().cnt;
+  document.getElementById('totalCost').textContent = '$'+totalCost.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+  document.getElementById('summaryBox').style.display = 'grid';
+  document.getElementById('filterbar').style.display = 'flex';
+  document.getElementById('tableWrap').style.display = 'block';
+  document.getElementById('statusBox').className = 'status success';
+  document.getElementById('statusBox').textContent = T().syncOk(groups.length);
+  document.getElementById('lastUpdate').textContent = T().lastUpd+new Date().toLocaleString('ko-KR');
 }
 
 function renderTable(data){

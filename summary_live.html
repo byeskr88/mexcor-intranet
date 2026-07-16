@@ -79,14 +79,14 @@ hr{border:none;border-top:0.5px solid var(--border);margin:18px 0;}
 .s-card .lbl{font-size:11px;color:var(--muted);margin-bottom:4px;}
 .s-card .val{font-size:18px;font-weight:600;}
 .s-card .sub2{font-size:11px;margin-top:3px;}
-/* 월별 바 - 가로 12개 */
-.month-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;}
-.m-col{display:flex;flex-direction:column;align-items:center;gap:2px;}
-.m-pct{font-size:10px;font-weight:600;min-height:14px;text-align:center;}
-.m-track{width:100%;height:60px;background:var(--s2);border-radius:3px 3px 0 0;overflow:hidden;display:flex;align-items:flex-end;}
-.m-fill{width:100%;}
-.m-lbl{font-size:9px;color:var(--muted);}
-.m-amt{font-size:9px;color:var(--muted);min-height:12px;}
+/* 월별 바 - 가로 12개 (sales_live 동일 디자인) */
+.month-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:6px;}
+.m-col{text-align:center;}
+.m-lbl{font-size:10px;color:var(--muted);margin:0 0 4px;}
+.m-pct{font-size:13px;font-weight:500;margin:0 0 4px;min-height:16px;}
+.m-track{height:4px;background:#e2e0d8;border-radius:2px;overflow:hidden;}
+.m-fill{height:4px;border-radius:2px;}
+.m-amt{font-size:10px;color:var(--muted);margin:3px 0 0;min-height:12px;}
 </style>
 </head>
 <body>
@@ -296,14 +296,14 @@ async function load(){
       const act=totM[i],plan=planVals[i]||0;
       const pct=plan>0?Math.round(act/plan*100):0;
       const isFut=act===0&&i>=curM;
-      const clr=isFut?'var(--s2)':pct>=100?'var(--ok)':pct>=90?'var(--warn)':'var(--danger)';
+      const clr=isFut?'#e2e0d8':pct>=100?'var(--ok)':pct>=90?'var(--warn)':'var(--danger)';
       const pctClr=isFut?'var(--hint)':pct>=100?'var(--ok-text)':pct>=90?'var(--warn-text)':'var(--danger-text)';
-      const h=isFut?0:Math.max(Math.round(act/maxV*55),act>0?3:0);
+      const barW=isFut?0:Math.min(pct,100);
       const isCur=i===curM-1;
-      return `<div class="m-col" style="${isCur?'background:var(--blue-bg);border-radius:4px;padding:2px;':''}">
+      return `<div class="m-col" style="${isCur?'background:var(--blue-bg);border-radius:6px;padding:4px 0;':''}">
+        <div class="m-lbl" style="${isCur?'color:var(--blue-text);font-weight:500;':''}">${i+1}월</div>
         <div class="m-pct" style="color:${pctClr};">${isFut?'예정':pct+'%'}</div>
-        <div class="m-track"><div class="m-fill" style="height:${h}px;background:${clr};"></div></div>
-        <div class="m-lbl">${i+1}월</div>
+        <div class="m-track"><div class="m-fill" style="width:${barW}%;background:${clr};"></div></div>
         <div class="m-amt">${!isFut&&act>0?fmtK(act):''}</div>
       </div>`;
     }).join('');

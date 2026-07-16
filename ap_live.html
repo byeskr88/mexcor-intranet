@@ -82,26 +82,26 @@
 <body>
 <script src="nav.js"></script>
 <div class="wrap">
-  <h1>AP 탭 — 구글 시트 실시간 연동</h1>
-  <p class="sub" id="lastUpdate">데이터 불러오는 중...</p>
-  <div class="status-bar loading" id="statusBox">구글 시트에서 데이터를 불러오는 중...</div>
+  <h1 data-ko="AP 탭 — 구글 시트 실시간 연동" data-es="CxP — Sincronización en Vivo">AP 탭 — 구글 시트 실시간 연동</h1>
+  <p class="sub" id="lastUpdate" data-ko="데이터 불러오는 중..." data-es="Cargando datos...">데이터 불러오는 중...</p>
+  <div class="status-bar loading" id="statusBox" data-ko="구글 시트에서 데이터를 불러오는 중..." data-es="Cargando datos de Google Sheets...">구글 시트에서 데이터를 불러오는 중...</div>
 
   <div id="mainContent" style="display:none;">
 
     <div class="top-cards">
       <div class="top-card gen" onclick="document.getElementById('sec-gen').scrollIntoView({behavior:'smooth'})">
-        <p class="lbl">일반 AP</p>
+        <p class="lbl" data-ko="일반 AP" data-es="CxP General">일반 AP</p>
         <p class="val" id="card-gen-mxn">-</p>
         <p class="val2" id="card-gen-usd">-</p>
         <p class="info" id="card-gen-info">-</p>
       </div>
       <div class="top-card hw" onclick="document.getElementById('sec-hw').scrollIntoView({behavior:'smooth'})">
-        <p class="lbl">현대웰딩 AP</p>
+        <p class="lbl" data-ko="현대웰딩 AP" data-es="CxP Hyundai Welding">현대웰딩 AP</p>
         <p class="val" id="card-hw-amt">-</p>
         <p class="info" id="card-hw-info">-</p>
       </div>
       <div class="top-card mkc" onclick="document.getElementById('sec-mkc').scrollIntoView({behavior:'smooth'})">
-        <p class="lbl">MKC (포워딩)</p>
+        <p class="lbl" data-ko="MKC (포워딩)" data-es="MKC (Reenvío)">MKC (포워딩)</p>
         <p class="val" id="card-mkc-amt">-</p>
         <p class="info" id="card-mkc-info">-</p>
       </div>
@@ -111,24 +111,24 @@
     <div id="sec-gen">
       <hr class="section-divider">
       <div class="sec-header">
-        <span class="sec-badge" style="background:var(--accent-bg);color:var(--accent-text);">일반 AP</span>
-        <p class="sec-title">일반 구매/지급</p>
+        <span class="sec-badge" style="background:var(--accent-bg);color:var(--accent-text);" data-ko="일반 AP" data-es="CxP General">일반 AP</span>
+        <p class="sec-title" data-ko="일반 구매/지급" data-es="Compras/Pagos Generales">일반 구매/지급</p>
         <div class="filter-groups">
           <div class="filter-group">
-            <span class="filter-group-label">기간</span>
+            <span class="filter-group-label" data-ko="기간" data-es="Período">기간</span>
             <div class="filterbar" id="yf-gen">
-              <button onclick="setF('gen','year','recent',this)" class="active">최근 6개월</button>
-              <button onclick="setF('gen','year','2026',this)">2026년</button>
-              <button onclick="setF('gen','year','2025',this)">2025년</button>
-              <button onclick="setF('gen','year','all',this)">전체</button>
+              <button onclick="setF('gen','year','recent',this)" class="active" data-ko="최근 6개월" data-es="Últimos 6 meses">최근 6개월</button>
+              <button onclick="setF('gen','year','2026',this)">2026</button>
+              <button onclick="setF('gen','year','2025',this)">2025</button>
+              <button onclick="setF('gen','year','all',this)" data-ko="전체" data-es="Todos">전체</button>
             </div>
           </div>
           <div class="filter-group">
-            <span class="filter-group-label">상태</span>
+            <span class="filter-group-label" data-ko="상태" data-es="Estado">상태</span>
             <div class="filterbar" id="sf-gen">
-              <button onclick="setF('gen','status','all',this)" class="active">전체</button>
-              <button onclick="setF('gen','status','PENDING',this)" style="color:var(--warning-text);">미결제</button>
-              <button onclick="setF('gen','status','PAID',this)">결제완료</button>
+              <button onclick="setF('gen','status','all',this)" class="active" data-ko="전체" data-es="Todos">전체</button>
+              <button onclick="setF('gen','status','PENDING',this)" style="color:var(--warning-text);" data-ko="미결제" data-es="Pendiente">미결제</button>
+              <button onclick="setF('gen','status','PAID',this)" data-ko="결제완료" data-es="Pagado">결제완료</button>
             </div>
           </div>
         </div>
@@ -136,18 +136,18 @@
       <div class="search-row">
         <input type="text" id="search-gen" placeholder="공급사명 검색..." oninput="applyFilter('gen')">
         <span class="result-info" id="result-gen"></span>
-        <button class="dl-btn" onclick="downloadCSV('gen')">⬇ 다운로드</button>
+        <button class="dl-btn" onclick="downloadCSV('gen')" data-ko="⬇ 다운로드" data-es="⬇ Descargar">⬇ 다운로드</button>
       </div>
       <div class="tbl-wrap">
         <table><thead><tr>
           <th onclick="sortBy('gen','NO')">NO ↕</th>
-          <th onclick="sortBy('gen','FACTURA_MONTH')">발행월 ↕</th>
-          <th onclick="sortBy('gen','PROVEEDOR')">공급사 ↕</th>
-          <th>FACTURA NO</th><th>컨셉</th><th>통화</th>
-          <th class="num" onclick="sortBy('gen','TOTAL')">합계 ↕</th>
-          <th>결제방식</th><th>부서</th><th>담당자</th>
-          <th onclick="sortBy('gen','FECHA_PAGO')">결제일 ↕</th>
-          <th>상태</th><th>NOTA</th>
+          <th onclick="sortBy('gen','FACTURA_MONTH')" data-ko="발행월 ↕" data-es="Mes Emisión ↕">발행월 ↕</th>
+          <th onclick="sortBy('gen','PROVEEDOR')" data-ko="공급사 ↕" data-es="Proveedor ↕">공급사 ↕</th>
+          <th>FACTURA NO</th><th data-ko="컨셉" data-es="Concepto">컨셉</th><th data-ko="통화" data-es="Moneda">통화</th>
+          <th class="num" onclick="sortBy('gen','TOTAL')" data-ko="합계 ↕" data-es="Total ↕">합계 ↕</th>
+          <th data-ko="결제방식" data-es="Forma de Pago">결제방식</th><th data-ko="부서" data-es="Depto.">부서</th><th data-ko="담당자" data-es="Responsable">담당자</th>
+          <th onclick="sortBy('gen','FECHA_PAGO')" data-ko="결제일 ↕" data-es="Fecha Pago ↕">결제일 ↕</th>
+          <th data-ko="상태" data-es="Estado">상태</th><th>NOTA</th>
         </tr></thead>
         <tbody id="tbody-gen"></tbody></table>
       </div>
@@ -158,31 +158,31 @@
       <hr class="section-divider">
       <div class="sec-header">
         <span class="sec-badge" style="background:#EDE7F6;color:#4527A0;">현대웰딩</span>
-        <p class="sec-title">용접봉 수입 결제</p>
+        <p class="sec-title" data-ko="용접봉 수입 결제" data-es="Pago Importación Electrodos">용접봉 수입 결제</p>
         <div class="filter-groups">
           <div class="filter-group">
             <span class="filter-group-label">LOC</span>
             <div class="filterbar" id="lf-hw">
-              <button onclick="setF('hw','loc','all',this)" class="active">전체</button>
+              <button onclick="setF('hw','loc','all',this)" class="active" data-ko="전체" data-es="Todos">전체</button>
               <button onclick="setF('hw','loc','MTY',this)">MTY</button>
               <button onclick="setF('hw','loc','QRO',this)">QRO</button>
             </div>
           </div>
           <div class="filter-group">
-            <span class="filter-group-label">기간</span>
+            <span class="filter-group-label" data-ko="기간" data-es="Período">기간</span>
             <div class="filterbar" id="yf-hw">
-              <button onclick="setF('hw','year','recent',this)" class="active">최근 6개월</button>
-              <button onclick="setF('hw','year','2026',this)">2026년</button>
-              <button onclick="setF('hw','year','2025',this)">2025년</button>
-              <button onclick="setF('hw','year','all',this)">전체</button>
+              <button onclick="setF('hw','year','recent',this)" class="active" data-ko="최근 6개월" data-es="Últimos 6 meses">최근 6개월</button>
+              <button onclick="setF('hw','year','2026',this)">2026</button>
+              <button onclick="setF('hw','year','2025',this)">2025</button>
+              <button onclick="setF('hw','year','all',this)" data-ko="전체" data-es="Todos">전체</button>
             </div>
           </div>
           <div class="filter-group">
-            <span class="filter-group-label">상태</span>
+            <span class="filter-group-label" data-ko="상태" data-es="Estado">상태</span>
             <div class="filterbar" id="sf-hw">
-              <button onclick="setF('hw','status','PENDING',this)" class="active">미결제</button>
-              <button onclick="setF('hw','status','all',this)">전체</button>
-              <button onclick="setF('hw','status','PAID',this)">결제완료</button>
+              <button onclick="setF('hw','status','PENDING',this)" class="active" data-ko="미결제" data-es="Pendiente">미결제</button>
+              <button onclick="setF('hw','status','all',this)" data-ko="전체" data-es="Todos">전체</button>
+              <button onclick="setF('hw','status','PAID',this)" data-ko="결제완료" data-es="Pagado">결제완료</button>
             </div>
           </div>
         </div>
@@ -190,22 +190,22 @@
       <div class="search-row">
         <input type="text" id="search-hw" placeholder="계약번호 검색..." oninput="applyFilter('hw')">
         <span class="result-info" id="result-hw"></span>
-        <button class="dl-btn" onclick="downloadCSV('hw')">⬇ 다운로드</button>
+        <button class="dl-btn" onclick="downloadCSV('hw')" data-ko="⬇ 다운로드" data-es="⬇ Descargar">⬇ 다운로드</button>
       </div>
       <div class="tbl-wrap">
         <table><thead><tr>
           <th>LOC</th>
           <th onclick="sortBy('hw','NO')">NO ↕</th>
-          <th onclick="sortBy('hw','CONTRACT_DATE')">계약일 ↕</th>
-          <th onclick="sortBy('hw','CONTRACT_NO')">계약번호 ↕</th>
+          <th onclick="sortBy('hw','CONTRACT_DATE')" data-ko="계약일 ↕" data-es="Fecha Contrato ↕">계약일 ↕</th>
+          <th onclick="sortBy('hw','CONTRACT_NO')" data-ko="계약번호 ↕" data-es="No. Contrato ↕">계약번호 ↕</th>
           <th>INCOTERMS</th>
           <th onclick="sortBy('hw','ETD_BUSAN')">ETD 부산 ↕</th>
-          <th>통화</th>
-          <th class="num" onclick="sortBy('hw','AMOUNT')">금액 ↕</th>
-          <th>신용일수</th>
-          <th onclick="sortBy('hw','DUE_DATE')">결제만기일 ↕</th>
-          <th>상태</th>
-          <th onclick="sortBy('hw','PAYMENT_DATE')">결제일 ↕</th>
+          <th data-ko="통화" data-es="Moneda">통화</th>
+          <th class="num" onclick="sortBy('hw','AMOUNT')" data-ko="금액 ↕" data-es="Monto ↕">금액 ↕</th>
+          <th data-ko="신용일수" data-es="Días Crédito">신용일수</th>
+          <th onclick="sortBy('hw','DUE_DATE')" data-ko="결제만기일 ↕" data-es="Fecha Vencim. ↕">결제만기일 ↕</th>
+          <th data-ko="상태" data-es="Estado">상태</th>
+          <th onclick="sortBy('hw','PAYMENT_DATE')" data-ko="결제일 ↕" data-es="Fecha Pago ↕">결제일 ↕</th>
           <th onclick="sortBy('hw','OVERDUE_DAYS')">D-day ↕</th>
           <th>NOTE</th>
         </tr></thead>
@@ -218,23 +218,23 @@
       <hr class="section-divider">
       <div class="sec-header">
         <span class="sec-badge" style="background:var(--warning-bg);color:var(--warning-text);">MKC</span>
-        <p class="sec-title">포워딩 비용</p>
+        <p class="sec-title" data-ko="포워딩 비용" data-es="Costo de Reenvío">포워딩 비용</p>
         <div class="filter-groups">
           <div class="filter-group">
-            <span class="filter-group-label">기간</span>
+            <span class="filter-group-label" data-ko="기간" data-es="Período">기간</span>
             <div class="filterbar" id="yf-mkc">
-              <button onclick="setF('mkc','year','recent',this)" class="active">최근 6개월</button>
-              <button onclick="setF('mkc','year','2026',this)">2026년</button>
-              <button onclick="setF('mkc','year','2025',this)">2025년</button>
-              <button onclick="setF('mkc','year','all',this)">전체</button>
+              <button onclick="setF('mkc','year','recent',this)" class="active" data-ko="최근 6개월" data-es="Últimos 6 meses">최근 6개월</button>
+              <button onclick="setF('mkc','year','2026',this)">2026</button>
+              <button onclick="setF('mkc','year','2025',this)">2025</button>
+              <button onclick="setF('mkc','year','all',this)" data-ko="전체" data-es="Todos">전체</button>
             </div>
           </div>
           <div class="filter-group">
-            <span class="filter-group-label">상태</span>
+            <span class="filter-group-label" data-ko="상태" data-es="Estado">상태</span>
             <div class="filterbar" id="sf-mkc">
-              <button onclick="setF('mkc','status','PENDING',this)" class="active">미결제</button>
-              <button onclick="setF('mkc','status','all',this)">전체</button>
-              <button onclick="setF('mkc','status','PAID',this)">결제완료</button>
+              <button onclick="setF('mkc','status','PENDING',this)" class="active" data-ko="미결제" data-es="Pendiente">미결제</button>
+              <button onclick="setF('mkc','status','all',this)" data-ko="전체" data-es="Todos">전체</button>
+              <button onclick="setF('mkc','status','PAID',this)" data-ko="결제완료" data-es="Pagado">결제완료</button>
             </div>
           </div>
         </div>
@@ -242,20 +242,20 @@
       <div class="search-row">
         <input type="text" id="search-mkc" placeholder="인보이스/운송유형 검색..." oninput="applyFilter('mkc')">
         <span class="result-info" id="result-mkc"></span>
-        <button class="dl-btn" onclick="downloadCSV('mkc')">⬇ 다운로드</button>
+        <button class="dl-btn" onclick="downloadCSV('mkc')" data-ko="⬇ 다운로드" data-es="⬇ Descargar">⬇ 다운로드</button>
       </div>
       <div class="tbl-wrap">
         <table><thead><tr>
-          <th onclick="sortBy('mkc','SHIPMODE')">운송유형 ↕</th>
+          <th onclick="sortBy('mkc','SHIPMODE')" data-ko="운송유형 ↕" data-es="Tipo Envío ↕">운송유형 ↕</th>
           <th onclick="sortBy('mkc','INVOICE_NO')">INVOICE NO ↕</th>
-          <th>통화</th>
+          <th data-ko="통화" data-es="Moneda">통화</th>
           <th class="num" onclick="sortBy('mkc','COST')">COST ↕</th>
           <th class="num">IVA</th>
-          <th class="num" onclick="sortBy('mkc','AMOUNT')">합계 ↕</th>
-          <th onclick="sortBy('mkc','ISSUE_DATE')">발행일 ↕</th>
-          <th onclick="sortBy('mkc','DEPOSIT_DATE')">입금일 ↕</th>
-          <th>컨테이너</th>
-          <th>상태</th>
+          <th class="num" onclick="sortBy('mkc','AMOUNT')" data-ko="합계 ↕" data-es="Total ↕">합계 ↕</th>
+          <th onclick="sortBy('mkc','ISSUE_DATE')" data-ko="발행일 ↕" data-es="Fecha Emisión ↕">발행일 ↕</th>
+          <th onclick="sortBy('mkc','DEPOSIT_DATE')" data-ko="입금일 ↕" data-es="Fecha Depósito ↕">입금일 ↕</th>
+          <th data-ko="컨테이너" data-es="Contenedor">컨테이너</th>
+          <th data-ko="상태" data-es="Estado">상태</th>
           <th>REMARK</th>
         </tr></thead>
         <tbody id="tbody-mkc"></tbody></table>
@@ -282,6 +282,26 @@ const currentFiltered={gen:[],hw:[],mkc:[]};
 const TODAY=new Date();
 const SIX_MONTHS_AGO=new Date(TODAY.getFullYear(),TODAY.getMonth()-6,TODAY.getDate());
 
+let curLang = localStorage.getItem('mexcor_lang')||'ko';
+const T_KO={cnt:'건',genInfo:(t,p)=>`${t}건 · 미결제 ${p}건`,
+  hwInfo:(t,p,c)=>`${t}건 · 미결제 ${p}건`+(c>0?` · D-3이내 ${c}건`:''),
+  mkcInfo:(t,p)=>`${t}건 · 미결제 ${p}건`,
+  syncOk:(g,h,m)=>`✓ 연동 성공 — 일반 ${g}건 / 현대웰딩 ${h}건 / MKC ${m}건`,
+  syncFail:m=>'❌ 연동 실패 — '+m,lastUpd:'최종 업데이트: ',curShow:'현재 표시: ',noData:'해당 조건의 데이터가 없습니다',
+  dOver:'일경과',dday:'D-day'};
+const T_ES={cnt:'',genInfo:(t,p)=>`${t} · Pendiente ${p}`,
+  hwInfo:(t,p,c)=>`${t} · Pendiente ${p}`+(c>0?` · D-3 o menos ${c}`:''),
+  mkcInfo:(t,p)=>`${t} · Pendiente ${p}`,
+  syncOk:(g,h,m)=>`✓ Sincronizado — General ${g} / Hyundai Welding ${h} / MKC ${m}`,
+  syncFail:m=>'❌ Error de sincronización — '+m,lastUpd:'Última actualización: ',curShow:'Mostrando: ',noData:'No hay datos para estos criterios',
+  dOver:' días vencido',dday:'Hoy'};
+function T(){ return curLang==='es'?T_ES:T_KO; }
+document.addEventListener('mexcorLangChange',function(e){
+  curLang=e.detail.lang;
+  if(allData.gen.length||allData.hw.length||allData.mkc.length) renderSummaryCards();
+  applyFilter('gen'); applyFilter('hw'); applyFilter('mkc');
+});
+
 function parseTSV(text){
   const lines=text.replace(/\r/g,'').split('\n');
   const headers=lines[0].split('\t').map(h=>h.trim());
@@ -307,36 +327,7 @@ async function loadAll(){
     allData.hw=parseTSV(t2).filter(r=>r['NO']&&r['NO']!=='NO');
     allData.mkc=parseTSV(t3).filter(r=>r['INVOICE_NO']&&r['INVOICE_NO']!=='INVOICE_NO');
 
-    // 일반 AP — 통화별 분리
-    const genPend=allData.gen.filter(r=>r['PAGO_STATUS']==='PENDIENTE');
-    const mxnTotal=allData.gen.filter(r=>r['MONEDA']==='MXN').reduce((s,r)=>s+(parseFloat((r['TOTAL']||'0').replace(/,/g,''))||0),0);
-    const usdTotal=allData.gen.filter(r=>r['MONEDA']==='USD').reduce((s,r)=>s+(parseFloat((r['TOTAL']||'0').replace(/,/g,''))||0),0);
-
-    // 현대웰딩
-    const hwPend=allData.hw.filter(r=>r['PAYMENT_STATUS']!=='PAID');
-    const hwAmt=hwPend.reduce((s,r)=>s+(parseFloat((r['AMOUNT']||'0').replace(/,/g,''))||0),0);
-    const hwCritical=hwPend.filter(r=>{const d=parseInt(r['OVERDUE_DAYS']);return !isNaN(d)&&d>=-3&&d<=0;}).length;
-
-    // MKC
-    const mkcPend=allData.mkc.filter(r=>r['PAYMENT_STATUS']==='PENDING');
-    const mkcAmt=mkcPend.reduce((s,r)=>s+(parseFloat((r['AMOUNT']||'0').replace(/,/g,''))||0),0);
-
-    document.getElementById('card-gen-mxn').textContent='MXN $'+Math.round(mxnTotal).toLocaleString();
-    document.getElementById('card-gen-usd').textContent='USD $'+Math.round(usdTotal).toLocaleString();
-    document.getElementById('card-gen-info').textContent=allData.gen.length+'건 · 미결제 '+genPend.length+'건';
-    document.getElementById('card-gen-info').style.color=genPend.length>0?'var(--warning-text)':'var(--text-secondary)';
-
-    document.getElementById('card-hw-amt').textContent='$'+Math.round(hwAmt).toLocaleString()+' USD';
-    document.getElementById('card-hw-info').textContent=allData.hw.length+'건 · 미결제 '+hwPend.length+'건'+(hwCritical>0?' · D-3이내 '+hwCritical+'건':'');
-    document.getElementById('card-hw-info').style.color=hwCritical>0?'var(--danger-text)':'var(--warning-text)';
-
-    document.getElementById('card-mkc-amt').textContent='$'+Math.round(mkcAmt).toLocaleString()+' USD';
-    document.getElementById('card-mkc-info').textContent=allData.mkc.length+'건 · 미결제 '+mkcPend.length+'건';
-    document.getElementById('card-mkc-info').style.color=mkcPend.length>0?'var(--warning-text)':'var(--text-secondary)';
-
-    document.getElementById('statusBox').className='status-bar success';
-    document.getElementById('statusBox').textContent='✓ 연동 성공 — 일반 '+allData.gen.length+'건 / 현대웰딩 '+allData.hw.length+'건 / MKC '+allData.mkc.length+'건';
-    document.getElementById('lastUpdate').textContent='최종 업데이트: '+new Date().toLocaleString('ko-KR');
+    renderSummaryCards();
     document.getElementById('mainContent').style.display='block';
 
     applyFilter('gen');
@@ -344,8 +335,41 @@ async function loadAll(){
     applyFilter('mkc');
   }catch(e){
     document.getElementById('statusBox').className='status-bar error';
-    document.getElementById('statusBox').textContent='❌ 연동 실패 — '+e.message;
+    document.getElementById('statusBox').textContent=T().syncFail(e.message);
   }
+}
+
+function renderSummaryCards(){
+  // 일반 AP — 통화별 분리
+  const genPend=allData.gen.filter(r=>r['PAGO_STATUS']==='PENDIENTE');
+  const mxnTotal=allData.gen.filter(r=>r['MONEDA']==='MXN').reduce((s,r)=>s+(parseFloat((r['TOTAL']||'0').replace(/,/g,''))||0),0);
+  const usdTotal=allData.gen.filter(r=>r['MONEDA']==='USD').reduce((s,r)=>s+(parseFloat((r['TOTAL']||'0').replace(/,/g,''))||0),0);
+
+  // 현대웰딩
+  const hwPend=allData.hw.filter(r=>r['PAYMENT_STATUS']!=='PAID');
+  const hwAmt=hwPend.reduce((s,r)=>s+(parseFloat((r['AMOUNT']||'0').replace(/,/g,''))||0),0);
+  const hwCritical=hwPend.filter(r=>{const d=parseInt(r['OVERDUE_DAYS']);return !isNaN(d)&&d>=-3&&d<=0;}).length;
+
+  // MKC
+  const mkcPend=allData.mkc.filter(r=>r['PAYMENT_STATUS']==='PENDING');
+  const mkcAmt=mkcPend.reduce((s,r)=>s+(parseFloat((r['AMOUNT']||'0').replace(/,/g,''))||0),0);
+
+  document.getElementById('card-gen-mxn').textContent='MXN $'+Math.round(mxnTotal).toLocaleString();
+  document.getElementById('card-gen-usd').textContent='USD $'+Math.round(usdTotal).toLocaleString();
+  document.getElementById('card-gen-info').textContent=T().genInfo(allData.gen.length,genPend.length);
+  document.getElementById('card-gen-info').style.color=genPend.length>0?'var(--warning-text)':'var(--text-secondary)';
+
+  document.getElementById('card-hw-amt').textContent='$'+Math.round(hwAmt).toLocaleString()+' USD';
+  document.getElementById('card-hw-info').textContent=T().hwInfo(allData.hw.length,hwPend.length,hwCritical);
+  document.getElementById('card-hw-info').style.color=hwCritical>0?'var(--danger-text)':'var(--warning-text)';
+
+  document.getElementById('card-mkc-amt').textContent='$'+Math.round(mkcAmt).toLocaleString()+' USD';
+  document.getElementById('card-mkc-info').textContent=T().mkcInfo(allData.mkc.length,mkcPend.length);
+  document.getElementById('card-mkc-info').style.color=mkcPend.length>0?'var(--warning-text)':'var(--text-secondary)';
+
+  document.getElementById('statusBox').className='status-bar success';
+  document.getElementById('statusBox').textContent=T().syncOk(allData.gen.length,allData.hw.length,allData.mkc.length);
+  document.getElementById('lastUpdate').textContent=T().lastUpd+new Date().toLocaleString('ko-KR');
 }
 
 function setF(tab,type,val,btn){
@@ -390,7 +414,7 @@ function applyFilter(tab){
   });
 
   currentFiltered[tab]=rows;
-  document.getElementById('result-'+tab).textContent='현재 표시: '+rows.length+'건';
+  document.getElementById('result-'+tab).textContent=T().curShow+rows.length+T().cnt;
   renderTable(tab,rows);
 }
 
@@ -403,7 +427,7 @@ function sortBy(tab,col){
 function renderTable(tab,rows){
   const tbody=document.getElementById('tbody-'+tab);
   if(rows.length===0){
-    tbody.innerHTML='<tr><td colspan="20" style="text-align:center;padding:20px;color:var(--text-secondary);">해당 조건의 데이터가 없습니다</td></tr>';
+    tbody.innerHTML='<tr><td colspan="20" style="text-align:center;padding:20px;color:var(--text-secondary);">'+T().noData+'</td></tr>';
     return;
   }
   if(tab==='gen'){
@@ -431,7 +455,7 @@ function renderTable(tab,rows){
       const isCritical=!isNaN(d)&&d>=-3&&d<=0&&s!=='PAID';
       const cls=s==='PAID'?'row-paid':isCritical?'row-critical':(b==='60일초과'||b==='30~60일'?'row-overdue':'row-pending');
       const bc=s==='PAID'?'badge-paid':isCritical?'badge-critical':(b==='60일초과'||b==='30~60일'?'badge-overdue':'badge-pending');
-      const od=r['OVERDUE_DAYS']!==''?(d>0?d+'일경과':(d===0?'D-day':'D'+d)):'-';
+      const od=r['OVERDUE_DAYS']!==''?(d>0?d+T().dOver:(d===0?T().dday:'D'+d)):'-';
       const oc=isCritical?'overdue-critical':(b==='60일초과'?'overdue-red':(b==='30~60일'||b==='30일이내'?'overdue-warn':''));
       const loc=r['LOC']||'';
       return`<tr class="${cls}">

@@ -58,18 +58,18 @@
 <script src="nav.js"></script>
 
 <div class="wrap">
-  <h1>매출 탭 — 구글 시트 실시간 연동</h1>
-  <p class="sub" id="lastUpdate">데이터 불러오는 중...</p>
-  <div class="status-bar loading" id="statusBox">구글 시트에서 데이터를 불러오는 중...</div>
+  <h1 data-ko="매출 탭 — 구글 시트 실시간 연동" data-es="Ventas — Sincronización en Vivo">매출 탭 — 구글 시트 실시간 연동</h1>
+  <p class="sub" id="lastUpdate" data-ko="데이터 불러오는 중..." data-es="Cargando datos...">데이터 불러오는 중...</p>
+  <div class="status-bar loading" id="statusBox" data-ko="구글 시트에서 데이터를 불러오는 중..." data-es="Cargando datos de Google Sheets...">구글 시트에서 데이터를 불러오는 중...</div>
 
   <div id="mainContent" style="display:none;">
     <div class="cards" id="cardsBox"></div>
     <div class="rate-bar" id="rateBar"></div>
     <div class="chart-grid">
-      <div class="chart-box"><h2>① 월별 계획 vs 실적 + 달성률</h2><div class="chart-wrap"><canvas id="chart1"></canvas></div></div>
-      <div class="chart-box"><h2>② MTY vs QRO 비중 (YTD)</h2><div class="chart-wrap"><canvas id="chart2"></canvas></div></div>
-      <div class="chart-box"><h2>③ 거래처별 YTD 실적</h2><div class="chart-wrap"><canvas id="chart3"></canvas></div></div>
-      <div class="chart-box"><h2>④ MTY vs QRO 월별 추이</h2><div class="chart-wrap"><canvas id="chart4"></canvas></div></div>
+      <div class="chart-box"><h2 data-ko="① 월별 계획 vs 실적 + 달성률" data-es="① Plan vs Real Mensual + Cumplim.">① 월별 계획 vs 실적 + 달성률</h2><div class="chart-wrap"><canvas id="chart1"></canvas></div></div>
+      <div class="chart-box"><h2 data-ko="② MTY vs QRO 비중 (YTD)" data-es="② Proporción MTY vs QRO (YTD)">② MTY vs QRO 비중 (YTD)</h2><div class="chart-wrap"><canvas id="chart2"></canvas></div></div>
+      <div class="chart-box"><h2 data-ko="③ 거래처별 YTD 실적" data-es="③ Resultado YTD por Cliente">③ 거래처별 YTD 실적</h2><div class="chart-wrap"><canvas id="chart3"></canvas></div></div>
+      <div class="chart-box"><h2 data-ko="④ MTY vs QRO 월별 추이" data-es="④ Tendencia Mensual MTY vs QRO">④ MTY vs QRO 월별 추이</h2><div class="chart-wrap"><canvas id="chart4"></canvas></div></div>
     </div>
     <div class="tbl-wrap"><table><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
   </div>
@@ -78,7 +78,22 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
 const TSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRfv4TFloZqAVKyJXAoGCjP5xec3MvPGjTagc1btjwQzKXvICTmREywHrT1wNSl_6JN7vA_gsY2w8kB/pub?gid=609736586&single=true&output=tsv';
-const MONTHS = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+const MONTHS_KO = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+const MONTHS_ES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+let curLang = localStorage.getItem('mexcor_lang')||'ko';
+let MONTHS = curLang==='es'?MONTHS_ES:MONTHS_KO;
+const T_KO={planLbl:'연간 계획',ytdAct:m=>`YTD 실적 (1~${m}월)`,mtyYtd:'MTY YTD',qroYtd:'QRO YTD',
+  share:'비중 ',ytdRate:'YTD 달성률',over:'초과',under:'미달',annualRate:'연간 대비 달성률',remain:'잔여 ',
+  plan:'계획',actual:'실적',rate:'달성률(%)',amount:'금액(USD)',rateLbl:'달성률',upcoming:'예정',
+  client:'거래처',loc:'LOC',planRow:'계획(USD)',total:'합계',rateRow:'달성률',
+  syncOk:n=>`✓ 구글 시트 연동 성공 — ${n}개 거래처 불러옴`,syncFail:m=>'❌ 연동 실패 — '+m,lastUpd:'최종 업데이트: '};
+const T_ES={planLbl:'Plan Anual',ytdAct:m=>`Real YTD (1-${m})`,mtyYtd:'MTY YTD',qroYtd:'QRO YTD',
+  share:'',ytdRate:'Cumplim. YTD',over:'sobre plan',under:'bajo plan',annualRate:'Cumplim. Anual',remain:'Restante ',
+  plan:'Plan',actual:'Real',rate:'Cumplim.(%)',amount:'Monto (USD)',rateLbl:'Cumplim.',upcoming:'Próximo',
+  client:'Cliente',loc:'LOC',planRow:'Plan (USD)',total:'Total',rateRow:'Cumplim.',
+  syncOk:n=>`✓ Sincronizado — ${n} clientes cargados`,syncFail:m=>'❌ Error de sincronización — '+m,lastUpd:'Última actualización: '};
+function T(){ return curLang==='es'?T_ES:T_KO; }
+document.addEventListener('mexcorLangChange',function(e){ curLang=e.detail.lang; MONTHS=curLang==='es'?MONTHS_ES:MONTHS_KO; loadData(); });
 let charts = [];
 
 function parseTSV(text){
@@ -149,12 +164,12 @@ async function loadData(){
 
     // 카드
     document.getElementById('cardsBox').innerHTML = `
-      <div class="card"><p class="lbl">연간 계획</p><p class="val">${fmtDollar(planTotal)}</p></div>
-      <div class="card"><p class="lbl">YTD 실적 (1~${curMonth}월)</p><p class="val">${fmtDollar(ytdActual)}</p></div>
-      <div class="card"><p class="lbl">MTY YTD</p><p class="val" style="color:#2a78d6;">${fmtDollar(mtyYTD)}</p><p class="sub2" style="color:var(--text-secondary);">비중 ${Math.round(mtyYTD/ytdActual*100)}%</p></div>
-      <div class="card"><p class="lbl">QRO YTD</p><p class="val" style="color:#7B1FA2;">${fmtDollar(qroYTD)}</p><p class="sub2" style="color:var(--text-secondary);">비중 ${Math.round(qroYTD/ytdActual*100)}%</p></div>
-      <div class="card"><p class="lbl">YTD 달성률</p><p class="val" style="color:${rateColor(ytdRate)};">${ytdRate}%</p><p class="sub2" style="color:${rateColor(ytdRate)};">${ytdRate>=100?'▲':'▼'} ${fmtDollar(Math.abs(ytdActual-ytdPlan))} ${ytdRate>=100?'초과':'미달'}</p></div>
-      <div class="card"><p class="lbl">연간 대비 달성률</p><p class="val" style="color:#2a78d6;">${annualRate}%</p><p class="sub2" style="color:var(--text-secondary);">잔여 ${fmtDollar(planTotal-ytdActual)}</p></div>
+      <div class="card"><p class="lbl">${T().planLbl}</p><p class="val">${fmtDollar(planTotal)}</p></div>
+      <div class="card"><p class="lbl">${T().ytdAct(curMonth)}</p><p class="val">${fmtDollar(ytdActual)}</p></div>
+      <div class="card"><p class="lbl">${T().mtyYtd}</p><p class="val" style="color:#2a78d6;">${fmtDollar(mtyYTD)}</p><p class="sub2" style="color:var(--text-secondary);">${T().share}${Math.round(mtyYTD/ytdActual*100)}%</p></div>
+      <div class="card"><p class="lbl">${T().qroYtd}</p><p class="val" style="color:#7B1FA2;">${fmtDollar(qroYTD)}</p><p class="sub2" style="color:var(--text-secondary);">${T().share}${Math.round(qroYTD/ytdActual*100)}%</p></div>
+      <div class="card"><p class="lbl">${T().ytdRate}</p><p class="val" style="color:${rateColor(ytdRate)};">${ytdRate}%</p><p class="sub2" style="color:${rateColor(ytdRate)};">${ytdRate>=100?'▲':'▼'} ${fmtDollar(Math.abs(ytdActual-ytdPlan))} ${ytdRate>=100?T().over:T().under}</p></div>
+      <div class="card"><p class="lbl">${T().annualRate}</p><p class="val" style="color:#2a78d6;">${annualRate}%</p><p class="sub2" style="color:var(--text-secondary);">${T().remain}${fmtDollar(planTotal-ytdActual)}</p></div>
     `;
 
     // 달성률 바
@@ -165,7 +180,7 @@ async function loadData(){
       const cls = r===null?'none':r>=100?'good':r>=90?'warn':'bad';
       const barColor = r===null?'#e2e0d8':r>=100?'#1D9E75':r>=90?'#BA7517':'#A32D2D';
       const barW = r===null?0:Math.min(r,100);
-      const display = r===null?(isFuture?'예정':'-'):r+'%';
+      const display = r===null?(isFuture?T().upcoming:'-'):r+'%';
       const amt = totalMonthly[i]>0?'$'+Math.round(totalMonthly[i]/1000)+'K':'';
       return `<div class="rate-cell" style="${isCur?'background:#EDF6FF;border-radius:6px;padding:4px 0;':''}">
         <p class="m" style="${isCur?'color:#185FA5;font-weight:500;':''}">${m}</p>
@@ -183,22 +198,22 @@ async function loadData(){
     charts.push(new Chart(document.getElementById('chart1'),{
       type:'bar',
       data:{labels:MONTHS,datasets:[
-        {label:'계획',data:planVals,backgroundColor:'#b4b2a933',borderColor:'#b4b2a9',borderWidth:1,stack:'s',order:2},
-        {label:'실적',data:totalMonthly.map(v=>v>0?v:null),
+        {label:T().plan,data:planVals,backgroundColor:'#b4b2a933',borderColor:'#b4b2a9',borderWidth:1,stack:'s',order:2},
+        {label:T().actual,data:totalMonthly.map(v=>v>0?v:null),
           backgroundColor:MONTHS.map((_,i)=>i<curMonth?'#2a78d699':'#2a78d633'),
           borderColor:MONTHS.map((_,i)=>i<curMonth?'#2a78d6':'#2a78d666'),
           borderWidth:1,stack:'s2',order:1},
-        {label:'달성률(%)',data:rateData,type:'line',yAxisID:'y2',
+        {label:T().rate,data:rateData,type:'line',yAxisID:'y2',
           borderColor:'#e34948',backgroundColor:'transparent',borderWidth:2,
           pointRadius:5,pointBackgroundColor:rateData.map(r=>r===null?'transparent':r>=100?'#1D9E75':r>=90?'#BA7517':'#A32D2D'),
           pointBorderColor:'#fff',pointBorderWidth:2,fill:false,tension:0,order:0,spanGaps:false}
       ]},
       options:{responsive:true,maintainAspectRatio:false,
         plugins:{legend:{display:true,position:'bottom',labels:{boxWidth:12,font:{size:11},padding:8}},
-          tooltip:{callbacks:{afterBody:items=>{const i=items[0].dataIndex;return rateData[i]?['달성률: '+rateData[i]+'%']:[];}}}},
+          tooltip:{callbacks:{afterBody:items=>{const i=items[0].dataIndex;return rateData[i]?[T().rateLbl+': '+rateData[i]+'%']:[];}}}},
         scales:{x:{ticks:{color:'#898781',font:{size:10}},grid:{display:false}},
-          y:{ticks:{color:'#898781',font:{size:10},callback:v=>fmtK(v)},grid:{color:'#e1e0d9'},title:{display:true,text:'금액(USD)',font:{size:10},color:'#898781'}},
-          y2:{position:'right',ticks:{color:'#e34948',font:{size:10},callback:v=>v+'%'},grid:{display:false},min:0,max:160,title:{display:true,text:'달성률',font:{size:10},color:'#e34948'}}
+          y:{ticks:{color:'#898781',font:{size:10},callback:v=>fmtK(v)},grid:{color:'#e1e0d9'},title:{display:true,text:T().amount,font:{size:10},color:'#898781'}},
+          y2:{position:'right',ticks:{color:'#e34948',font:{size:10},callback:v=>v+'%'},grid:{display:false},min:0,max:160,title:{display:true,text:T().rateLbl,font:{size:10},color:'#e34948'}}
         }
       }
     }));
@@ -237,7 +252,7 @@ async function loadData(){
     charts.push(new Chart(document.getElementById('chart4'),{
       type:'line',
       data:{labels:MONTHS,datasets:[
-        {label:'계획',data:planVals,borderColor:'#b4b2a9',backgroundColor:'transparent',borderWidth:1.5,borderDash:[5,3],pointRadius:0,fill:false,tension:0},
+        {label:T().plan,data:planVals,borderColor:'#b4b2a9',backgroundColor:'transparent',borderWidth:1.5,borderDash:[5,3],pointRadius:0,fill:false,tension:0},
         {label:'MTY',data:mtyMonthly.map(v=>v>0?v:null),borderColor:'#2a78d6',backgroundColor:'#2a78d611',borderWidth:2,pointRadius:4,pointBackgroundColor:'#2a78d6',fill:true,tension:0.3,spanGaps:false},
         {label:'QRO',data:qroMonthly.map(v=>v>0?v:null),borderColor:'#7B1FA2',backgroundColor:'#7B1FA211',borderWidth:2,pointRadius:4,pointBackgroundColor:'#7B1FA2',fill:true,tension:0.3,spanGaps:false}
       ]},
@@ -250,13 +265,13 @@ async function loadData(){
 
     // 표 헤더
     document.getElementById('thead').innerHTML=`<tr>
-      <th style="text-align:left;">거래처</th><th style="text-align:left;">LOC</th>
+      <th style="text-align:left;">${T().client}</th><th style="text-align:left;">${T().loc}</th>
       ${MONTHS.map(m=>`<th>${m}</th>`).join('')}<th>YTD</th>
     </tr>`;
 
     // 표 본문
     let tbody='';
-    tbody+=`<tr class="plan-row"><td>계획(USD)</td><td>-</td>`;
+    tbody+=`<tr class="plan-row"><td>${T().planRow}</td><td>-</td>`;
     planVals.forEach((v,i)=>{const cls=i===curMonth-1?'cur':i>=curMonth?'future':'';tbody+=`<td class="${cls}">${v>0?fmtDollar(v):'-'}</td>`;});
     tbody+=`<td>${fmtDollar(planTotal)}</td></tr>`;
 
@@ -274,11 +289,11 @@ async function loadData(){
       tbody+=`<td style="font-weight:500;">${fmtDollar(ytd)}</td></tr>`;
     });
 
-    tbody+=`<tr class="total-row"><td>합계</td><td></td>`;
+    tbody+=`<tr class="total-row"><td>${T().total}</td><td></td>`;
     totalMonthly.forEach((v,i)=>{const cls=i===curMonth-1?'cur':i>=curMonth?'future':'';tbody+=`<td class="${cls}">${v>0?fmtDollar(v):'-'}</td>`;});
     tbody+=`<td>${fmtDollar(ytdActual)}</td></tr>`;
 
-    tbody+=`<tr class="rate-row"><td>달성률</td><td></td>`;
+    tbody+=`<tr class="rate-row"><td>${T().rateRow}</td><td></td>`;
     totalMonthly.forEach((v,i)=>{
       const cls=i===curMonth-1?'cur':i>=curMonth?'future':'';
       if(v===0){tbody+=`<td class="${cls} none">-</td>`;return;}
@@ -289,13 +304,13 @@ async function loadData(){
     document.getElementById('tbody').innerHTML=tbody;
 
     document.getElementById('statusBox').className='status-bar success';
-    document.getElementById('statusBox').textContent='✓ 구글 시트 연동 성공 — '+clientRows.length+'개 거래처 불러옴';
-    document.getElementById('lastUpdate').textContent='최종 업데이트: '+new Date().toLocaleString('ko-KR');
+    document.getElementById('statusBox').textContent=T().syncOk(clientRows.length);
+    document.getElementById('lastUpdate').textContent=T().lastUpd+new Date().toLocaleString('ko-KR');
     document.getElementById('mainContent').style.display='block';
 
   } catch(e){
     document.getElementById('statusBox').className='status-bar error';
-    document.getElementById('statusBox').textContent='❌ 연동 실패 — '+e.message;
+    document.getElementById('statusBox').textContent=T().syncFail(e.message);
   }
 }
 

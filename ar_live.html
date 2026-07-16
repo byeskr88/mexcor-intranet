@@ -86,28 +86,28 @@
 <script src="nav.js"></script>
 
 <div class="wrap">
-  <h1>AR 탭 — 구글 시트 실시간 연동</h1>
-  <p class="sub" id="lastUpdate">데이터 불러오는 중...</p>
-  <div class="status-bar loading" id="statusBox">구글 시트에서 데이터를 불러오는 중...</div>
+  <h1 data-ko="AR 탭 — 구글 시트 실시간 연동" data-es="CxC — Sincronización en Vivo">AR 탭 — 구글 시트 실시간 연동</h1>
+  <p class="sub" id="lastUpdate" data-ko="데이터 불러오는 중..." data-es="Cargando datos...">데이터 불러오는 중...</p>
+  <div class="status-bar loading" id="statusBox" data-ko="구글 시트에서 데이터를 불러오는 중..." data-es="Cargando datos de Google Sheets...">구글 시트에서 데이터를 불러오는 중...</div>
 
   <div id="mainContent" style="display:none;">
 
     <!-- 최근 입금 내역 -->
   <div class="payment-section" id="paymentSection">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-      <span style="font-size:13px;font-weight:500;">최근 입금 내역</span>
+      <span style="font-size:13px;font-weight:500;" data-ko="최근 입금 내역" data-es="Pagos Recientes">최근 입금 내역</span>
       <div class="payment-tabs">
-        <button class="ptab active" onclick="setPayPeriod(1,this)">1개월</button>
-        <button class="ptab" onclick="setPayPeriod(3,this)">3개월</button>
-        <button class="ptab" onclick="setPayPeriod(6,this)">6개월</button>
+        <button class="ptab active" onclick="setPayPeriod(1,this)" data-ko="1개월" data-es="1 mes">1개월</button>
+        <button class="ptab" onclick="setPayPeriod(3,this)" data-ko="3개월" data-es="3 meses">3개월</button>
+        <button class="ptab" onclick="setPayPeriod(6,this)" data-ko="6개월" data-es="6 meses">6개월</button>
       </div>
     </div>
     <div class="recent-pay-grid" id="recentPayGrid"></div>
     <div class="tbl-wrap" style="margin-bottom:16px;">
       <table>
         <thead><tr>
-          <th>거래처</th><th>FACTURA NO</th><th>발행일</th>
-          <th>통화</th><th class="num">금액</th><th>실입금일</th><th>비고</th>
+          <th data-ko="거래처" data-es="Cliente">거래처</th><th>FACTURA NO</th><th data-ko="발행일" data-es="Fecha Emisión">발행일</th>
+          <th data-ko="통화" data-es="Moneda">통화</th><th class="num" data-ko="금액" data-es="Monto">금액</th><th data-ko="실입금일" data-es="Fecha Pago Real">실입금일</th><th data-ko="비고" data-es="Nota">비고</th>
         </tr></thead>
         <tbody id="recentPayBody"></tbody>
       </table>
@@ -116,46 +116,46 @@
   <div style="border-top:0.5px solid var(--border);margin:16px 0;"></div>
   <div class="summary">
       <div class="card">
-        <p class="lbl">미수금 (USD)</p>
+        <p class="lbl" data-ko="미수금 (USD)" data-es="CxC (USD)">미수금 (USD)</p>
         <p class="val" id="totalUSD">-</p>
       </div>
       <div class="card">
-        <p class="lbl">미수금 (MXN)</p>
+        <p class="lbl" data-ko="미수금 (MXN)" data-es="CxC (MXN)">미수금 (MXN)</p>
         <p class="val" id="totalMXN" style="font-size:15px;">-</p>
       </div>
-      <div class="card"><p class="lbl">미만기</p><p class="val" id="cnt0" style="color:var(--text-secondary);">-</p></div>
-      <div class="card"><p class="lbl">30일 이내</p><p class="val" id="cnt30" style="color:var(--warning);">-</p></div>
-      <div class="card"><p class="lbl">30~60일</p><p class="val" id="cnt60" style="color:var(--warning);">-</p></div>
-      <div class="card"><p class="lbl">60일 초과</p><p class="val" id="cnt60over" style="color:var(--danger);">-</p></div>
-      <div class="card"><p class="lbl">미수금 총 건수</p><p class="val" id="totalCnt">-</p></div>
+      <div class="card"><p class="lbl" data-ko="미만기" data-es="No Vencido">미만기</p><p class="val" id="cnt0" style="color:var(--text-secondary);">-</p></div>
+      <div class="card"><p class="lbl" data-ko="30일 이내" data-es="Dentro de 30 días">30일 이내</p><p class="val" id="cnt30" style="color:var(--warning);">-</p></div>
+      <div class="card"><p class="lbl" data-ko="30~60일" data-es="30-60 días">30~60일</p><p class="val" id="cnt60" style="color:var(--warning);">-</p></div>
+      <div class="card"><p class="lbl" data-ko="60일 초과" data-es="Más de 60 días">60일 초과</p><p class="val" id="cnt60over" style="color:var(--danger);">-</p></div>
+      <div class="card"><p class="lbl" data-ko="미수금 총 건수" data-es="Total de Casos">미수금 총 건수</p><p class="val" id="totalCnt">-</p></div>
     </div>
 
     <div class="filter-row">
-      <span class="filter-label">📅 기간</span>
+      <span class="filter-label" data-ko="📅 기간" data-es="📅 Período">📅 기간</span>
       <div class="filterbar" id="yearFilter">
-        <button onclick="setYear('recent',this)" class="active">최근 6개월</button>
-        <button onclick="setYear('2026',this)">2026년</button>
-        <button onclick="setYear('2025',this)">2025년</button>
-        <button onclick="setYear('2024',this)">2024년</button>
-        <button onclick="setYear('2023',this)">2023년</button>
-        <button onclick="setYear('all',this)">전체 기록</button>
+        <button onclick="setYear('recent',this)" class="active" data-ko="최근 6개월" data-es="Últimos 6 meses">최근 6개월</button>
+        <button onclick="setYear('2026',this)">2026</button>
+        <button onclick="setYear('2025',this)">2025</button>
+        <button onclick="setYear('2024',this)">2024</button>
+        <button onclick="setYear('2023',this)">2023</button>
+        <button onclick="setYear('all',this)" data-ko="전체 기록" data-es="Todo el Historial">전체 기록</button>
       </div>
     </div>
     <div class="filter-row" style="margin-bottom:12px;">
-      <span class="filter-label">📋 상태</span>
+      <span class="filter-label" data-ko="📋 상태" data-es="📋 Estado">📋 상태</span>
       <div class="filterbar" id="statusFilter">
-        <button onclick="setStatus('PENDIENTE',this)" class="active">미수금만</button>
-        <button onclick="setStatus('all',this)">전체</button>
-        <button onclick="setStatus('60일초과',this)" style="color:var(--danger-text);">60일초과</button>
-        <button onclick="setStatus('30~60일',this)" style="color:var(--warning-text);">30~60일</button>
-        <button onclick="setStatus('30일이내',this)" style="color:var(--warning-text);">30일이내</button>
+        <button onclick="setStatus('PENDIENTE',this)" class="active" data-ko="미수금만" data-es="Solo Pendientes">미수금만</button>
+        <button onclick="setStatus('all',this)" data-ko="전체" data-es="Todos">전체</button>
+        <button onclick="setStatus('60일초과',this)" style="color:var(--danger-text);" data-ko="60일초과" data-es="+60 días">60일초과</button>
+        <button onclick="setStatus('30~60일',this)" style="color:var(--warning-text);" data-ko="30~60일" data-es="30-60 días">30~60일</button>
+        <button onclick="setStatus('30일이내',this)" style="color:var(--warning-text);" data-ko="30일이내" data-es="-30 días">30일이내</button>
       </div>
     </div>
 
     <div class="search-row">
-      <input type="text" id="searchInput" placeholder="거래처명 검색..." oninput="applyFilters()">
+      <input type="text" id="searchInput" placeholder="거래처명 검색..." oninput="applyFilters()" data-ko-ph="거래처명 검색..." data-es-ph="Buscar cliente...">
       <span class="result-info" id="resultInfo"></span>
-      <button class="download-btn" onclick="downloadCSV()">⬇ 엑셀 다운로드</button>
+      <button class="download-btn" onclick="downloadCSV()" data-ko="⬇ 엑셀 다운로드" data-es="⬇ Descargar Excel">⬇ 엑셀 다운로드</button>
     </div>
 
     <div class="tbl-wrap">
@@ -163,20 +163,20 @@
         <thead>
           <tr>
             <th onclick="sortTable(this,'NO')">NO <span class="sort-icon">↕</span></th>
-            <th onclick="sortTable(this,'FACTURA_MONTH')">발행월 <span class="sort-icon">↕</span></th>
-            <th onclick="sortTable(this,'CLIENTE')">거래처 <span class="sort-icon">↕</span></th>
+            <th onclick="sortTable(this,'FACTURA_MONTH')" data-ko="발행월" data-es="Mes Emisión">발행월 <span class="sort-icon">↕</span></th>
+            <th onclick="sortTable(this,'CLIENTE')" data-ko="거래처" data-es="Cliente">거래처 <span class="sort-icon">↕</span></th>
             <th onclick="sortTable(this,'FACTURA_NO')">FACTURA NO <span class="sort-icon">↕</span></th>
-            <th onclick="sortTable(this,'FACTURA_DATE')">발행일 <span class="sort-icon">↕</span></th>
-            <th>컨셉</th>
-            <th>통화</th>
-            <th class="num" onclick="sortTable(this,'SUB_TOTAL')">소계 <span class="sort-icon">↕</span></th>
+            <th onclick="sortTable(this,'FACTURA_DATE')" data-ko="발행일" data-es="Fecha Emisión">발행일 <span class="sort-icon">↕</span></th>
+            <th data-ko="컨셉" data-es="Concepto">컨셉</th>
+            <th data-ko="통화" data-es="Moneda">통화</th>
+            <th class="num" onclick="sortTable(this,'SUB_TOTAL')" data-ko="소계" data-es="Subtotal">소계 <span class="sort-icon">↕</span></th>
             <th class="num">IVA</th>
-            <th class="num" onclick="sortTable(this,'TOTAL')">합계 <span class="sort-icon">↕</span></th>
-            <th>신용일수</th>
-            <th onclick="sortTable(this,'PAYMENT_PLAN_DATE')">결제예정일 <span class="sort-icon">↕</span></th>
-            <th>실제결제일</th>
-            <th onclick="sortTable(this,'OVERDUE_DAYS')">연체일수 <span class="sort-icon">↕</span></th>
-            <th>상태</th>
+            <th class="num" onclick="sortTable(this,'TOTAL')" data-ko="합계" data-es="Total">합계 <span class="sort-icon">↕</span></th>
+            <th data-ko="신용일수" data-es="Días Crédito">신용일수</th>
+            <th onclick="sortTable(this,'PAYMENT_PLAN_DATE')" data-ko="결제예정일" data-es="Fecha Pago Prog.">결제예정일 <span class="sort-icon">↕</span></th>
+            <th data-ko="실제결제일" data-es="Fecha Pago Real">실제결제일</th>
+            <th onclick="sortTable(this,'OVERDUE_DAYS')" data-ko="연체일수" data-es="Días Atraso">연체일수 <span class="sort-icon">↕</span></th>
+            <th data-ko="상태" data-es="Estado">상태</th>
             <th>NOTE</th>
           </tr>
         </thead>
@@ -196,6 +196,29 @@ let sortDir = -1;
 let currentFiltered = [];
 const TODAY = new Date();
 const SIX_MONTHS_AGO = new Date(TODAY.getFullYear(), TODAY.getMonth()-6, TODAY.getDate());
+
+// 언어 처리
+let curLang = localStorage.getItem('mexcor_lang')||'ko';
+const T_KO={noData:'해당 조건의 데이터가 없습니다',noPay:'해당 기간 입금 내역 없음',cnt:'건',
+  loading:'구글 시트에서 데이터를 불러오는 중...',syncOk:v=>`✓ 구글 시트 연동 성공 — 전체 ${v.total}건 (미수금 ${v.pend}건)`,
+  syncFail:m=>'❌ 연동 실패 — '+m,lastUpd:'최종 업데이트: ',curShow:'현재 표시: ',
+  dOver:'일 경과',dday:'D-day',company:'통화',subTotal:'SUB TOTAL',iva:'IVA 16%',total:'TOTAL',
+  creditDays:'크레딧 기간',day:'일',payPlan1:'결제 예정일 1',payPlan2:'결제 예정일 2',actualPay:'실제 입금일',
+  factNo:'FACTURA NO',note:'비고',payCnt:'입금 건수',recentM:m=>`최근 ${m}개월`,usdPay:'USD 입금',mxnPay:'MXN 입금',
+  clientCnt:'거래처 수',inPeriod:'기간 내',company2:'개사',searchPh:'거래처명 검색...'};
+const T_ES={noData:'No hay datos para estos criterios',noPay:'Sin pagos en este período',cnt:'',
+  loading:'Cargando datos de Google Sheets...',syncOk:v=>`✓ Sincronizado — Total ${v.total} (Pendientes ${v.pend})`,
+  syncFail:m=>'❌ Error de sincronización — '+m,lastUpd:'Última actualización: ',curShow:'Mostrando: ',
+  dOver:' días vencido',dday:'Hoy',company:'Moneda',subTotal:'SUBTOTAL',iva:'IVA 16%',total:'TOTAL',
+  creditDays:'Días de Crédito',day:' días',payPlan1:'Fecha Pago Prog. 1',payPlan2:'Fecha Pago Prog. 2',actualPay:'Fecha Pago Real',
+  factNo:'FACTURA NO',note:'Nota',payCnt:'Pagos Recibidos',recentM:m=>`Últimos ${m} meses`,usdPay:'Pagos USD',mxnPay:'Pagos MXN',
+  clientCnt:'Clientes',inPeriod:'en el período',company2:'',searchPh:'Buscar cliente...'};
+function T(){ return curLang==='es'?T_ES:T_KO; }
+document.addEventListener('mexcorLangChange',function(e){
+  curLang=e.detail.lang;
+  const inp=document.getElementById('searchInput'); if(inp) inp.placeholder=T().searchPh;
+  applyFilters(); renderPayments();
+});
 
 function parseTSV(text){
   const lines = text.replace(/\r/g,'').split('\n');
@@ -247,8 +270,8 @@ function getOverdueClass(bucket, days){
 function getOverdueDisplay(days){
   if(days==='') return '-';
   const d = parseInt(days);
-  if(d>0) return d+'일 경과';
-  if(d===0) return 'D-day';
+  if(d>0) return d+T().dOver;
+  if(d===0) return T().dday;
   return 'D'+d;
 }
 
@@ -266,21 +289,21 @@ async function loadData(){
 
     document.getElementById('totalUSD').textContent = '$'+usdTotal.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
     document.getElementById('totalMXN').textContent = mxnTotal>0 ? '$'+mxnTotal.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}) : '-';
-    document.getElementById('cnt0').textContent = pending.filter(r=>r['BUCKET']==='미만기').length+'건';
-    document.getElementById('cnt30').textContent = pending.filter(r=>r['BUCKET']==='30일이내').length+'건';
-    document.getElementById('cnt60').textContent = pending.filter(r=>r['BUCKET']==='30~60일').length+'건';
-    document.getElementById('cnt60over').textContent = pending.filter(r=>r['BUCKET']==='60일초과').length+'건';
-    document.getElementById('totalCnt').textContent = pending.length+'건';
+    document.getElementById('cnt0').textContent = pending.filter(r=>r['BUCKET']==='미만기').length+T().cnt;
+    document.getElementById('cnt30').textContent = pending.filter(r=>r['BUCKET']==='30일이내').length+T().cnt;
+    document.getElementById('cnt60').textContent = pending.filter(r=>r['BUCKET']==='30~60일').length+T().cnt;
+    document.getElementById('cnt60over').textContent = pending.filter(r=>r['BUCKET']==='60일초과').length+T().cnt;
+    document.getElementById('totalCnt').textContent = pending.length+T().cnt;
 
     document.getElementById('statusBox').className = 'status-bar success';
-    document.getElementById('statusBox').textContent = '✓ 구글 시트 연동 성공 — 전체 '+allRows.length+'건 (미수금 '+pending.length+'건)';
-    document.getElementById('lastUpdate').textContent = '최종 업데이트: '+new Date().toLocaleString('ko-KR');
+    document.getElementById('statusBox').textContent = T().syncOk({total:allRows.length,pend:pending.length});
+    document.getElementById('lastUpdate').textContent = T().lastUpd+new Date().toLocaleString('ko-KR');
     document.getElementById('mainContent').style.display = 'block';
     applyFilters();
   renderPayments();
   } catch(e){
     document.getElementById('statusBox').className = 'status-bar error';
-    document.getElementById('statusBox').textContent = '❌ 연동 실패 — '+e.message;
+    document.getElementById('statusBox').textContent = T().syncFail(e.message);
   }
 }
 
@@ -310,7 +333,7 @@ function applyFilters(){
   });
 
   currentFiltered = filtered;
-  document.getElementById('resultInfo').textContent = '현재 표시: '+filtered.length+'건';
+  document.getElementById('resultInfo').textContent = T().curShow+filtered.length+T().cnt;
   renderTable(filtered);
 }
 
@@ -347,7 +370,7 @@ function sortTable(th, col){
 
 function renderTable(rows){
   if(rows.length===0){
-    document.getElementById('tableBody').innerHTML='<tr><td colspan="17" style="text-align:center;padding:20px;color:var(--text-secondary);">해당 조건의 데이터가 없습니다</td></tr>';
+    document.getElementById('tableBody').innerHTML='<tr><td colspan="17" style="text-align:center;padding:20px;color:var(--text-secondary);">'+T().noData+'</td></tr>';
     return;
   }
   document.getElementById('tableBody').innerHTML=rows.map((r,i)=>{
@@ -380,16 +403,16 @@ function renderTable(rows){
       <td colspan="17">
         <div class="expand-inner">
           <div class="expand-grid">
-            <div class="eg-cell"><div class="eg-lbl">통화</div><div class="eg-val">${fmt(r['CURRENCY'])}</div></div>
-            <div class="eg-cell"><div class="eg-lbl">SUB TOTAL</div><div class="eg-val">${fmtNum(r['SUB_TOTAL'])}</div></div>
-            <div class="eg-cell"><div class="eg-lbl">IVA 16%</div><div class="eg-val">${fmtNum(r['IVA'])}</div></div>
-            <div class="eg-cell"><div class="eg-lbl">TOTAL</div><div class="eg-val" style="color:${isPend?'var(--danger-text)':isPaid?'var(--success-text)':'var(--text)'};">${fmtNum(r['TOTAL'])}</div></div>
-            <div class="eg-cell"><div class="eg-lbl">크레딧 기간</div><div class="eg-val">${fmt(r['CREDIT_DAYS'])}일</div></div>
-            <div class="eg-cell"><div class="eg-lbl">결제 예정일 1</div><div class="eg-val">${fmt(r['PAYMENT_PLAN_DATE'])}</div></div>
-            <div class="eg-cell"><div class="eg-lbl">결제 예정일 2</div><div class="eg-val">${fmt(r['PAYMENT_PLAN_DATE2'])||'-'}</div></div>
-            <div class="eg-cell"><div class="eg-lbl">실제 입금일</div><div class="eg-val" style="color:${isPaid?'var(--success-text)':'var(--text)'};">${isPaid?'✓ ':''} ${fmt(r['ACTUAL_PAYMENT_DATE']||r['ACTUAL PAYMENT DATE'])}</div></div>
-            <div class="eg-cell"><div class="eg-lbl">FACTURA NO</div><div class="eg-val">${fmt(r['FACTURA_NO'])}</div></div>
-            <div class="eg-cell"><div class="eg-lbl">비고</div><div class="eg-val" style="font-size:11px;">${fmt(r['NOTE'])||'-'}</div></div>
+            <div class="eg-cell"><div class="eg-lbl">${T().company}</div><div class="eg-val">${fmt(r['CURRENCY'])}</div></div>
+            <div class="eg-cell"><div class="eg-lbl">${T().subTotal}</div><div class="eg-val">${fmtNum(r['SUB_TOTAL'])}</div></div>
+            <div class="eg-cell"><div class="eg-lbl">${T().iva}</div><div class="eg-val">${fmtNum(r['IVA'])}</div></div>
+            <div class="eg-cell"><div class="eg-lbl">${T().total}</div><div class="eg-val" style="color:${isPend?'var(--danger-text)':isPaid?'var(--success-text)':'var(--text)'};">${fmtNum(r['TOTAL'])}</div></div>
+            <div class="eg-cell"><div class="eg-lbl">${T().creditDays}</div><div class="eg-val">${fmt(r['CREDIT_DAYS'])}${T().day}</div></div>
+            <div class="eg-cell"><div class="eg-lbl">${T().payPlan1}</div><div class="eg-val">${fmt(r['PAYMENT_PLAN_DATE'])}</div></div>
+            <div class="eg-cell"><div class="eg-lbl">${T().payPlan2}</div><div class="eg-val">${fmt(r['PAYMENT_PLAN_DATE2'])||'-'}</div></div>
+            <div class="eg-cell"><div class="eg-lbl">${T().actualPay}</div><div class="eg-val" style="color:${isPaid?'var(--success-text)':'var(--text)'};">${isPaid?'✓ ':''} ${fmt(r['ACTUAL_PAYMENT_DATE']||r['ACTUAL PAYMENT DATE'])}</div></div>
+            <div class="eg-cell"><div class="eg-lbl">${T().factNo}</div><div class="eg-val">${fmt(r['FACTURA_NO'])}</div></div>
+            <div class="eg-cell"><div class="eg-lbl">${T().note}</div><div class="eg-val" style="font-size:11px;">${fmt(r['NOTE'])||'-'}</div></div>
           </div>
         </div>
       </td>
@@ -444,10 +467,10 @@ function renderPayments(){
   const usdCnt=paid.filter(r=>r['CURRENCY']==='USD').length;
   const mxnCnt=paid.filter(r=>r['CURRENCY']==='MXN').length;
   document.getElementById('recentPayGrid').innerHTML = `
-    <div class="rp-card"><div class="lbl">입금 건수</div><div class="val">${cnt}건</div><div class="sub2">최근 ${payPeriod}개월</div></div>
-    <div class="rp-card"><div class="lbl">USD 입금</div><div class="val">${fmtMoney(usdTotal)}</div><div class="sub2">${usdCnt}건</div></div>
-    <div class="rp-card"><div class="lbl">MXN 입금</div><div class="val">${fmtMoney(mxnTotal)}</div><div class="sub2">${mxnCnt}건</div></div>
-    <div class="rp-card"><div class="lbl">거래처 수</div><div class="val">${new Set(paid.map(r=>r['CLIENTE'])).size}개사</div><div class="sub2">기간 내</div></div>`;
+    <div class="rp-card"><div class="lbl">${T().payCnt}</div><div class="val">${cnt}${T().cnt}</div><div class="sub2">${T().recentM(payPeriod)}</div></div>
+    <div class="rp-card"><div class="lbl">${T().usdPay}</div><div class="val">${fmtMoney(usdTotal)}</div><div class="sub2">${usdCnt}${T().cnt}</div></div>
+    <div class="rp-card"><div class="lbl">${T().mxnPay}</div><div class="val">${fmtMoney(mxnTotal)}</div><div class="sub2">${mxnCnt}${T().cnt}</div></div>
+    <div class="rp-card"><div class="lbl">${T().clientCnt}</div><div class="val">${new Set(paid.map(r=>r['CLIENTE'])).size}${T().company2}</div><div class="sub2">${T().inPeriod}</div></div>`;
 
   document.getElementById('recentPayBody').innerHTML = paid.slice(0,20).map(r=>`
     <tr>
@@ -458,7 +481,7 @@ function renderPayments(){
       <td class="num" style="color:var(--success-text);font-weight:500;">${fmtNum(r['TOTAL'])}</td>
       <td style="color:var(--success-text);">✓ ${fmt(r['ACTUAL_PAYMENT_DATE']||r['ACTUAL PAYMENT DATE'])}</td>
       <td style="font-size:11px;color:var(--text-secondary);">${fmt(r['NOTE'])}</td>
-    </tr>`).join('') || '<tr><td colspan="7" style="text-align:center;padding:16px;color:var(--text-secondary);">해당 기간 입금 내역 없음</td></tr>';
+    </tr>`).join('') || '<tr><td colspan="7" style="text-align:center;padding:16px;color:var(--text-secondary);">'+T().noPay+'</td></tr>';
 }
 
 function downloadCSV(){
@@ -472,6 +495,7 @@ function downloadCSV(){
   a.click();
 }
 
+document.getElementById('searchInput').placeholder = T().searchPh;
 loadData();
 </script>
 </body>
