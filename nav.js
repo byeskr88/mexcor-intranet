@@ -104,4 +104,11 @@
 
   window._mexcorLang = lang;
   applyLang();
+  // nav.js는 <body> 맨 앞에서 동기 실행되기 때문에, 이 시점엔 페이지의 나머지 HTML(차트 제목 등)이
+  // 아직 DOM에 파싱되기 전이라 번역이 누락될 수 있음. 파싱 완료 후 한 번 더 적용.
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded', applyLang);
+  } else {
+    applyLang();
+  }
 })();

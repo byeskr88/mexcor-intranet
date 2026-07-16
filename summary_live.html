@@ -74,7 +74,7 @@ hr{border:none;border-top:0.5px solid var(--border);margin:18px 0;}
 .inner{background:var(--surface);border-radius:var(--r);padding:12px 14px;border:0.5px solid var(--border);}
 
 /* 매출 카드 - sales_live 동일 */
-.sales-cards{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:14px;}
+.sales-cards{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px;}
 .s-card{background:var(--s1);border-radius:var(--r);padding:12px 14px;}
 .s-card .lbl{font-size:11px;color:var(--muted);margin-bottom:4px;}
 .s-card .val{font-size:18px;font-weight:600;}
@@ -105,10 +105,9 @@ hr{border:none;border-top:0.5px solid var(--border);margin:18px 0;}
   <div class="sec" id="sec-sales"><span data-ko="📊 매출 현황" data-es="📊 Ventas">📊 매출 현황</span></div>
   <div class="sales-cards">
     <div class="s-card"><div class="lbl" id="lbl-plan" data-ko="연간 계획" data-es="Plan Anual">연간 계획</div><div class="val" id="kPlan">-</div></div>
-    <div class="s-card"><div class="lbl" id="lbl-ytd-act" data-ko="YTD 실적" data-es="Real YTD">YTD 실적</div><div class="val" id="kYtdAct">-</div><div class="sub2" id="kYtdActSub">-</div></div>
+    <div class="s-card"><div class="lbl" id="lbl-ytd-act" data-ko="YTD 실적" data-es="Real YTD">YTD 실적</div><div class="val" id="kYtdAct">- <span id="kYtdPct" style="font-size:13px;"></span></div><div class="sub2" id="kYtdActSub">-</div></div>
     <div class="s-card"><div class="lbl">MTY YTD</div><div class="val" style="color:var(--blue-text);" id="kMty">-</div><div class="sub2" id="kMtySub">-</div></div>
     <div class="s-card"><div class="lbl">QRO YTD</div><div class="val" style="color:var(--purple-text);" id="kQro">-</div><div class="sub2" id="kQroSub">-</div></div>
-    <div class="s-card"><div class="lbl" id="lbl-ytd-rate" data-ko="YTD 달성률" data-es="Cumplim. YTD">YTD 달성률</div><div class="val" id="kYtd">-</div><div class="sub2" id="kYtdSub">-</div></div>
     <div class="s-card"><div class="lbl" id="lbl-annual-rate" data-ko="연간 대비 달성률" data-es="Cumplim. Anual">연간 대비 달성률</div><div class="val" id="kAnnual">-</div><div class="sub2" id="kAnnualSub">-</div></div>
   </div>
   <div class="inner" style="margin-bottom:4px;">
@@ -285,9 +284,9 @@ async function load(){
     document.getElementById('kQro').textContent=fmtDollar(qroYtd);
     document.getElementById('kQroSub').textContent=`비중 ${Math.round(qroYtd/(ytdAct||1)*100)}%`;
     const ytdRate=ytdPlan>0?Math.round(ytdAct/ytdPlan*100):0;
-    document.getElementById('kYtd').textContent=ytdRate+'%';
-    document.getElementById('kYtd').style.color=rateColor(ytdRate);
-    document.getElementById('kYtdSub').textContent=`${ytdRate>=100?'▲':'▼'} ${fmtDollar(Math.abs(ytdAct-ytdPlan))} ${ytdRate>=100?'초과':'미달'}`;
+    document.getElementById('kYtdPct').textContent='('+ytdRate+'%)';
+    document.getElementById('kYtdPct').style.color=rateColor(ytdRate);
+    document.getElementById('kYtdActSub').textContent=`1~${curM}월 · ${ytdRate>=100?'▲':'▼'} ${fmtDollar(Math.abs(ytdAct-ytdPlan))} ${ytdRate>=100?'초과':'미달'}`;
     document.getElementById('kAnnual').textContent=annualRate+'%';
     document.getElementById('kAnnualSub').textContent=`잔여 ${fmtDollar(Math.max(totalPlan-ytdAct,0))}`;
     // 월별 바 (curM 달까지만 표시)
@@ -401,14 +400,14 @@ load();
 
 // 언어 변경 수신
 const LANG_KO={
-  'lbl-plan':'연간 계획','lbl-ytd-act':'YTD 실적','lbl-ytd-rate':'YTD 달성률',
+  'lbl-plan':'연간 계획','lbl-ytd-act':'YTD 실적',
   'lbl-annual-rate':'연간 대비 달성률','lbl-monthly':'월별 달성률',
   'sec-sales':'📊 매출 현황','sec-alert':'🚨 긴급 알림','sec-ar':'💰 AR 미수금',
   'sec-crm':'🤝 CRM 파이프라인','sec-action':'📅 이번 주 액션',
   'sec-mty-inv':'📦 MTY 재고 — 재주문 필요','sec-qro-inv':'📦 QRO 재고 현황'
 };
 const LANG_ES={
-  'lbl-plan':'Plan Anual','lbl-ytd-act':'Real YTD','lbl-ytd-rate':'Cumplimiento YTD',
+  'lbl-plan':'Plan Anual','lbl-ytd-act':'Real YTD',
   'lbl-annual-rate':'Cumplimiento Anual','lbl-monthly':'Cumplimiento Mensual',
   'sec-sales':'📊 Ventas','sec-alert':'🚨 Alertas Urgentes','sec-ar':'💰 Cuentas por Cobrar',
   'sec-crm':'🤝 Pipeline CRM','sec-action':'📅 Acciones esta Semana',

@@ -19,7 +19,7 @@
   .status-bar.loading{background:var(--surface-1);color:var(--text-secondary);}
   .status-bar.success{background:#E1F5EE;color:#085041;}
   .status-bar.error{background:#FCEBEB;color:#791F1F;}
-  .cards{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:12px;}
+  .cards{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:12px;}
   .card{background:var(--surface-1);border-radius:var(--radius);padding:12px;}
   .card .lbl{font-size:11px;color:var(--text-secondary);margin:0 0 4px;}
   .card .val{font-size:18px;font-weight:500;margin:0;}
@@ -129,7 +129,7 @@ async function loadData(){
     const keys = Object.keys(sampleRow);
 
     // 월별 컬럼 키 찾기 (1월~12월)
-    const monthKeys = MONTHS.map(m=>{
+    const monthKeys = MONTHS_KO.map(m=>{
       return keys.find(k=>k.trim()===m || k.trim()===m.replace('월','')+'월') || m;
     });
 
@@ -165,10 +165,9 @@ async function loadData(){
     // 카드
     document.getElementById('cardsBox').innerHTML = `
       <div class="card"><p class="lbl">${T().planLbl}</p><p class="val">${fmtDollar(planTotal)}</p></div>
-      <div class="card"><p class="lbl">${T().ytdAct(curMonth)}</p><p class="val">${fmtDollar(ytdActual)}</p></div>
+      <div class="card"><p class="lbl">${T().ytdAct(curMonth)}</p><p class="val">${fmtDollar(ytdActual)} <span style="font-size:13px;color:${rateColor(ytdRate)};">(${ytdRate}%)</span></p><p class="sub2" style="color:${rateColor(ytdRate)};">${ytdRate>=100?'▲':'▼'} ${fmtDollar(Math.abs(ytdActual-ytdPlan))} ${ytdRate>=100?T().over:T().under}</p></div>
       <div class="card"><p class="lbl">${T().mtyYtd}</p><p class="val" style="color:#2a78d6;">${fmtDollar(mtyYTD)}</p><p class="sub2" style="color:var(--text-secondary);">${T().share}${Math.round(mtyYTD/ytdActual*100)}%</p></div>
       <div class="card"><p class="lbl">${T().qroYtd}</p><p class="val" style="color:#7B1FA2;">${fmtDollar(qroYTD)}</p><p class="sub2" style="color:var(--text-secondary);">${T().share}${Math.round(qroYTD/ytdActual*100)}%</p></div>
-      <div class="card"><p class="lbl">${T().ytdRate}</p><p class="val" style="color:${rateColor(ytdRate)};">${ytdRate}%</p><p class="sub2" style="color:${rateColor(ytdRate)};">${ytdRate>=100?'▲':'▼'} ${fmtDollar(Math.abs(ytdActual-ytdPlan))} ${ytdRate>=100?T().over:T().under}</p></div>
       <div class="card"><p class="lbl">${T().annualRate}</p><p class="val" style="color:#2a78d6;">${annualRate}%</p><p class="sub2" style="color:var(--text-secondary);">${T().remain}${fmtDollar(planTotal-ytdActual)}</p></div>
     `;
 
