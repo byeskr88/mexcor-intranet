@@ -102,17 +102,17 @@ hr{border:none;border-top:0.5px solid var(--border);margin:18px 0;}
   <div class="sbar loading" id="sbar">데이터 불러오는 중...</div>
 
   <!-- 매출 -->
-  <div class="sec" id="sec-sales">📊 매출 현황</div>
+  <div class="sec" id="sec-sales"><span data-ko="📊 매출 현황" data-es="📊 Ventas">📊 매출 현황</span></div>
   <div class="sales-cards">
-    <div class="s-card"><div class="lbl" id="lbl-plan">연간 계획</div><div class="val" id="kPlan">-</div></div>
-    <div class="s-card"><div class="lbl" id="lbl-ytd-act">YTD 실적</div><div class="val" id="kYtdAct">-</div><div class="sub2" id="kYtdActSub">-</div></div>
+    <div class="s-card"><div class="lbl" id="lbl-plan" data-ko="연간 계획" data-es="Plan Anual">연간 계획</div><div class="val" id="kPlan">-</div></div>
+    <div class="s-card"><div class="lbl" id="lbl-ytd-act" data-ko="YTD 실적" data-es="Real YTD">YTD 실적</div><div class="val" id="kYtdAct">-</div><div class="sub2" id="kYtdActSub">-</div></div>
     <div class="s-card"><div class="lbl">MTY YTD</div><div class="val" style="color:var(--blue-text);" id="kMty">-</div><div class="sub2" id="kMtySub">-</div></div>
     <div class="s-card"><div class="lbl">QRO YTD</div><div class="val" style="color:var(--purple-text);" id="kQro">-</div><div class="sub2" id="kQroSub">-</div></div>
-    <div class="s-card"><div class="lbl" id="lbl-ytd-rate">YTD 달성률</div><div class="val" id="kYtd">-</div><div class="sub2" id="kYtdSub">-</div></div>
-    <div class="s-card"><div class="lbl" id="lbl-annual-rate">연간 대비 달성률</div><div class="val" id="kAnnual">-</div><div class="sub2" id="kAnnualSub">-</div></div>
+    <div class="s-card"><div class="lbl" id="lbl-ytd-rate" data-ko="YTD 달성률" data-es="Cumplim. YTD">YTD 달성률</div><div class="val" id="kYtd">-</div><div class="sub2" id="kYtdSub">-</div></div>
+    <div class="s-card"><div class="lbl" id="lbl-annual-rate" data-ko="연간 대비 달성률" data-es="Cumplim. Anual">연간 대비 달성률</div><div class="val" id="kAnnual">-</div><div class="sub2" id="kAnnualSub">-</div></div>
   </div>
   <div class="inner" style="margin-bottom:4px;">
-    <div style="font-size:10px;color:var(--hint);margin-bottom:8px;" id="lbl-monthly">월별 달성률</div>
+    <div style="font-size:10px;color:var(--hint);margin-bottom:8px;" id="lbl-monthly" data-ko="월별 달성률" data-es="Cumplimiento Mensual">월별 달성률</div>
     <div class="month-grid" id="monthBars"><div style="font-size:11px;color:var(--hint);grid-column:1/-1;text-align:center;padding:16px;">로드 중...</div></div>
   </div>
 
@@ -121,15 +121,15 @@ hr{border:none;border-top:0.5px solid var(--border);margin:18px 0;}
   <!-- 알림 + AR -->
   <div class="grid2">
     <div>
-      <div class="sec" style="margin-top:0;" id="sec-alert">🚨 긴급 알림</div>
+      <div class="sec" style="margin-top:0;" id="sec-alert"><span data-ko="🚨 긴급 알림" data-es="🚨 Alertas">🚨 긴급 알림</span></div>
       <div class="alerts" id="alertsList"><div style="font-size:12px;color:var(--hint);">로드 중...</div></div>
     </div>
     <div>
-      <div class="sec" style="margin-top:0;" id="sec-ar">💰 AR 미수금</div>
+      <div class="sec" style="margin-top:0;" id="sec-ar"><span data-ko="💰 AR 미수금" data-es="💰 CxC Pendiente">💰 AR 미수금</span></div>
       <div class="grid3">
-        <div class="card"><div class="lbl">USD</div><div class="val" id="arUsd">-</div><div class="sub" id="arUsdSub">-</div></div>
-        <div class="card"><div class="lbl">MXN</div><div class="val" id="arMxn">-</div><div class="sub" id="arMxnSub">-</div></div>
-        <div class="card"><div class="lbl">총 건수</div><div class="val" id="arCnt">-</div><div class="sub">PENDIENTE</div></div>
+        <div class="card"><div class="lbl" data-ko="USD" data-es="USD">USD</div><div class="val" id="arUsd">-</div><div class="sub" id="arUsdSub">-</div></div>
+        <div class="card"><div class="lbl" data-ko="MXN" data-es="MXN">MXN</div><div class="val" id="arMxn">-</div><div class="sub" id="arMxnSub">-</div></div>
+        <div class="card"><div class="lbl" data-ko="총 건수" data-es="Total">총 건수</div><div class="val" id="arCnt">-</div><div class="sub">PENDIENTE</div></div>
       </div>
     </div>
   </div>
@@ -139,11 +139,11 @@ hr{border:none;border-top:0.5px solid var(--border);margin:18px 0;}
   <!-- CRM -->
   <div class="grid2">
     <div>
-      <div class="sec" style="margin-top:0;" id="sec-crm">🤝 CRM 파이프라인</div>
+      <div class="sec" style="margin-top:0;" id="sec-crm"><span data-ko="🤝 CRM 파이프라인" data-es="🤝 Pipeline CRM">🤝 CRM 파이프라인</span></div>
       <div class="inner"><div id="pipeRows"><div style="font-size:12px;color:var(--hint);">로드 중...</div></div></div>
     </div>
     <div>
-      <div class="sec" style="margin-top:0;" id="sec-action">📅 이번 주 액션</div>
+      <div class="sec" style="margin-top:0;" id="sec-action"><span data-ko="📅 이번 주 액션" data-es="📅 Acciones Semana">📅 이번 주 액션</span></div>
       <div class="inner"><div id="actionRows"><div style="font-size:12px;color:var(--hint);">로드 중...</div></div></div>
     </div>
   </div>
@@ -153,11 +153,11 @@ hr{border:none;border-top:0.5px solid var(--border);margin:18px 0;}
   <!-- 재고 -->
   <div class="grid2">
     <div>
-      <div class="sec" style="margin-top:0;" id="sec-mty-inv">📦 MTY 재고 — 재주문 필요</div>
+      <div class="sec" style="margin-top:0;" id="sec-mty-inv"><span data-ko="📦 MTY 재고 — 재주문 필요" data-es="📦 MTY Inventario — Reorden">📦 MTY 재고 — 재주문 필요</span></div>
       <div class="inner" id="mtyInv"><div style="font-size:12px;color:var(--hint);">로드 중...</div></div>
     </div>
     <div>
-      <div class="sec" style="margin-top:0;" id="sec-qro-inv">📦 QRO 재고 현황</div>
+      <div class="sec" style="margin-top:0;" id="sec-qro-inv"><span data-ko="📦 QRO 재고 현황" data-es="📦 QRO Inventario">📦 QRO 현황</span></div>
       <div class="inner" id="qroInv"><div style="font-size:12px;color:var(--hint);">로드 중...</div></div>
     </div>
   </div>
