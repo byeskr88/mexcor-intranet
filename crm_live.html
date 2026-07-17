@@ -348,6 +348,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
       <div class="dp-sub" id="dpSub">-</div>
     </div>
     <button class="btn" id="dpEditBtn" onclick="toggleEdit()" style="font-size:11px;padding:4px 9px;margin-right:4px;" data-ko="✏️ 수정" data-es="✏️ Editar">✏️ 수정</button>
+    <button class="btn" id="dpDeleteBtn" onclick="deleteAccount()" style="font-size:11px;padding:4px 9px;margin-right:4px;color:var(--danger-text);border-color:var(--danger);" data-ko="🗑 삭제" data-es="🗑 Eliminar">🗑 삭제</button>
     <button class="dp-close" onclick="closeDetail()">✕</button>
   </div>
   <div class="dp-body">
@@ -692,13 +693,34 @@ function closeDetail(){
   document.getElementById('detailPanel').classList.remove('open');
 }
 
+async function deleteAccount(){
+  if(!selectedId) return;
+  const a=accounts.find(x=>x.id===selectedId);
+  if(!a) return;
+  const msg=curLang==='es'?`¿Eliminar "${a.name}"? Esto también borrará su registro de contactos. Esta acción no se puede deshacer.`
+    :`"${a.name}" 삭제할까요? 컨택 로그도 같이 삭제되고, 되돌릴 수 없어요.`;
+  if(!confirm(msg)) return;
+  await sb.from('contact_logs').delete().eq('account_id',selectedId);
+  await sb.from('accounts').delete().eq('id',selectedId);
+  closeDetail();
+  await loadAll();
+  showToast(curLang==='es'?`${a.name} eliminado`:`${a.name} 삭제됨`);
+}
+
+async function deleteLog(logId){
+  if(!confirm(curLang==='es'?'¿Eliminar este registro?':'이 기록을 삭제할까요?')) return;
+  await sb.from('contact_logs').delete().eq('id',logId);
+  await loadAll();
+  if(selectedId) renderTimeline(selectedId);
+}
+
 function renderTimeline(id){
   const tl=document.getElementById('dpTimeline');
   const items=logs[id]||[];
   if(items.length===0){tl.innerHTML='<div class="tl-empty">'+T().noContactLog+'</div>';return;}
   tl.innerHTML=items.map((l,i)=>`<div class="tl-item">
     <div class="tl-dot${i===0?' new':''}"></div>
-    <div class="tl-date">${new Date(l.created_at).toLocaleDateString('ko-KR')}</div>
+    <div class="tl-date">${new Date(l.created_at).toLocaleDateString('ko-KR')} <button onclick="deleteLog('${l.id}')" style="background:none;border:none;cursor:pointer;color:var(--hint);font-size:10px;padding:0 2px;float:right;" title="${curLang==='es'?'Eliminar':'삭제'}">✕</button></div>
     <div class="tl-text">${l.content}</div>
     <div class="tl-by">${l.logged_by||'DJ'}</div>
   </div>`).join('');
