@@ -15,34 +15,37 @@
 
   const style = document.createElement('style');
   style.textContent = `
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600&display=swap');
     body { padding-top: 48px !important; }
     #mexcor-nav {
       position: fixed; top: 0; left: 0; right: 0; height: 48px;
-      background: #1a1f3a; display: flex; align-items: center;
+      background: #2b3260; display: flex; align-items: center;
       padding: 0 14px; gap: 3px; z-index: 9999;
-      border-bottom: 0.5px solid #2a3060;
+      border-bottom: 0.5px solid #3d4478;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
-    .mn-logo { margin-right: 10px; padding-right: 10px; border-right: 0.5px solid #3a4070; flex-shrink:0;
-      display: flex; align-items: center; height: 100%; }
-    .mn-logo img { height: 30px; width: auto; max-height: 30px; display: block; object-fit: contain;
+    .mn-logo { margin-right: 10px; padding-right: 10px; border-right: 0.5px solid #4a5290; flex-shrink:0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 1px; }
+    .mn-logo img { height: 21px; width: auto; max-height: 21px; display: block; object-fit: contain;
       filter: brightness(0) invert(1); opacity: 0.92; }
+    .mn-logo-word { font-family: 'Poppins', -apple-system, sans-serif; font-weight: 600; font-size: 8px;
+      letter-spacing: 1.5px; color: #d8dae8; opacity: 0.85; line-height: 1; }
     .mn-tabs { display: flex; gap: 2px; flex: 1; overflow-x: auto; }
     .mn-tabs::-webkit-scrollbar { display: none; }
     .mn-tab {
       display: flex; align-items: center; gap: 5px;
       padding: 5px 11px; border-radius: 6px; cursor: pointer;
-      border: none; background: transparent; color: #9a98a0;
+      border: none; background: transparent; color: #b0aeb8;
       font-family: inherit; font-size: 12px; white-space: nowrap;
       text-decoration: none; transition: background .1s;
     }
-    .mn-tab:hover { background: #252b50; color: #fff; }
-    .mn-tab.active { background: #252b50; color: #fff; }
+    .mn-tab:hover { background: #3a4278; color: #fff; }
+    .mn-tab.active { background: #3a4278; color: #fff; }
     .mn-status { font-size: 10px; padding: 1px 5px; border-radius: 20px; margin-left: 1px; }
     .mn-right { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-    .mn-time { font-size: 11px; color: #555; }
+    .mn-time { font-size: 11px; color: #a8a6c8; }
     .mn-lang-toggle {
-      display: flex; background: #2a3060; border: 0.5px solid #5a6090; border-radius: 5px; overflow: hidden;
+      display: flex; background: #1f2450; border: 0.5px solid #4a5290; border-radius: 5px; overflow: hidden;
     }
     .mn-lang-opt {
       background: transparent; border: none; color: #9a98a0; padding: 4px 9px; font-size: 11px;
@@ -63,6 +66,7 @@
   nav.innerHTML = `
     <div class="mn-logo">
       <img src="logo.svg" alt="MEXCOR" onerror="window._mexcorLogoFallback(this)">
+      <span class="mn-logo-word">MEXCOR</span>
     </div>
     <div class="mn-tabs">
       ${PAGES.map(p=>`<a class="mn-tab${p.file===curFile?' active':''}" href="${p.file}" data-id="${p.id}">
@@ -79,10 +83,7 @@
     </div>
   `;
   window._mexcorLogoFallback = function(img){
-    const span = document.createElement('span');
-    span.textContent = 'MEXCOR';
-    span.style.cssText = 'color:#fff;font-weight:700;font-size:14px;letter-spacing:.05em;';
-    img.replaceWith(span);
+    img.style.display = 'none';
   };
 
   document.body.prepend(nav);
