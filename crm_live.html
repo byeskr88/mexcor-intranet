@@ -447,6 +447,17 @@ const SURL='https://oezergrrqcinclorwvnk.supabase.co';
 const SKEY='sb_publishable_1eqTksIg-IetXykOBHf0rg_19ourTmF';
 const sb=supabase.createClient(SURL,SKEY);
 
+// Supabase 쓰기 작업 결과 확인 - 에러를 조용히 삼키지 않고 사용자에게 표시
+async function sbWrite(promise){
+  const {error} = await promise;
+  if(error){
+    console.error('Supabase write error:', error);
+    showToast((curLang==='es'?'⚠ Error al guardar: ':'⚠ 저장 실패: ')+error.message);
+    return false;
+  }
+  return true;
+}
+
 const STAGES=[
   {id:'active',label:'Active',col:'col-active',color:'var(--ok)'},
   {id:'prospect',label:'Prospect',col:'col-prospect',color:'var(--s2)'},
@@ -651,7 +662,7 @@ function setupDrop(col){
     if(!id||!newStage) return;
     const acc=accounts.find(a=>a.id===id);
     if(!acc||acc.stage===newStage) return;
-    await sb.from('accounts').update({stage:newStage,updated_at:new Date()}).eq('id',id);
+    if(!await sbWrite(sb.from('accounts').update({stage:newStage,updated_at:new Date()}).eq('id',id))) return;
     showToast(`${acc.name} → ${STAGES.find(s=>s.id===newStage)?.label}`);
     await loadAll();
     if(selectedId===id) openDetail(id);
@@ -704,8 +715,8 @@ async function deleteAccount(){
   const msg=curLang==='es'?`¿Eliminar "${a.name}"? Esto también borrará su registro de contactos. Esta acción no se puede deshacer.`
     :`"${a.name}" 삭제할까요? 컨택 로그도 같이 삭제되고, 되돌릴 수 없어요.`;
   if(!confirm(msg)) return;
-  await sb.from('contact_logs').delete().eq('account_id',selectedId);
-  await sb.from('accounts').delete().eq('id',selectedId);
+  if(!await sbWrite(sb.from('contact_logs').delete().eq('account_id',selectedId))) return;
+  if(!await sbWrite(sb.from('accounts').delete().eq('id',selectedId))) return;
   closeDetail();
   await loadAll();
   showToast(curLang==='es'?`${a.name} eliminado`:`${a.name} 삭제됨`);
@@ -713,7 +724,7 @@ async function deleteAccount(){
 
 async function deleteLog(logId){
   if(!confirm(curLang==='es'?'¿Eliminar este registro?':'이 기록을 삭제할까요?')) return;
-  await sb.from('contact_logs').delete().eq('id',logId);
+  if(!await sbWrite(sb.from('contact_logs').delete().eq('id',logId))) return;
   await loadAll();
   if(selectedId) renderTimeline(selectedId);
 }
@@ -733,7 +744,7 @@ function renderTimeline(id){
 async function changeStage(v){
   if(!selectedId) return;
   const a=accounts.find(x=>x.id===selectedId);
-  await sb.from('accounts').update({stage:v,updated_at:new Date()}).eq('id',selectedId);
+  if(!await sbWrite(sb.from('accounts').update({stage:v,updated_at:new Date()}).eq('id',selectedId))) return;
   showToast(`${a.name} → ${STAGES.find(s=>s.id===v)?.label||v}`);
   await loadAll();
   document.getElementById('dpSub').textContent=(a.industry||'-')+' · '+(a.location||'-');
@@ -741,7 +752,7 @@ async function changeStage(v){
 
 async function changePriority(v){
   if(!selectedId) return;
-  await sb.from('accounts').update({priority:v}).eq('id',selectedId);
+  if(!await sbWrite(sb.from('accounts').update({priority:v}).eq('id',selectedId))) return;
   await loadAll();
   showToast(curLang==='es'?'Prioridad actualizada':'우선순위 변경됨');
 }
@@ -757,7 +768,7 @@ async function commitWinProbability(pct){
   document.getElementById('dpWinPct').textContent=pct+'%';
   document.getElementById('dpWinFill').style.width=pct+'%';
   document.getElementById('dpWinFill').style.background=pct>=60?'var(--ok)':pct>=30?'var(--warn)':'var(--danger)';
-  await sb.from('accounts').update({win_probability:pct}).eq('id',selectedId);
+  await sbWrite(sb.from('accounts').update({win_probability:pct}).eq('id',selectedId));
   const a=accounts.find(x=>x.id===selectedId);
   if(a) a.win_probability=pct;
 }
@@ -782,7 +793,7 @@ async function saveContact(){
   const content=document.getElementById('contactInput').value.trim();
   const loggedBy=document.getElementById('loggedBy').value;
   if(!content||!selectedId) return;
-  await sb.from('contact_logs').insert({account_id:selectedId,content,logged_by:loggedBy});
+  if(!await sbWrite(sb.from('contact_logs').insert({account_id:selectedId,content,logged_by:loggedBy}))) return;
   document.getElementById('contactInput').value='';
   await loadAll();
   renderTimeline(selectedId);
@@ -824,7 +835,7 @@ function closeNewModal(){document.getElementById('newModal').style.display='none
 async function createAccount(){
   const name=document.getElementById('nName').value.trim();
   if(!name){showToast(curLang==='es'?'Ingrese el nombre del cliente':'거래처명을 입력해주세요');return;}
-  await sb.from('accounts').insert({
+  const ok = await sbWrite(sb.from('accounts').insert({
     name,flag:document.getElementById('nFlag').value,
     stage:document.getElementById('nStage').value,
     priority:document.getElementById('nPriority').value,
@@ -835,7 +846,8 @@ async function createAccount(){
     expected_value:parseFloat(document.getElementById('nValue').value)||0,
     next_action:document.getElementById('nAction').value,
     note:document.getElementById('nNote').value,
-  });
+  }));
+  if(!ok) return;
   closeNewModal();
   ['nName','nLoc','nIndustry','nProducts','nContact','nValue','nAction','nNote'].forEach(id=>document.getElementById(id).value='');
   await loadAll();
@@ -860,21 +872,24 @@ loadAll();
 
 // ===== 편집 모드 =====
 let editMode = false;
-function toggleEdit(){
-  editMode = !editMode;
-  const btn = document.getElementById('dpEditBtn');
+async function toggleEdit(){
   const footer = document.querySelector('.dp-footer');
-  if(editMode){
+  if(!editMode){
+    editMode = true;
+    const btn = document.getElementById('dpEditBtn');
     btn.textContent = T().save;
     btn.style.background = 'var(--text)';
     btn.style.color = '#fff';
     renderEditMode();
     if(footer){ footer.style.opacity='0.4'; footer.style.pointerEvents='none'; }
   } else {
+    const ok = await saveEdit();
+    if(!ok) return; // 저장 실패 시 수정 모드 유지, 입력한 내용 보존
+    editMode = false;
+    const btn = document.getElementById('dpEditBtn');
     btn.textContent = T().edit;
     btn.style.background = '';
     btn.style.color = '';
-    saveEdit();
     if(footer){ footer.style.opacity=''; footer.style.pointerEvents=''; }
   }
 }
@@ -897,7 +912,7 @@ function renderEditMode(){
 }
 
 async function saveEdit(){
-  if(!selectedId) return;
+  if(!selectedId) return false;
   const fields = ['contact_person','location','industry','expected_value','monthly_fc','ytd_rate','products','next_action','next_action_date','note'];
   const updates = {updated_at: new Date()};
   fields.forEach(f=>{
@@ -909,10 +924,12 @@ async function saveEdit(){
       updates[f] = el.value;
     }
   });
-  await sb.from('accounts').update(updates).eq('id', selectedId);
+  const ok = await sbWrite(sb.from('accounts').update(updates).eq('id', selectedId));
+  if(!ok) return false;
   await loadAll();
   openDetail(selectedId);
-  showToast('수정 저장됨');
+  showToast(curLang==='es'?'Información guardada':'수정 저장됨');
+  return true;
 }
 
 // ===== 액션 D-day 리스트 =====
@@ -1019,7 +1036,8 @@ function closeNoticeModal(){document.getElementById('noticeModal').style.display
 async function saveNotice(){
   const content=document.getElementById('nContent').value.trim();
   if(!content){showToast(curLang==='es'?'Ingrese el contenido':'내용을 입력해주세요');return;}
-  await sb.from('notices').insert({type:document.getElementById('nType').value,content,author:document.getElementById('nAuthor').value});
+  const ok = await sbWrite(sb.from('notices').insert({type:document.getElementById('nType').value,content,author:document.getElementById('nAuthor').value}));
+  if(!ok) return;
   document.getElementById('nContent').value='';
   closeNoticeModal();
   loadNotices();
@@ -1027,7 +1045,7 @@ async function saveNotice(){
 }
 async function deleteNotice(id){
   if(!confirm(curLang==='es'?'¿Eliminar?':'삭제할까요?')) return;
-  await sb.from('notices').delete().eq('id',id);
+  if(!await sbWrite(sb.from('notices').delete().eq('id',id))) return;
   loadNotices();
   showToast(curLang==='es'?'Eliminado':'삭제됨');
 }
@@ -1049,13 +1067,14 @@ async function saveMemo(){
   const inp=document.getElementById('memoInput');
   const content=inp.value.trim();
   if(!content) return;
-  await sb.from('quick_notes').insert({content,author:'DJ'});
+  const ok = await sbWrite(sb.from('quick_notes').insert({content,author:'DJ'}));
+  if(!ok) return;
   inp.value='';
   loadMemos();
   showToast(curLang==='es'?'Nota guardada':'메모 저장됨');
 }
 async function deleteMemo(id){
-  await sb.from('quick_notes').delete().eq('id',id);
+  if(!await sbWrite(sb.from('quick_notes').delete().eq('id',id))) return;
   loadMemos();
 }
 
