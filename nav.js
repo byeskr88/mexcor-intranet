@@ -25,8 +25,8 @@
     }
     .mn-logo { margin-right: 10px; padding-right: 10px; border-right: 0.5px solid #3a4070; flex-shrink:0;
       display: flex; align-items: center; height: 100%; }
-    .mn-logo img { height: 28px; width: auto; max-height: 28px; display: block; object-fit: contain;
-      background: #fff; border-radius: 4px; padding: 2px 6px; }
+    .mn-logo img { height: 30px; width: auto; max-height: 30px; display: block; object-fit: contain;
+      filter: brightness(0) invert(1); opacity: 0.92; }
     .mn-tabs { display: flex; gap: 2px; flex: 1; overflow-x: auto; }
     .mn-tabs::-webkit-scrollbar { display: none; }
     .mn-tab {

@@ -119,9 +119,9 @@ tr:last-child td{border-bottom:none;}
 <script src="nav.js"></script>
 
 <div class="wrap">
-  <h1>재고 탭</h1>
-  <p class="ts" id="ts">데이터 불러오는 중...</p>
-  <div class="sbar loading" id="sbar">구글 시트에서 데이터를 불러오는 중...</div>
+  <h1 data-ko="재고 탭" data-es="Inventario">재고 탭</h1>
+  <p class="ts" id="ts" data-ko="데이터 불러오는 중..." data-es="Cargando datos...">데이터 불러오는 중...</p>
+  <div class="sbar loading" id="sbar" data-ko="구글 시트에서 데이터를 불러오는 중..." data-es="Cargando datos de Google Sheets...">구글 시트에서 데이터를 불러오는 중...</div>
   <div id="main" style="display:none;">
     <div class="loc-tabs">
       <button class="loc-tab active" onclick="switchLoc('mty',this)">MTY</button>
@@ -131,18 +131,18 @@ tr:last-child td{border-bottom:none;}
     <!-- MTY -->
     <div id="p-mty">
       <div class="sec-tabs">
-        <button class="sec-tab active" onclick="switchSec('mty','inv',this)">재고 현황</button>
-        <button class="sec-tab" onclick="switchSec('mty','perf',this)">업체별 계획 대비 실적</button>
-        <button class="sec-tab" onclick="switchSec('mty','io',this)">입출고 실적</button>
+        <button class="sec-tab active" onclick="switchSec('mty','inv',this)" data-ko="재고 현황" data-es="Estado de Inventario">재고 현황</button>
+        <button class="sec-tab" onclick="switchSec('mty','perf',this)" data-ko="업체별 계획 대비 실적" data-es="Real vs Plan por Cliente">업체별 계획 대비 실적</button>
+        <button class="sec-tab" onclick="switchSec('mty','io',this)" data-ko="입출고 실적" data-es="Entradas/Salidas">입출고 실적</button>
       </div>
       <div id="mty-inv">
         <div class="cards" id="mtyCards"></div>
         <div class="alerts" id="mtyAlerts"></div>
-        <div class="sec-title">재고 현황</div>
+        <div class="sec-title" data-ko="재고 현황" data-es="Estado de Inventario">재고 현황</div>
         <div class="search-bar">
-          <input type="text" id="mtySearch" placeholder="품목명 검색..." oninput="renderMtyInv()">
+          <input type="text" id="mtySearch" placeholder="품목명 검색..." oninput="renderMtyInv()" data-ko-ph="품목명 검색..." data-es-ph="Buscar artículo...">
           <div class="type-filters">
-            <button class="type-btn active" onclick="setTypeFilter('mty','ALL',this)">전체</button>
+            <button class="type-btn active" onclick="setTypeFilter('mty','ALL',this)" data-ko="전체" data-es="Todos">전체</button>
             <button class="type-btn" onclick="setTypeFilter('mty','DRUM',this)">DRUM</button>
             <button class="type-btn" onclick="setTypeFilter('mty','SPOOL',this)">SPOOL</button>
             <button class="type-btn" onclick="setTypeFilter('mty','ETC',this)">ETC</button>
@@ -151,8 +151,8 @@ tr:last-child td{border-bottom:none;}
         <div class="tbl-wrap"><table>
           <thead><tr>
             <th>NO</th><th>ORIGIN</th><th>ITEM</th><th>TYPE</th><th>CLIENT</th>
-            <th class="r">재고</th><th class="r">OPEN</th><th class="r">FORECAST/월</th>
-            <th class="r" style="min-width:120px;">MOH</th><th>상태</th>
+            <th class="r" data-ko="재고" data-es="Stock">재고</th><th class="r">OPEN</th><th class="r">FORECAST/월</th>
+            <th class="r" style="min-width:120px;">MOH</th><th data-ko="상태" data-es="Estado">상태</th>
           </tr></thead>
           <tbody id="mtyInvBody"></tbody>
         </table></div>
@@ -163,7 +163,7 @@ tr:last-child td{border-bottom:none;}
           <span><span class="ldot" style="background:#E1F5EE;border:0.5px solid #5DCAA5;"></span>≥100%</span>
           <span><span class="ldot" style="background:#FAEEDA;border:0.5px solid #EF9F27;"></span>80~99%</span>
           <span><span class="ldot" style="background:#FCEBEB;border:0.5px solid #F09595;"></span>&lt;80%</span>
-          <span>셀: 실적 / FC:계획 / ▲▼달성율</span>
+          <span data-ko="셀: 실적 / FC:계획 / ▲▼달성율" data-es="Celda: Real / FC:Plan / ▲▼Cumplim.">셀: 실적 / FC:계획 / ▲▼달성율</span>
         </div>
         <div class="perf-wrap"><table class="perf-tbl">
           <thead><tr>
@@ -177,20 +177,20 @@ tr:last-child td{border-bottom:none;}
       </div>
       <div id="mty-io" style="display:none;">
         <div class="sub-tabs">
-          <button class="sub-tab active" onclick="switchIO('mty','out',this)">출고</button>
-          <button class="sub-tab" onclick="switchIO('mty','in',this)">입고</button>
+          <button class="sub-tab active" onclick="switchIO('mty','out',this)" data-ko="출고" data-es="Salidas">출고</button>
+          <button class="sub-tab" onclick="switchIO('mty','in',this)" data-ko="입고" data-es="Entradas">입고</button>
         </div>
         <div id="mty-io-out">
           <div class="filter-bar" id="mtyFilter"></div>
           <div class="filter-bar" id="mtyItemFilter" style="margin-top:-4px;"></div>
           <div class="tbl-wrap"><table>
-            <thead><tr><th>NO</th><th>월</th><th>거래처</th><th>PO NO</th><th>납품일</th><th>품목</th><th>단위</th><th class="r">수량</th><th class="r">총 KG</th></tr></thead>
+            <thead><tr><th>NO</th><th data-ko="월" data-es="Mes">월</th><th data-ko="거래처" data-es="Cliente">거래처</th><th>PO NO</th><th data-ko="납품일" data-es="Fecha Entrega">납품일</th><th data-ko="품목" data-es="Artículo">품목</th><th data-ko="단위" data-es="Unidad">단위</th><th class="r" data-ko="수량" data-es="Cantidad">수량</th><th class="r">총 KG</th></tr></thead>
             <tbody id="mtyOutBody"></tbody>
           </table></div>
         </div>
         <div id="mty-io-in" style="display:none;">
           <div class="tbl-wrap"><table>
-            <thead><tr><th>NO</th><th>월</th><th>계약번호</th><th>INCOTERMS</th><th>FCL/LCL</th><th>ETD 부산</th><th>ETA 입고</th><th>품목</th><th>단위</th><th class="r">수량</th><th>상태</th></tr></thead>
+            <thead><tr><th>NO</th><th data-ko="월" data-es="Mes">월</th><th data-ko="계약번호" data-es="No. Contrato">계약번호</th><th>INCOTERMS</th><th>FCL/LCL</th><th>ETD 부산</th><th>ETA 입고</th><th data-ko="품목" data-es="Artículo">품목</th><th data-ko="단위" data-es="Unidad">단위</th><th class="r" data-ko="수량" data-es="Cantidad">수량</th><th data-ko="상태" data-es="Estado">상태</th></tr></thead>
             <tbody id="mtyInBody"></tbody>
           </table></div>
         </div>
@@ -200,18 +200,18 @@ tr:last-child td{border-bottom:none;}
     <!-- QRO -->
     <div id="p-qro" style="display:none;">
       <div class="sec-tabs">
-        <button class="sec-tab active" onclick="switchSec('qro','inv',this)">재고 현황</button>
-        <button class="sec-tab" onclick="switchSec('qro','perf',this)">업체별 계획 대비 실적</button>
-        <button class="sec-tab" onclick="switchSec('qro','io',this)">입출고 실적</button>
+        <button class="sec-tab active" onclick="switchSec('qro','inv',this)" data-ko="재고 현황" data-es="Estado de Inventario">재고 현황</button>
+        <button class="sec-tab" onclick="switchSec('qro','perf',this)" data-ko="업체별 계획 대비 실적" data-es="Real vs Plan por Cliente">업체별 계획 대비 실적</button>
+        <button class="sec-tab" onclick="switchSec('qro','io',this)" data-ko="입출고 실적" data-es="Entradas/Salidas">입출고 실적</button>
       </div>
       <div id="qro-inv">
         <div class="cards" id="qroCards"></div>
-        <div class="sec-title">재고 현황</div>
+        <div class="sec-title" data-ko="재고 현황" data-es="Estado de Inventario">재고 현황</div>
         <div class="tbl-wrap"><table>
           <thead><tr>
             <th>ORIGIN</th><th>ITEM</th><th>TYPE</th><th>CLIENT</th>
-            <th class="r">재고</th><th class="r">OPEN</th><th class="r">FORECAST/월</th>
-            <th class="r" style="min-width:120px;">MOH</th><th>상태</th>
+            <th class="r" data-ko="재고" data-es="Stock">재고</th><th class="r">OPEN</th><th class="r">FORECAST/월</th>
+            <th class="r" style="min-width:120px;">MOH</th><th data-ko="상태" data-es="Estado">상태</th>
           </tr></thead>
           <tbody id="qroInvBody"></tbody>
         </table></div>
@@ -222,7 +222,7 @@ tr:last-child td{border-bottom:none;}
           <span><span class="ldot" style="background:#E1F5EE;border:0.5px solid #5DCAA5;"></span>≥100%</span>
           <span><span class="ldot" style="background:#FAEEDA;border:0.5px solid #EF9F27;"></span>80~99%</span>
           <span><span class="ldot" style="background:#FCEBEB;border:0.5px solid #F09595;"></span>&lt;80%</span>
-          <span>셀: 실적 / FC:계획 / ▲▼달성율</span>
+          <span data-ko="셀: 실적 / FC:계획 / ▲▼달성율" data-es="Celda: Real / FC:Plan / ▲▼Cumplim.">셀: 실적 / FC:계획 / ▲▼달성율</span>
         </div>
         <div class="perf-wrap"><table class="perf-tbl">
           <thead><tr>
@@ -236,18 +236,18 @@ tr:last-child td{border-bottom:none;}
       </div>
       <div id="qro-io" style="display:none;">
         <div class="sub-tabs">
-          <button class="sub-tab active" onclick="switchIO('qro','out',this)">출고</button>
-          <button class="sub-tab" onclick="switchIO('qro','in',this)">입고</button>
+          <button class="sub-tab active" onclick="switchIO('qro','out',this)" data-ko="출고" data-es="Salidas">출고</button>
+          <button class="sub-tab" onclick="switchIO('qro','in',this)" data-ko="입고" data-es="Entradas">입고</button>
         </div>
         <div id="qro-io-out">
           <div class="tbl-wrap"><table>
-            <thead><tr><th>NO</th><th>월</th><th>거래처</th><th>PO NO</th><th>납품일</th><th>품목</th><th>단위</th><th class="r">수량</th><th class="r">총 KG</th></tr></thead>
+            <thead><tr><th>NO</th><th data-ko="월" data-es="Mes">월</th><th data-ko="거래처" data-es="Cliente">거래처</th><th>PO NO</th><th data-ko="납품일" data-es="Fecha Entrega">납품일</th><th data-ko="품목" data-es="Artículo">품목</th><th data-ko="단위" data-es="Unidad">단위</th><th class="r" data-ko="수량" data-es="Cantidad">수량</th><th class="r">총 KG</th></tr></thead>
             <tbody id="qroOutBody"></tbody>
           </table></div>
         </div>
         <div id="qro-io-in" style="display:none;">
           <div class="tbl-wrap"><table>
-            <thead><tr><th>NO</th><th>월</th><th>계약번호</th><th>INCOTERMS</th><th>FCL/LCL</th><th>ETD 부산</th><th>ETA 입고</th><th>품목</th><th>단위</th><th class="r">수량</th><th>상태</th></tr></thead>
+            <thead><tr><th>NO</th><th data-ko="월" data-es="Mes">월</th><th data-ko="계약번호" data-es="No. Contrato">계약번호</th><th>INCOTERMS</th><th>FCL/LCL</th><th>ETD 부산</th><th>ETA 입고</th><th data-ko="품목" data-es="Artículo">품목</th><th data-ko="단위" data-es="Unidad">단위</th><th class="r" data-ko="수량" data-es="Cantidad">수량</th><th data-ko="상태" data-es="Estado">상태</th></tr></thead>
             <tbody id="qroInBody"></tbody>
           </table></div>
         </div>
@@ -275,6 +275,19 @@ function norm(s){return String(s||'').toLowerCase().replace(/\s+/g,'').replace(/
 let G={};
 let mtyTypeFilter='ALL';
 let qroTypeFilter='ALL';
+
+let curLang = localStorage.getItem('mexcor_lang')||'ko';
+const T_KO={reorder:'재주문 필요',moh:'개월 미만',syncOk:'✓ 구글 시트 연동 성공',syncFail:m=>'❌ 연동 실패 — '+m,
+  lastUpd:'최종 업데이트: ',all:'전체',allClient:'전체거래처',allItem:'전체품목',pending:'예정'};
+const T_ES={reorder:'Requiere Reorden',moh:' meses',syncOk:'✓ Sincronizado',syncFail:m=>'❌ Error de sincronización — '+m,
+  lastUpd:'Última actualización: ',all:'Todos',allClient:'Todos los Clientes',allItem:'Todos los Artículos',pending:'Próximo'};
+function T(){ return curLang==='es'?T_ES:T_KO; }
+document.addEventListener('mexcorLangChange',function(e){
+  curLang=e.detail.lang;
+  const inp=document.getElementById('mtySearch');
+  if(inp) inp.placeholder=curLang==='es'?'Buscar artículo...':'품목명 검색...';
+  load();
+});
 
 function timeAgo(date){
   const mins=Math.floor((Date.now()-date)/60000);
@@ -358,11 +371,11 @@ async function load(){
     function mohColor(m){return m<3?'var(--danger)':m<6?'var(--warn)':'var(--ok)';}
     function getMOH(stock,fc){return fc>0?(stock/fc).toFixed(1):null;}
     function getStatus(moh){
-      if(!moh) return ['정상','badge-ok'];
+      if(!moh) return [curLang==='es'?'Normal':'정상','badge-ok'];
       const m=parseFloat(moh);
-      if(m<3) return ['재주문 필요','badge-danger'];
-      if(m<6) return ['주의','badge-warn'];
-      return ['정상','badge-ok'];
+      if(m<3) return [T().reorder,'badge-danger'];
+      if(m<6) return [curLang==='es'?'Atención':'주의','badge-warn'];
+      return [curLang==='es'?'Normal':'정상','badge-ok'];
     }
     function getRowCls(moh){
       if(!moh) return 'row-ok';
@@ -378,18 +391,18 @@ async function load(){
 
     // 카드
     document.getElementById('mtyCards').innerHTML=`
-      <div class="card"><div class="lbl">전체 품목</div><div class="val">${G.mtyInv.length}개</div></div>
-      <div class="card"><div class="lbl">재주문 필요 (MOH&lt;3)</div><div class="val" style="color:var(--danger-text);">${mtyReorders.length}개</div></div>
-      <div class="card"><div class="lbl">2026 입고</div><div class="val">${inM.data.filter(r=>r[1]||r[3]).length}건</div></div>
-      <div class="card"><div class="lbl">2026 출고</div><div class="val">${oM.data.filter(r=>r[3]||r[1]).length}건</div></div>`;
+      <div class="card"><div class="lbl">${curLang==='es'?'Artículos Totales':'전체 품목'}</div><div class="val">${G.mtyInv.length}${curLang==='es'?'':'개'}</div></div>
+      <div class="card"><div class="lbl">${T().reorder} (MOH&lt;3)</div><div class="val" style="color:var(--danger-text);">${mtyReorders.length}${curLang==='es'?'':'개'}</div></div>
+      <div class="card"><div class="lbl">${curLang==='es'?'Entradas 2026':'2026 입고'}</div><div class="val">${inM.data.filter(r=>r[1]||r[3]).length}${curLang==='es'?'':'건'}</div></div>
+      <div class="card"><div class="lbl">${curLang==='es'?'Salidas 2026':'2026 출고'}</div><div class="val">${oM.data.filter(r=>r[3]||r[1]).length}${curLang==='es'?'':'건'}</div></div>`;
 
     // 재주문 알림
     document.getElementById('mtyAlerts').innerHTML=mtyReorders.map(r=>{
       const moh=getMOH(r.stock,r.fc);
       return `<div class="alert">
-        <div><div class="a-name">${r.item}</div><div class="a-info">재고 ${r.stock} ${r.type} · FORECAST ${r.fc}/월${r.open?' · OPEN '+r.open:''}</div></div>
+        <div><div class="a-name">${r.item}</div><div class="a-info">${curLang==='es'?'Stock':'재고'} ${r.stock} ${r.type} · FORECAST ${r.fc}${curLang==='es'?'/mes':'/월'}${r.open?' · OPEN '+r.open:''}</div></div>
         <div class="a-info">${r.client}</div>
-        <div class="a-badge">MOH ${moh}개월</div>
+        <div class="a-badge">MOH ${moh}${T().moh}</div>
       </div>`;
     }).join('');
 
@@ -452,7 +465,7 @@ async function load(){
           const f=fc[m]||0,r=res[m]||0,r25=res25[m]||0,fut=(m>=CUR&&r===0);
           const diff=r25>0?Math.round((r-r25)/r25*100):null;
           const diffStr=diff===null?'':diff>0?`<span style="color:var(--text-success);font-size:9px;">↑${diff}%</span>`:`<span style="color:var(--text-danger);font-size:9px;">↓${Math.abs(diff)}%</span>`;
-          if(fut){ph+=`<td class="rc cn"><span class="rv vn">-</span><span class="rf">FC:${f}</span><span class="rp" style="color:#ccc;">예정</span></td>`;continue;}
+          if(fut){ph+=`<td class="rc cn"><span class="rv vn">-</span><span class="rf">FC:${f}</span><span class="rp" style="color:#ccc;">${T().pending}</span></td>`;continue;}
           if(r===0){ph+=`<td class="rc cn"><span class="rv vn">0</span><span class="rf">FC:${f}</span><span class="rp pb">▼0%</span></td>`;continue;}
           const p=f>0?Math.round(r/f*100):0;
           const cc=p>=100?'cg':p>=80?'cw':'cb';
@@ -486,10 +499,10 @@ async function load(){
 
     const qroReorders=G.qroInv.filter(r=>{const m=getMOH(r.stock,r.fc);return m&&parseFloat(m)<2&&r.fc>0;});
     document.getElementById('qroCards').innerHTML=`
-      <div class="card"><div class="lbl">전체 품목</div><div class="val">${G.qroInv.length}개</div></div>
-      <div class="card"><div class="lbl">재주문 필요 (MOH&lt;2)</div><div class="val" style="color:${qroReorders.length>0?'var(--danger-text)':'var(--ok-text)'};">${qroReorders.length}개</div></div>
-      <div class="card"><div class="lbl">2026 입고</div><div class="val">${inQ.data.filter(r=>r[1]||r[3]).length}건</div></div>
-      <div class="card"><div class="lbl">2026 출고</div><div class="val">${oQ.data.filter(r=>r[3]||r[1]).length}건</div></div>`;
+      <div class="card"><div class="lbl">${curLang==='es'?'Artículos Totales':'전체 품목'}</div><div class="val">${G.qroInv.length}${curLang==='es'?'':'개'}</div></div>
+      <div class="card"><div class="lbl">${T().reorder} (MOH&lt;2)</div><div class="val" style="color:${qroReorders.length>0?'var(--danger-text)':'var(--ok-text)'};">${qroReorders.length}${curLang==='es'?'':'개'}</div></div>
+      <div class="card"><div class="lbl">${curLang==='es'?'Entradas 2026':'2026 입고'}</div><div class="val">${inQ.data.filter(r=>r[1]||r[3]).length}${curLang==='es'?'':'건'}</div></div>
+      <div class="card"><div class="lbl">${curLang==='es'?'Salidas 2026':'2026 출고'}</div><div class="val">${oQ.data.filter(r=>r[3]||r[1]).length}${curLang==='es'?'':'건'}</div></div>`;
 
     document.getElementById('qroInvBody').innerHTML=G.qroInv.map(r=>{
       const moh=getMOH(r.stock,r.fc);
@@ -531,7 +544,7 @@ async function load(){
           const f=fc[m]||0,r=res[m]||0,r25=res25q[m]||0,fut=(m>=CUR&&r===0);
           const diff=r25>0?Math.round((r-r25)/r25*100):null;
           const diffStr=diff===null?'':diff>0?`<span style="color:var(--text-success);font-size:9px;">↑${diff}%</span>`:`<span style="color:var(--text-danger);font-size:9px;">↓${Math.abs(diff)}%</span>`;
-          if(fut){qph+=`<td class="rc cn"><span class="rv vn">-</span><span class="rf">FC:${f}</span><span class="rp" style="color:#ccc;">예정</span></td>`;continue;}
+          if(fut){qph+=`<td class="rc cn"><span class="rv vn">-</span><span class="rf">FC:${f}</span><span class="rp" style="color:#ccc;">${T().pending}</span></td>`;continue;}
           if(r===0){qph+=`<td class="rc cn"><span class="rv vn">0</span><span class="rf">FC:${f}</span><span class="rp pb">▼0%</span></td>`;continue;}
           const p=f>0?Math.round(r/f*100):0;
           const cc=p>=100?'cg':p>=80?'cw':'cb';
@@ -589,10 +602,10 @@ async function load(){
     }
     function renderMtyFilters(){
       document.getElementById('mtyFilter').innerHTML=
-        `<button class="${window._mOutCFilter==='all'?'active':''}" onclick="fOutC('all',this)">전체거래처</button>`+
+        `<button class="${window._mOutCFilter==='all'?'active':''}" onclick="fOutC('all',this)">${T().allClient}</button>`+
         mtyC.map(c=>`<button class="${window._mOutCFilter===c?'active':''}" onclick="fOutC('${c}',this)">${c}</button>`).join('');
       document.getElementById('mtyItemFilter').innerHTML=
-        `<button class="${window._mOutIFilter==='all'?'active':''}" onclick="fOutI('all',this)">전체품목</button>`+
+        `<button class="${window._mOutIFilter==='all'?'active':''}" onclick="fOutI('all',this)">${T().allItem}</button>`+
         mtyItems.map(i=>`<button class="${window._mOutIFilter===i?'active':''}" onclick="fOutI('${i.replace(/'/g,"\'")}',this)">${i}</button>`).join('');
     }
     window.fOutC=(c,btn)=>{window._mOutCFilter=c;renderMtyFilters();renderOutTbl(mtyOutFiltered(),'mtyOutBody');};
@@ -604,15 +617,15 @@ async function load(){
     renderInTbl(inQ.data,'qroInBody');
 
     document.getElementById('sbar').className='sbar ok';
-    document.getElementById('sbar').textContent='✓ 구글 시트 연동 성공';
+    document.getElementById('sbar').textContent=T().syncOk;
     const now=new Date();
-    document.getElementById('ts').innerHTML='최종 업데이트: '+now.toLocaleString('ko-KR')+' <span style="color:var(--text-muted);">·</span> <span style="color:var(--text-secondary);">'+timeAgo(now)+'</span>';
-    setInterval(()=>{document.getElementById('ts').innerHTML='최종 업데이트: '+now.toLocaleString('ko-KR')+' <span style="color:var(--text-muted);">·</span> <span style="color:var(--text-secondary);">'+timeAgo(now)+'</span>';},60000);
+    document.getElementById('ts').innerHTML=T().lastUpd+now.toLocaleString('ko-KR')+' <span style="color:var(--text-muted);">·</span> <span style="color:var(--text-secondary);">'+timeAgo(now)+'</span>';
+    setInterval(()=>{document.getElementById('ts').innerHTML=T().lastUpd+now.toLocaleString('ko-KR')+' <span style="color:var(--text-muted);">·</span> <span style="color:var(--text-secondary);">'+timeAgo(now)+'</span>';},60000);
     document.getElementById('main').style.display='block';
 
   }catch(e){
     document.getElementById('sbar').className='sbar err';
-    document.getElementById('sbar').textContent='❌ 연동 실패 — '+e.message;
+    document.getElementById('sbar').textContent=T().syncFail(e.message);
   }
 }
 load();

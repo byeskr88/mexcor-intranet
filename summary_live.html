@@ -105,7 +105,7 @@ hr{border:none;border-top:0.5px solid var(--border);margin:18px 0;}
   <div class="sec" id="sec-sales"><span data-ko="📊 매출 현황" data-es="📊 Ventas">📊 매출 현황</span></div>
   <div class="sales-cards">
     <div class="s-card"><div class="lbl" id="lbl-plan" data-ko="연간 계획" data-es="Plan Anual">연간 계획</div><div class="val" id="kPlan">-</div></div>
-    <div class="s-card"><div class="lbl" id="lbl-ytd-act" data-ko="YTD 실적" data-es="Real YTD">YTD 실적</div><div class="val" id="kYtdAct">- <span id="kYtdPct" style="font-size:13px;"></span></div><div class="sub2" id="kYtdActSub">-</div></div>
+    <div class="s-card"><div class="lbl" id="lbl-ytd-act" data-ko="YTD 실적" data-es="Real YTD">YTD 실적</div><div class="val" id="kYtdAct"><span id="kYtdAmt">-</span> <span id="kYtdPct" style="font-size:13px;"></span></div><div class="sub2" id="kYtdActSub">-</div></div>
     <div class="s-card"><div class="lbl">MTY YTD</div><div class="val" style="color:var(--blue-text);" id="kMty">-</div><div class="sub2" id="kMtySub">-</div></div>
     <div class="s-card"><div class="lbl">QRO YTD</div><div class="val" style="color:var(--purple-text);" id="kQro">-</div><div class="sub2" id="kQroSub">-</div></div>
     <div class="s-card"><div class="lbl" id="lbl-annual-rate" data-ko="연간 대비 달성률" data-es="Cumplim. Anual">연간 대비 달성률</div><div class="val" id="kAnnual">-</div><div class="sub2" id="kAnnualSub">-</div></div>
@@ -277,7 +277,7 @@ async function load(){
     function rateColor(r){return r>=100?'var(--ok-text)':r>=90?'var(--warn-text)':'var(--danger-text)';}
     const annualRate=totalPlan>0?Math.round(ytdAct/totalPlan*100):0;
     document.getElementById('kPlan').textContent=fmtDollar(totalPlan);
-    document.getElementById('kYtdAct').textContent=fmtDollar(ytdAct);
+    document.getElementById('kYtdAmt').textContent=fmtDollar(ytdAct);
     document.getElementById('kYtdActSub').textContent=`1~${curM}월`;
     document.getElementById('kMty').textContent=fmtDollar(mtyYtd);
     document.getElementById('kMtySub').textContent=`비중 ${Math.round(mtyYtd/(ytdAct||1)*100)}%`;
