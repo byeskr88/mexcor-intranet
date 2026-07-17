@@ -616,6 +616,10 @@ async function load(){
     renderOutTbl(oQ.data,'qroOutBody');
     renderInTbl(inQ.data,'qroInBody');
 
+    const totalReorders=mtyReorders.length+qroReorders.length;
+    window._mexcorSetStatus?.('inv', totalReorders>0?'danger':'ok',
+      totalReorders>0?(curLang==='es'?`Reorden ${totalReorders}`:`재주문 ${totalReorders}건`):(curLang==='es'?'OK':'정상'));
+
     document.getElementById('sbar').className='sbar ok';
     document.getElementById('sbar').textContent=T().syncOk;
     const now=new Date();

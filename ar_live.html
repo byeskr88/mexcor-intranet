@@ -297,6 +297,9 @@ async function loadData(){
     document.getElementById('cnt60over').textContent = pending.filter(r=>r['BUCKET']==='60일초과').length+T().cnt;
     document.getElementById('totalCnt').textContent = pending.length+T().cnt;
 
+    window._mexcorSetStatus?.('ar', usdTotal>100000?'danger':usdTotal>0?'warn':'ok',
+      usdTotal>0?'$'+Math.round(usdTotal/1000)+'K':(curLang==='es'?'OK':'정상'));
+
     document.getElementById('statusBox').className = 'status-bar success';
     document.getElementById('statusBox').textContent = T().syncOk({total:allRows.length,pend:pending.length});
     document.getElementById('lastUpdate').textContent = T().lastUpd+new Date().toLocaleString('ko-KR');

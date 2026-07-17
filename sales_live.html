@@ -302,6 +302,8 @@ async function loadData(){
     tbody+=`<td class="${rateClass(ytdRate)}">${ytdRate}%</td></tr>`;
     document.getElementById('tbody').innerHTML=tbody;
 
+    window._mexcorSetStatus?.('sales', ytdRate>=100?'ok':ytdRate>=80?'warn':'danger', ytdRate+'%');
+
     document.getElementById('statusBox').className='status-bar success';
     document.getElementById('statusBox').textContent=T().syncOk(clientRows.length);
     document.getElementById('lastUpdate').textContent=T().lastUpd+new Date().toLocaleString('ko-KR');

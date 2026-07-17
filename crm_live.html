@@ -141,7 +141,8 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 .stage-select{padding:5px 10px;font-size:12px;border:0.5px solid var(--border);border-radius:var(--r);font-family:inherit;background:var(--surface);color:var(--text);flex:1;}
 .win-bar-wrap{margin-top:4px;}
 .win-label{display:flex;justify-content:space-between;font-size:10px;color:var(--hint);margin-bottom:3px;}
-.win-track{height:5px;background:var(--s2);border-radius:3px;overflow:hidden;}
+.win-track{height:5px;padding:5px 0;cursor:pointer;box-sizing:content-box;}
+.win-track-bg{height:5px;background:var(--s2);border-radius:3px;overflow:hidden;}
 .win-fill{height:100%;border-radius:3px;background:var(--blue);}
 .ai-box{background:var(--purple-bg);border:0.5px solid #AFA9EC;border-radius:var(--r);padding:11px;}
 .ai-label{font-size:10px;font-weight:600;color:var(--purple-text);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
@@ -372,7 +373,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
       </div>
       <div class="win-bar-wrap" id="dpWinWrap">
         <div class="win-label"><span data-ko="수주 확률" data-es="Prob. de Cierre">수주 확률</span><span id="dpWinPct">0%</span></div>
-        <div class="win-track"><div class="win-fill" id="dpWinFill" style="width:0%"></div></div>
+        <div class="win-track" id="dpWinTrack" title="클릭해서 % 조절"><div class="win-track-bg"><div class="win-fill" id="dpWinFill" style="width:0%"></div></div></div>
       </div>
     </div>
     <div class="dp-section">
@@ -619,6 +620,8 @@ function updateStats(){
   document.getElementById('statPipe').textContent=accounts.filter(a=>['prospect','qualified','proposal','negotiation'].includes(a.stage)).length;
   const fu=accounts.filter(a=>{const d=lastContactDays(a.id);return a.stage!=='won'&&a.stage!=='lost'&&(d===null||d>30);}).length;
   document.getElementById('statFollowup').textContent=fu;
+  window._mexcorSetStatus?.('crm', fu>0?'warn':'ok',
+    fu>0?(curLang==='es'?`Seguim. ${fu}`:`팔로업 ${fu}건`):(curLang==='es'?'OK':'정상'));
 }
 
 function renderAlerts(){
@@ -671,6 +674,7 @@ async function openDetail(id){
   document.getElementById('dpWinPct').textContent=wp+'%';
   document.getElementById('dpWinFill').style.width=wp+'%';
   document.getElementById('dpWinFill').style.background=wp>=60?'var(--ok)':wp>=30?'var(--warn)':'var(--danger)';
+  document.getElementById('dpWinTrack').title=curLang==='es'?'Clic para ajustar %':'클릭해서 % 조절';
   const due=dueDays(a.next_action_date);
   document.getElementById('dpInfo').innerHTML=`
     <div class="info-cell"><div class="lbl">${T().contactPerson}</div><div class="val">${a.contact_person||'-'}</div></div>
@@ -741,6 +745,38 @@ async function changePriority(v){
   await loadAll();
   showToast(curLang==='es'?'Prioridad actualizada':'우선순위 변경됨');
 }
+
+// ===== 수주 확률 바 클릭/드래그로 조절 =====
+function winPctFromEvent(e,track){
+  const rect=track.getBoundingClientRect();
+  const x=(e.touches?e.touches[0].clientX:e.clientX)-rect.left;
+  return Math.max(0,Math.min(100,Math.round(x/rect.width*100)));
+}
+async function commitWinProbability(pct){
+  if(!selectedId) return;
+  document.getElementById('dpWinPct').textContent=pct+'%';
+  document.getElementById('dpWinFill').style.width=pct+'%';
+  document.getElementById('dpWinFill').style.background=pct>=60?'var(--ok)':pct>=30?'var(--warn)':'var(--danger)';
+  await sb.from('accounts').update({win_probability:pct}).eq('id',selectedId);
+  const a=accounts.find(x=>x.id===selectedId);
+  if(a) a.win_probability=pct;
+}
+(function setupWinTrackDrag(){
+  const track=document.getElementById('dpWinTrack');
+  let dragging=false;
+  function move(e){
+    if(!dragging) return;
+    e.preventDefault();
+    commitWinProbability(winPctFromEvent(e,track));
+  }
+  function end(){ dragging=false; }
+  track.addEventListener('mousedown',e=>{ dragging=true; commitWinProbability(winPctFromEvent(e,track)); });
+  track.addEventListener('touchstart',e=>{ dragging=true; commitWinProbability(winPctFromEvent(e,track)); },{passive:true});
+  window.addEventListener('mousemove',move);
+  window.addEventListener('touchmove',move,{passive:false});
+  window.addEventListener('mouseup',end);
+  window.addEventListener('touchend',end);
+})();
 
 async function saveContact(){
   const content=document.getElementById('contactInput').value.trim();
@@ -849,7 +885,6 @@ function renderEditMode(){
     <div class="info-cell"><div class="lbl">${T().location}</div><input class="edit-input" id="ei_location" value="${a.location||''}"></div>
     <div class="info-cell"><div class="lbl">${T().industry}</div><input class="edit-input" id="ei_industry" value="${a.industry||''}"></div>
     <div class="info-cell"><div class="lbl">${T().expectedVal} (USD)</div><input class="edit-input" id="ei_expected_value" type="number" value="${a.expected_value||0}"></div>
-    <div class="info-cell"><div class="lbl">${T().winProbPct}</div><input class="edit-input" id="ei_win_probability" type="number" min="0" max="100" value="${a.win_probability||0}"></div>
     <div class="info-cell"><div class="lbl">${T().monthlyFc}</div><input class="edit-input" id="ei_monthly_fc" value="${a.monthly_fc||''}"></div>
     <div class="info-cell"><div class="lbl">${T().ytdRate}</div><input class="edit-input" id="ei_ytd_rate" value="${a.ytd_rate||''}"></div>
     <div class="info-cell"><div class="lbl">${T().product}</div><input class="edit-input" id="ei_products" value="${a.products||''}"></div>
@@ -860,12 +895,12 @@ function renderEditMode(){
 
 async function saveEdit(){
   if(!selectedId) return;
-  const fields = ['contact_person','location','industry','expected_value','win_probability','monthly_fc','ytd_rate','products','next_action','next_action_date','note'];
+  const fields = ['contact_person','location','industry','expected_value','monthly_fc','ytd_rate','products','next_action','next_action_date','note'];
   const updates = {updated_at: new Date()};
   fields.forEach(f=>{
     const el = document.getElementById('ei_'+f);
     if(!el) return;
-    if(f==='expected_value'||f==='win_probability'){
+    if(f==='expected_value'){
       updates[f] = parseFloat(el.value)||0;
     } else {
       updates[f] = el.value;
