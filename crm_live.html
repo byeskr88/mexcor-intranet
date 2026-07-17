@@ -397,7 +397,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
       <textarea id="contactInput" placeholder="컨택 내용 입력... (미팅, 견적, 전화 등)" data-ko-ph="컨택 내용 입력... (미팅, 견적, 전화 등)" data-es-ph="Ingresar contacto... (reunión, cotización, llamada, etc.)"></textarea>
       <div class="input-footer">
         <select id="loggedBy"><option>DJ</option><option>QRO 담당</option><option>회계팀</option></select>
-        <button class="btn btn-primary" onclick="saveContact()" data-ko="저장" data-es="Guardar">저장</button>
+        <button class="btn btn-primary" onclick="saveContact()" data-ko="컨택 저장" data-es="Guardar Contacto">컨택 저장</button>
       </div>
     </div>
   </div>
@@ -463,14 +463,14 @@ const T_KO={total:'총 ',company:'개사',noContact:'컨택 기록 없음',daysN
   amount:'금액',winProb:'수주확률',contact:'컨택',days:'일',followupNeeded:'⚠ 팔로업 필요',
   action:'액션 없음',contactPerson:'담당자',location:'위치',product:'제품',expectedVal:'예상 금액',
   monthlyFc:'납품 FC',ytdRate:'YTD 달성율',nextAction:'다음 액션',note:'비고',noContactLog:'컨택 기록 없음',
-  edit:'✏️ 수정',save:'💾 저장',industry:'산업군',winProbPct:'수주 확률 (%)',actionDue:'액션 마감일',
+  edit:'✏️ 수정',save:'💾 정보 저장',industry:'산업군',winProbPct:'수주 확률 (%)',actionDue:'액션 마감일',
   analyzing:'분석 중...',aiFail:'AI 분석을 불러올 수 없습니다.'};
 const T_ES={total:'Total ',company:'',noContact:'Sin registro de contacto',daysNoContact:d=>`Sin contacto hace ${d} días`,
   today:'Hoy',daysAgo:d=>`Hace ${d} días`,noActivity:'Sin actividad',empty:'Vacío',noRecord:'Sin registro',
   amount:'Monto',winProb:'Prob. Cierre',contact:'Contacto',days:' días',followupNeeded:'⚠ Necesita Seguimiento',
   action:'Sin acciones',contactPerson:'Responsable',location:'Ubicación',product:'Producto',expectedVal:'Monto Estimado',
   monthlyFc:'FC de Entrega',ytdRate:'Cumplim. YTD',nextAction:'Próxima Acción',note:'Nota',noContactLog:'Sin registros de contacto',
-  edit:'✏️ Editar',save:'💾 Guardar',industry:'Industria',winProbPct:'Prob. de Cierre (%)',actionDue:'Fecha Límite',
+  edit:'✏️ Editar',save:'💾 Guardar Info',industry:'Industria',winProbPct:'Prob. de Cierre (%)',actionDue:'Fecha Límite',
   analyzing:'Analizando...',aiFail:'No se pudo cargar el análisis de IA.'};
 function T(){ return curLang==='es'?T_ES:T_KO; }
 document.addEventListener('mexcorLangChange',function(e){
@@ -863,16 +863,19 @@ let editMode = false;
 function toggleEdit(){
   editMode = !editMode;
   const btn = document.getElementById('dpEditBtn');
+  const footer = document.querySelector('.dp-footer');
   if(editMode){
     btn.textContent = T().save;
     btn.style.background = 'var(--text)';
     btn.style.color = '#fff';
     renderEditMode();
+    if(footer){ footer.style.opacity='0.4'; footer.style.pointerEvents='none'; }
   } else {
     btn.textContent = T().edit;
     btn.style.background = '';
     btn.style.color = '';
     saveEdit();
+    if(footer){ footer.style.opacity=''; footer.style.pointerEvents=''; }
   }
 }
 
