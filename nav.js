@@ -3,8 +3,8 @@
   const PAGES = [
     {id:'summary',file:'summary_live.html',icon:'🏠',ko:'Summary',es:'Resumen'},
     {id:'aviso',file:'aviso_live.html',icon:'📋',ko:'AVISO',es:'AVISO'},
-    {id:'ar',file:'ar_live.html',icon:'💰',ko:'AR',es:'CxC'},
-    {id:'ap',file:'ap_live.html',icon:'💳',ko:'AP',es:'CxP'},
+    {id:'ar',file:'ar_live.html',icon:'💰',ko:'AR',es:'AR'},
+    {id:'ap',file:'ap_live.html',icon:'💳',ko:'AP',es:'AP'},
     {id:'sales',file:'sales_live.html',icon:'📊',ko:'매출',es:'Ventas'},
     {id:'inv',file:'inventory_live.html',icon:'📦',ko:'재고',es:'Inventario'},
     {id:'crm',file:'crm_live.html',icon:'🤝',ko:'고객관리',es:'Clientes'},
@@ -41,11 +41,15 @@
     .mn-status { font-size: 10px; padding: 1px 5px; border-radius: 20px; margin-left: 1px; }
     .mn-right { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
     .mn-time { font-size: 11px; color: #555; }
-    .mn-lang {
-      background: #2a3060; border: 0.5px solid #5a6090; border-radius: 5px;
-      color: #ccc; padding: 4px 10px; font-size: 12px; cursor: pointer; font-family: inherit; font-weight: 500;
+    .mn-lang-toggle {
+      display: flex; background: #2a3060; border: 0.5px solid #5a6090; border-radius: 5px; overflow: hidden;
     }
-    .mn-lang:hover { background:#3a4070; color: #fff; }
+    .mn-lang-opt {
+      background: transparent; border: none; color: #9a98a0; padding: 4px 9px; font-size: 11px;
+      cursor: pointer; font-family: inherit; font-weight: 500;
+    }
+    .mn-lang-opt.active { background: #5a6090; color: #fff; }
+    .mn-lang-opt:hover:not(.active) { color: #fff; }
     .mn-s-ok { background: #1a5c3c; color: #5DCAA5; }
     .mn-s-warn { background: #5c3a0a; color: #EF9F27; }
     .mn-s-danger { background: #5c1a1a; color: #F09595; }
@@ -68,7 +72,10 @@
     </div>
     <div class="mn-right">
       <span class="mn-time" id="nav-time"></span>
-      <button class="mn-lang" id="nav-lang" onclick="window._navToggleLang()">${lang==='ko'?'KO':'ES'}</button>
+      <div class="mn-lang-toggle">
+        <button class="mn-lang-opt${lang==='ko'?' active':''}" onclick="window._navSetLang('ko')" title="한국어">한</button>
+        <button class="mn-lang-opt${lang==='es'?' active':''}" onclick="window._navSetLang('es')" title="Español">ES</button>
+      </div>
     </div>
   `;
   document.body.prepend(nav);
@@ -80,7 +87,9 @@
     document.querySelectorAll('.mn-label').forEach(el=>{
       el.textContent = lang==='ko'?el.dataset.ko:el.dataset.es;
     });
-    document.getElementById('nav-lang').textContent = lang==='ko'?'KO':'ES';
+    document.querySelectorAll('.mn-lang-opt').forEach(el=>{
+      el.classList.toggle('active', (lang==='ko')===(el.textContent==='한'));
+    });
     // data-ko/data-es 속성 가진 모든 요소 번역
     document.querySelectorAll('[data-ko][data-es]').forEach(el=>{
       if(!el.classList.contains('mn-label'))
@@ -88,8 +97,9 @@
     });
   }
 
-  window._navToggleLang = function(){
-    lang = lang==='ko'?'es':'ko';
+  window._navSetLang = function(newLang){
+    if(newLang===lang) return;
+    lang = newLang;
     localStorage.setItem('mexcor_lang', lang);
     applyLang();
     document.dispatchEvent(new CustomEvent('mexcorLangChange',{detail:{lang}}));

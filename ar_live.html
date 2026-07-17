@@ -92,29 +92,7 @@
 
   <div id="mainContent" style="display:none;">
 
-    <!-- 최근 입금 내역 -->
-  <div class="payment-section" id="paymentSection">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-      <span style="font-size:13px;font-weight:500;" data-ko="최근 입금 내역" data-es="Pagos Recientes">최근 입금 내역</span>
-      <div class="payment-tabs">
-        <button class="ptab active" onclick="setPayPeriod(1,this)" data-ko="1개월" data-es="1 mes">1개월</button>
-        <button class="ptab" onclick="setPayPeriod(3,this)" data-ko="3개월" data-es="3 meses">3개월</button>
-        <button class="ptab" onclick="setPayPeriod(6,this)" data-ko="6개월" data-es="6 meses">6개월</button>
-      </div>
-    </div>
-    <div class="recent-pay-grid" id="recentPayGrid"></div>
-    <div class="tbl-wrap" style="margin-bottom:16px;">
-      <table>
-        <thead><tr>
-          <th data-ko="거래처" data-es="Cliente">거래처</th><th>FACTURA NO</th><th data-ko="발행일" data-es="Fecha Emisión">발행일</th>
-          <th data-ko="통화" data-es="Moneda">통화</th><th class="num" data-ko="금액" data-es="Monto">금액</th><th data-ko="실입금일" data-es="Fecha Pago Real">실입금일</th><th data-ko="비고" data-es="Nota">비고</th>
-        </tr></thead>
-        <tbody id="recentPayBody"></tbody>
-      </table>
-    </div>
-  </div>
-  <div style="border-top:0.5px solid var(--border);margin:16px 0;"></div>
-  <div class="summary">
+    <div class="summary">
       <div class="card">
         <p class="lbl" data-ko="미수금 (USD)" data-es="CxC (USD)">미수금 (USD)</p>
         <p class="val" id="totalUSD">-</p>
@@ -182,6 +160,30 @@
         </thead>
         <tbody id="tableBody"></tbody>
       </table>
+    </div>
+
+    <div style="border-top:0.5px solid var(--border);margin:16px 0;"></div>
+
+    <!-- 최근 입금 내역 -->
+    <div class="payment-section" id="paymentSection">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <span style="font-size:13px;font-weight:500;" data-ko="최근 입금 내역" data-es="Pagos Recientes">최근 입금 내역</span>
+        <div class="payment-tabs">
+          <button class="ptab active" onclick="setPayPeriod(1,this)" data-ko="1개월" data-es="1 mes">1개월</button>
+          <button class="ptab" onclick="setPayPeriod(3,this)" data-ko="3개월" data-es="3 meses">3개월</button>
+          <button class="ptab" onclick="setPayPeriod(6,this)" data-ko="6개월" data-es="6 meses">6개월</button>
+        </div>
+      </div>
+      <div class="recent-pay-grid" id="recentPayGrid"></div>
+      <div class="tbl-wrap" style="margin-bottom:16px;">
+        <table>
+          <thead><tr>
+            <th data-ko="거래처" data-es="Cliente">거래처</th><th>FACTURA NO</th><th data-ko="발행일" data-es="Fecha Emisión">발행일</th>
+            <th data-ko="통화" data-es="Moneda">통화</th><th class="num" data-ko="금액" data-es="Monto">금액</th><th data-ko="실입금일" data-es="Fecha Pago Real">실입금일</th><th data-ko="비고" data-es="Nota">비고</th>
+          </tr></thead>
+          <tbody id="recentPayBody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>

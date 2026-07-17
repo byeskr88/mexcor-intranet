@@ -201,11 +201,25 @@ function fmtK(v){
 }
 
 const MONTHS=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+const DISPLAY_MONTHS_ES=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 const alerts=[];
+
+let curLang = localStorage.getItem('mexcor_lang')||'ko';
+const T_KO={pending:'예정',arWarn:(k,c)=>`USD 미수금 ${k} — 주의 필요`,arOk:(k,c)=>`USD 미수금 ${k} (${c}건)`,
+  urgent:'긴급',check:'확인',salesDanger:r=>`YTD 달성율 ${r}% — 목표 미달`,salesWarn:r=>`YTD 달성율 ${r}% — 목표 추격 중`,
+  attention:'주의',invDanger:n=>`MTY 재주문 필요 ${n}건 — MOH 3개월 미만`,cases:n=>`${n}건`,
+  crmWarn:n=>`팔로업 필요 ${n}개사 — 30일 이상 컨택 없음`,over:'초과',under:'미달',ok:'정상'};
+const T_ES={pending:'Próximo',arWarn:(k,c)=>`CxC USD ${k} — Requiere atención`,arOk:(k,c)=>`CxC USD ${k} (${c} casos)`,
+  urgent:'Urgente',check:'Revisar',salesDanger:r=>`Cumplim. YTD ${r}% — Bajo objetivo`,salesWarn:r=>`Cumplim. YTD ${r}% — En seguimiento`,
+  attention:'Atención',invDanger:n=>`Reorden MTY necesaria ${n} — MOH menos de 3 meses`,cases:n=>`${n}`,
+  crmWarn:n=>`Necesita seguimiento ${n} clientes — sin contacto 30+ días`,over:'sobre',under:'bajo',ok:'OK'};
+function T(){ return curLang==='es'?T_ES:T_KO; }
+document.addEventListener('mexcorLangChange',function(e){ curLang=e.detail.lang; load(); });
 
 async function load(){
   const errs=[];
   let usdAr=0;
+  alerts.length=0;
 
 
   // ===== AR =====
@@ -229,9 +243,9 @@ async function load(){
     document.getElementById('arCnt').textContent=pend.length+'건';
     document.getElementById('arUsdSub').textContent='PENDIENTE';
     document.getElementById('arMxnSub').textContent='PENDIENTE';
-    if(usd>100000) alerts.push({t:'danger',tag:'AR',txt:`USD 미수금 ${fmtK(usd)} — 주의 필요`,bdg:'긴급'});
-    else if(usd>0) alerts.push({t:'warn',tag:'AR',txt:`USD 미수금 ${fmtK(usd)} (${pend.length}건)`,bdg:'확인'});
-    window.parent?.postMessage({type:'tabStatus',tab:'ar',status:usd>100000?'danger':usd>0?'warn':'ok',label:usd>0?fmtK(usd):'정상'},'*');
+    if(usd>100000) alerts.push({t:'danger',tag:'AR',txt:T().arWarn(fmtK(usd)),bdg:T().urgent});
+    else if(usd>0) alerts.push({t:'warn',tag:'AR',txt:T().arOk(fmtK(usd),pend.length),bdg:T().check});
+    window._mexcorSetStatus?.('ar', usd>100000?'danger':usd>0?'warn':'ok', usd>0?fmtK(usd):(window._mexcorLang==='es'?'OK':'정상'));
   }catch(e){errs.push('AR:'+e.message);}
 
   // ===== 매출 — sales_live.html 동일 로직 =====
@@ -286,7 +300,7 @@ async function load(){
     const ytdRate=ytdPlan>0?Math.round(ytdAct/ytdPlan*100):0;
     document.getElementById('kYtdPct').textContent='('+ytdRate+'%)';
     document.getElementById('kYtdPct').style.color=rateColor(ytdRate);
-    document.getElementById('kYtdActSub').textContent=`1~${curM}월 · ${ytdRate>=100?'▲':'▼'} ${fmtDollar(Math.abs(ytdAct-ytdPlan))} ${ytdRate>=100?'초과':'미달'}`;
+    document.getElementById('kYtdActSub').textContent=`1~${curM}${curLang==='es'?'':'월'} · ${ytdRate>=100?'▲':'▼'} ${fmtDollar(Math.abs(ytdAct-ytdPlan))} ${ytdRate>=100?T().over:T().under}`;
     document.getElementById('kAnnual').textContent=annualRate+'%';
     document.getElementById('kAnnualSub').textContent=`잔여 ${fmtDollar(Math.max(totalPlan-ytdAct,0))}`;
     // 월별 바 (curM 달까지만 표시)
@@ -299,16 +313,17 @@ async function load(){
       const pctClr=isFut?'var(--hint)':pct>=100?'var(--ok-text)':pct>=90?'var(--warn-text)':'var(--danger-text)';
       const barW=isFut?0:Math.min(pct,100);
       const isCur=i===curM-1;
+      const mLbl=curLang==='es'?DISPLAY_MONTHS_ES[i]:(i+1)+'월';
       return `<div class="m-col" style="${isCur?'background:var(--blue-bg);border-radius:6px;padding:4px 0;':''}">
-        <div class="m-lbl" style="${isCur?'color:var(--blue-text);font-weight:500;':''}">${i+1}월</div>
-        <div class="m-pct" style="color:${pctClr};">${isFut?'예정':pct+'%'}</div>
+        <div class="m-lbl" style="${isCur?'color:var(--blue-text);font-weight:500;':''}">${mLbl}</div>
+        <div class="m-pct" style="color:${pctClr};">${isFut?T().pending:pct+'%'}</div>
         <div class="m-track"><div class="m-fill" style="width:${barW}%;background:${clr};"></div></div>
         <div class="m-amt">${!isFut&&act>0?fmtK(act):''}</div>
       </div>`;
     }).join('');
-    if(ytdRate<80) alerts.push({t:'danger',tag:'매출',txt:`YTD 달성율 ${ytdRate}% — 목표 미달`,bdg:'주의'});
-    else if(ytdRate<100) alerts.push({t:'warn',tag:'매출',txt:`YTD 달성율 ${ytdRate}% — 목표 추격 중`,bdg:'확인'});
-    window.parent?.postMessage({type:'tabStatus',tab:'sales',status:ytdRate>=100?'ok':ytdPct>=80?'warn':'danger',label:ytdRate+'%'},'*');
+    if(ytdRate<80) alerts.push({t:'danger',tag:'매출',txt:T().salesDanger(ytdRate),bdg:T().attention});
+    else if(ytdRate<100) alerts.push({t:'warn',tag:'매출',txt:T().salesWarn(ytdRate),bdg:T().check});
+    window._mexcorSetStatus?.('sales', ytdRate>=100?'ok':ytdRate>=80?'warn':'danger', ytdRate+'%');
   }catch(e){errs.push('매출:'+e.message);}
 
   // ===== 재고 =====
@@ -324,15 +339,18 @@ async function load(){
     document.getElementById('mtyInv').innerHTML=[
       ...reorders.map(r=>`<div class="inv-row"><span>${r.item}</span><span class="moh-pill moh-d">MOH ${(r.stock/r.fc).toFixed(1)}</span></div>`),
       ...warns.map(r=>`<div class="inv-row"><span>${r.item}</span><span class="moh-pill moh-w">MOH ${(r.stock/r.fc).toFixed(1)}</span></div>`)
-    ].join('')||'<div style="font-size:12px;color:var(--ok-text);">✓ 전체 정상</div>';
-    if(reorders.length>0) alerts.push({t:'danger',tag:'재고',txt:`MTY 재주문 필요 ${reorders.length}건 — MOH 3개월 미만`,bdg:`${reorders.length}건`});
-    window.parent?.postMessage({type:'tabStatus',tab:'inv',status:reorders.length>0?'danger':warns.length>0?'warn':'ok',label:reorders.length>0?`재주문 ${reorders.length}건`:warns.length>0?`주의 ${warns.length}건`:'정상'},'*');
+    ].join('')||'<div style="font-size:12px;color:var(--ok-text);">'+(curLang==='es'?'✓ Todo normal':'✓ 전체 정상')+'</div>';
+    if(reorders.length>0) alerts.push({t:'danger',tag:'재고',txt:T().invDanger(reorders.length),bdg:T().cases(reorders.length)});
+    window._mexcorSetStatus?.('inv', reorders.length>0?'danger':warns.length>0?'warn':'ok',
+      reorders.length>0?(window._mexcorLang==='es'?`Reorden ${reorders.length}`:`재주문 ${reorders.length}건`)
+      :warns.length>0?(window._mexcorLang==='es'?`Atención ${warns.length}`:`주의 ${warns.length}건`)
+      :(window._mexcorLang==='es'?'OK':'정상'));
     const qroInv=await tsvRaw('inv_qro');
     document.getElementById('qroInv').innerHTML=qroInv.data.filter(r=>r[2]&&r[2].trim()).map(r=>{
       const fc=getFC(r[2]),stock=toN(r[5]),moh=fc>0?(stock/fc).toFixed(1):'-';
       const cls=moh!=='-'&&parseFloat(moh)<2?'moh-d':moh!=='-'&&parseFloat(moh)<4?'moh-w':'';
       return `<div class="inv-row"><span>${r[2]}</span><span class="moh-pill ${cls}">MOH ${moh}</span></div>`;
-    }).join('')||'<div style="font-size:12px;color:var(--hint);">데이터 없음</div>';
+    }).join('')||'<div style="font-size:12px;color:var(--hint);">'+(curLang==='es'?'Sin datos':'데이터 없음')+'</div>';
   }catch(e){errs.push('재고:'+e.message);}
 
   // ===== CRM =====
@@ -375,8 +393,9 @@ async function load(){
       const d=lg.length>0?Math.floor((Date.now()-new Date(lg[0].created_at))/86400000):999;
       return d>30;
     });
-    if(followup.length>0) alerts.push({t:'warn',tag:'CRM',txt:`팔로업 필요 ${followup.length}개사 — 30일 이상 컨택 없음`,bdg:`${followup.length}건`});
-    window.parent?.postMessage({type:'tabStatus',tab:'crm',status:followup.length>0?'warn':'ok',label:followup.length>0?`팔로업 ${followup.length}건`:'정상'},'*');
+    if(followup.length>0) alerts.push({t:'warn',tag:'CRM',txt:T().crmWarn(followup.length),bdg:T().cases(followup.length)});
+    window._mexcorSetStatus?.('crm', followup.length>0?'warn':'ok',
+      followup.length>0?(window._mexcorLang==='es'?`Seguim. ${followup.length}`:`팔로업 ${followup.length}건`):(window._mexcorLang==='es'?'OK':'정상'));
   }catch(e){errs.push('CRM:'+e.message);}
 
   // 알림 렌더
@@ -388,12 +407,10 @@ async function load(){
         <span class="txt">${a.txt}</span>
         <span class="bdg">${a.bdg}</span>
       </div>`).join('')
-    :'<div style="font-size:12px;color:var(--ok-text);padding:8px 0;">✓ 전체 정상</div>';
+    :'<div style="font-size:12px;color:var(--ok-text);padding:8px 0;">'+(curLang==='es'?'✓ Todo normal':'✓ 전체 정상')+'</div>';
 
-  // 탭 상태 배지 업데이트
-  try{ window._mexcorSetStatus?.('ar', usdAr>100000?'danger':usdAr>0?'warn':'ok', usdAr>0?'$'+Math.round(usdAr/1000)+'K':'정상'); }catch(e){}
   document.getElementById('sbar').className = errs.length?'sbar err':'sbar ok';
-  document.getElementById('sbar').textContent = errs.length?'⚠ 오류: '+errs.join(' / '):'✓ 데이터 연동 성공';
+  document.getElementById('sbar').textContent = errs.length?(curLang==='es'?'⚠ Error: ':'⚠ 오류: ')+errs.join(' / '):(curLang==='es'?'✓ Datos sincronizados':'✓ 데이터 연동 성공');
   document.getElementById('pageTs').textContent='최종 업데이트: '+new Date().toLocaleString('ko-KR');
 }
 load();

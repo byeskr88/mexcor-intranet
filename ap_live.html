@@ -126,8 +126,8 @@
           <div class="filter-group">
             <span class="filter-group-label" data-ko="상태" data-es="Estado">상태</span>
             <div class="filterbar" id="sf-gen">
-              <button onclick="setF('gen','status','all',this)" class="active" data-ko="전체" data-es="Todos">전체</button>
-              <button onclick="setF('gen','status','PENDING',this)" style="color:var(--warning-text);" data-ko="미결제" data-es="Pendiente">미결제</button>
+              <button onclick="setF('gen','status','PENDING',this)" class="active" style="color:var(--warning-text);" data-ko="미결제" data-es="Pendiente">미결제</button>
+              <button onclick="setF('gen','status','all',this)" data-ko="전체" data-es="Todos">전체</button>
               <button onclick="setF('gen','status','PAID',this)" data-ko="결제완료" data-es="Pagado">결제완료</button>
             </div>
           </div>
@@ -273,7 +273,7 @@ const URLS={
 };
 const allData={gen:[],hw:[],mkc:[]};
 const filters={
-  gen:{year:'recent',status:'all'},
+  gen:{year:'recent',status:'PENDING'},
   hw:{year:'recent',status:'PENDING',loc:'all'},
   mkc:{year:'recent',status:'PENDING'}
 };
