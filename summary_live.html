@@ -210,7 +210,7 @@ const T_KO={pending:'예정',arWarn:(k,c)=>`USD 미수금 ${k} — 주의 필요
   attention:'주의',invDanger:n=>`MTY 재주문 필요 ${n}건 — MOH 3개월 미만`,cases:n=>`${n}건`,
   crmWarn:n=>`팔로업 필요 ${n}개사 — 30일 이상 컨택 없음`,over:'초과',under:'미달',ok:'정상'};
 const T_ES={pending:'Próximo',arWarn:(k,c)=>`CxC USD ${k} — Requiere atención`,arOk:(k,c)=>`CxC USD ${k} (${c} casos)`,
-  urgent:'Urgente',check:'Revisar',salesDanger:r=>`Cumplim. YTD ${r}% — Bajo objetivo`,salesWarn:r=>`Cumplim. YTD ${r}% — En seguimiento`,
+  urgent:'Urgente',check:'Revisar',salesDanger:r=>`Cumplim. YTD ${r}% — bajo objetivo`,salesWarn:r=>`Cumplim. YTD ${r}% — en seguimiento`,
   attention:'Atención',invDanger:n=>`Reorden MTY necesaria ${n} — MOH menos de 3 meses`,cases:n=>`${n}`,
   crmWarn:n=>`Necesita seguimiento ${n} clientes — sin contacto 30+ días`,over:'sobre',under:'bajo',ok:'OK'};
 function T(){ return curLang==='es'?T_ES:T_KO; }

@@ -292,7 +292,7 @@ const T_KO={cnt:'건',genInfo:(t,p)=>`${t}건 · 미결제 ${p}건`,
 const T_ES={cnt:'',genInfo:(t,p)=>`${t} · Pendiente ${p}`,
   hwInfo:(t,p,c)=>`${t} · Pendiente ${p}`+(c>0?` · D-3 o menos ${c}`:''),
   mkcInfo:(t,p)=>`${t} · Pendiente ${p}`,
-  syncOk:(g,h,m)=>`✓ Sincronizado — General ${g} / Hyundai Welding ${h} / MKC ${m}`,
+  syncOk:(g,h,m)=>`✓ Sincronizado — general ${g} / Hyundai Welding ${h} / MKC ${m}`,
   syncFail:m=>'❌ Error de sincronización — '+m,lastUpd:'Última actualización: ',curShow:'Mostrando: ',noData:'No hay datos para estos criterios',
   dOver:' días vencido',dday:'Hoy'};
 function T(){ return curLang==='es'?T_ES:T_KO; }
