@@ -62,7 +62,7 @@
   nav.id = 'mexcor-nav';
   nav.innerHTML = `
     <div class="mn-logo">
-      <img src="logo.svg" alt="MEXCOR" onerror="this.outerHTML='<span style=\"color:#fff;font-weight:700;font-size:14px;letter-spacing:.05em;\">MEXCOR</span>'">
+      <img src="logo.svg" alt="MEXCOR" onerror="window._mexcorLogoFallback(this)">
     </div>
     <div class="mn-tabs">
       ${PAGES.map(p=>`<a class="mn-tab${p.file===curFile?' active':''}" href="${p.file}" data-id="${p.id}">
@@ -78,6 +78,13 @@
       </div>
     </div>
   `;
+  window._mexcorLogoFallback = function(img){
+    const span = document.createElement('span');
+    span.textContent = 'MEXCOR';
+    span.style.cssText = 'color:#fff;font-weight:700;font-size:14px;letter-spacing:.05em;';
+    img.replaceWith(span);
+  };
+
   document.body.prepend(nav);
 
   function updateTime(){ document.getElementById('nav-time').textContent=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}); }
