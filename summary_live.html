@@ -166,7 +166,9 @@ hr{border:none;border-top:0.5px solid var(--border);margin:18px 0;}
 <script>
 const BASE='https://docs.google.com/spreadsheets/d/e/2PACX-1vRfv4TFloZqAVKyJXAoGCjP5xec3MvPGjTagc1btjwQzKXvICTmREywHrT1wNSl_6JN7vA_gsY2w8kB/pub?gid={G}&single=true&output=tsv';
 const GIDS={ar:'1428414690',sales:'609736586',inv_mty:'1055215705',inv_qro:'1072433103',fc_inv:'118513204'};
-const sb=supabase.createClient('https://oezergrrqcinclorwvnk.supabase.co','sb_publishable_1eqTksIg-IetXykOBHf0rg_19ourTmF');
+let sb=null;
+try{ sb=supabase.createClient('https://oezergrrqcinclorwvnk.supabase.co','sb_publishable_1eqTksIg-IetXykOBHf0rg_19ourTmF'); }
+catch(e){ console.error('Supabase 초기화 실패 (CRM 파이프라인 섹션에만 영향):', e); }
 
 // TSV → 오브젝트 배열로 파싱
 async function tsvObj(key){

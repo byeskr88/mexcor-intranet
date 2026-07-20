@@ -445,7 +445,9 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 <script>
 const SURL='https://oezergrrqcinclorwvnk.supabase.co';
 const SKEY='sb_publishable_1eqTksIg-IetXykOBHf0rg_19ourTmF';
-const sb=supabase.createClient(SURL,SKEY);
+let sb=null;
+try{ sb=supabase.createClient(SURL,SKEY); }
+catch(e){ console.error('Supabase 초기화 실패:', e); }
 
 // Supabase 쓰기 작업 결과 확인 - 에러를 조용히 삼키지 않고 사용자에게 표시
 async function sbWrite(promise){
@@ -491,6 +493,11 @@ document.addEventListener('mexcorLangChange',function(e){
 });
 
 async function loadAll(){
+  if(!sb){
+    const board=document.getElementById('board');
+    if(board) board.innerHTML='<div class="loading" style="color:var(--danger-text);">'+(curLang==='es'?'⚠ No se pudo conectar (recargue la página)':'⚠ 연결 실패 — 새로고침 해보세요')+'</div>';
+    return;
+  }
   const {data:acc}=await sb.from('accounts').select('*').order('name');
   if(acc) accounts=acc;
   const {data:lg}=await sb.from('contact_logs').select('*').order('created_at',{ascending:false});
@@ -920,6 +927,8 @@ async function saveEdit(){
     if(!el) return;
     if(f==='expected_value'){
       updates[f] = parseFloat(el.value)||0;
+    } else if(f==='next_action_date'){
+      updates[f] = el.value?el.value:null;
     } else {
       updates[f] = el.value;
     }
