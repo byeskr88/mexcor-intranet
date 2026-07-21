@@ -115,10 +115,27 @@
 
   window._mexcorSetStatus = function(tabId, status, label){
     const el=document.getElementById('nav-st-'+tabId);
-    if(!el) return;
-    el.textContent=label; el.style.display='inline-block';
-    el.className='mn-status mn-s-'+(status||'gray');
+    if(el){
+      el.textContent=label; el.style.display='inline-block';
+      el.className='mn-status mn-s-'+(status||'gray');
+    }
+    try{
+      localStorage.setItem('mexcor_badge_'+tabId, JSON.stringify({status,label,ts:Date.now()}));
+    }catch(e){}
   };
+
+  // 페이지 로드 시 캐시된 배지(마지막으로 알려진 상태)를 먼저 보여주고,
+  // 현재 탭이 직접 계산하면 최신 값으로 덮어씀. 24시간 지난 캐시는 무시.
+  PAGES.forEach(t=>{
+    try{
+      const cached=localStorage.getItem('mexcor_badge_'+t.id);
+      if(!cached) return;
+      const {status,label,ts}=JSON.parse(cached);
+      if(Date.now()-ts>86400000) return;
+      const el=document.getElementById('nav-st-'+t.id);
+      if(el){ el.textContent=label; el.style.display='inline-block'; el.className='mn-status mn-s-'+(status||'gray'); }
+    }catch(e){}
+  });
 
   window._mexcorLang = lang;
   applyLang();
