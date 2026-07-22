@@ -117,8 +117,8 @@
           <div class="filter-group">
             <span class="filter-group-label" data-ko="기간" data-es="Período">기간</span>
             <div class="filterbar" id="yf-gen">
-              <button onclick="setF('gen','year','recent',this)" class="active" data-ko="최근 6개월" data-es="Últimos 6 meses">최근 6개월</button>
-              <button onclick="setF('gen','year','2026',this)">2026</button>
+              <button onclick="setF('gen','year','recent',this)" data-ko="최근 6개월" data-es="Últimos 6 meses">최근 6개월</button>
+              <button onclick="setF('gen','year','2026',this)" class="active">2026</button>
               <button onclick="setF('gen','year','2025',this)">2025</button>
               <button onclick="setF('gen','year','all',this)" data-ko="전체" data-es="Todos">전체</button>
             </div>
@@ -171,8 +171,8 @@
           <div class="filter-group">
             <span class="filter-group-label" data-ko="기간" data-es="Período">기간</span>
             <div class="filterbar" id="yf-hw">
-              <button onclick="setF('hw','year','recent',this)" class="active" data-ko="최근 6개월" data-es="Últimos 6 meses">최근 6개월</button>
-              <button onclick="setF('hw','year','2026',this)">2026</button>
+              <button onclick="setF('hw','year','recent',this)" data-ko="최근 6개월" data-es="Últimos 6 meses">최근 6개월</button>
+              <button onclick="setF('hw','year','2026',this)" class="active">2026</button>
               <button onclick="setF('hw','year','2025',this)">2025</button>
               <button onclick="setF('hw','year','all',this)" data-ko="전체" data-es="Todos">전체</button>
             </div>
@@ -223,8 +223,8 @@
           <div class="filter-group">
             <span class="filter-group-label" data-ko="기간" data-es="Período">기간</span>
             <div class="filterbar" id="yf-mkc">
-              <button onclick="setF('mkc','year','recent',this)" class="active" data-ko="최근 6개월" data-es="Últimos 6 meses">최근 6개월</button>
-              <button onclick="setF('mkc','year','2026',this)">2026</button>
+              <button onclick="setF('mkc','year','recent',this)" data-ko="최근 6개월" data-es="Últimos 6 meses">최근 6개월</button>
+              <button onclick="setF('mkc','year','2026',this)" class="active">2026</button>
               <button onclick="setF('mkc','year','2025',this)">2025</button>
               <button onclick="setF('mkc','year','all',this)" data-ko="전체" data-es="Todos">전체</button>
             </div>
@@ -273,9 +273,9 @@ const URLS={
 };
 const allData={gen:[],hw:[],mkc:[]};
 const filters={
-  gen:{year:'recent',status:'PENDING'},
-  hw:{year:'recent',status:'PENDING',loc:'all'},
-  mkc:{year:'recent',status:'PENDING'}
+  gen:{year:'2026',status:'PENDING'},
+  hw:{year:'2026',status:'PENDING',loc:'all'},
+  mkc:{year:'2026',status:'PENDING'}
 };
 const sortState={gen:{col:'NO',dir:1},hw:{col:'OVERDUE_DAYS',dir:-1},mkc:{col:'ISSUE_DATE',dir:-1}};
 const currentFiltered={gen:[],hw:[],mkc:[]};
