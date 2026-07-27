@@ -254,6 +254,7 @@
           <th class="num" onclick="sortBy('mkc','AMOUNT')" data-ko="합계 ↕" data-es="Total ↕">합계 ↕</th>
           <th onclick="sortBy('mkc','ISSUE_DATE')" data-ko="발행일 ↕" data-es="Fecha Emisión ↕">발행일 ↕</th>
           <th onclick="sortBy('mkc','DEPOSIT_DATE')" data-ko="입금일 ↕" data-es="Fecha Depósito ↕">입금일 ↕</th>
+          <th onclick="sortBy('mkc','OVERDUE_DAYS')">D-day ↕</th>
           <th data-ko="컨테이너" data-es="Contenedor">컨테이너</th>
           <th data-ko="상태" data-es="Estado">상태</th>
           <th>REMARK</th>
@@ -474,8 +475,13 @@ function renderTable(tab,rows){
   }else{
     tbody.innerHTML=rows.map(r=>{
       const s=r['PAYMENT_STATUS']||'';
-      const cls=s==='PAID'?'row-paid':'row-pending';
-      const bc=s==='PAID'?'badge-paid':'badge-pending';
+      const b=r['BUCKET']||'';
+      const d=parseInt(r['OVERDUE_DAYS']);
+      const isCritical=!isNaN(d)&&d>=-3&&d<=0&&s!=='PAID';
+      const cls=s==='PAID'?'row-paid':isCritical?'row-critical':(b==='60일초과'||b==='30~60일'?'row-overdue':'row-pending');
+      const bc=s==='PAID'?'badge-paid':isCritical?'badge-critical':(b==='60일초과'||b==='30~60일'?'badge-overdue':'badge-pending');
+      const od=r['OVERDUE_DAYS']!==undefined&&r['OVERDUE_DAYS']!==''?(d>0?d+T().dOver:(d===0?T().dday:'D'+d)):'-';
+      const oc=isCritical?'overdue-critical':(b==='60일초과'?'overdue-red':(b==='30~60일'||b==='30일이내'?'overdue-warn':''));
       const containers=r['CONTAINERS']&&r['CONTAINERS']!=='-'?r['CONTAINERS']:'-';
       return`<tr class="${cls}">
         <td>${fmt(r['SHIPMODE'])}</td><td>${fmt(r['INVOICE_NO'])}</td>
@@ -484,6 +490,7 @@ function renderTable(tab,rows){
         <td class="num">${fmtNum(r['IVA'])}</td>
         <td class="num">${fmtNum(r['AMOUNT'])}</td>
         <td>${fmt(r['ISSUE_DATE'])}</td><td>${fmt(r['DEPOSIT_DATE'])}</td>
+        <td class="${oc}">${od}</td>
         <td style="font-size:11px;">${containers}</td>
         <td><span class="badge ${bc}">${fmt(s)}</span></td>
         <td style="font-size:11px;color:var(--text-secondary);">${fmt(r['REMARK'])}</td>
