@@ -211,6 +211,7 @@ tr:last-child td{border-bottom:none;}
       </div>
       <div id="qro-inv">
         <div class="cards" id="qroCards"></div>
+        <div class="alerts" id="qroAlerts"></div>
         <div class="sec-title" data-ko="재고 현황" data-es="Estado de Inventario">재고 현황</div>
         <div class="tbl-wrap"><table>
           <thead><tr>
@@ -521,6 +522,22 @@ async function load(){
       <div class="card"><div class="lbl">${T().reorder} (MOH&lt;2)</div><div class="val" style="color:${qroReorders.length>0?'var(--danger-text)':'var(--ok-text)'};">${qroReorders.length}${curLang==='es'?'':'개'}</div></div>
       <div class="card"><div class="lbl">${curLang==='es'?'Entradas 2026':'2026 입고'}</div><div class="val">${inQ.data.filter(r=>r[1]||r[3]).length}${curLang==='es'?'':'건'}</div></div>
       <div class="card"><div class="lbl">${curLang==='es'?'Salidas 2026':'2026 출고'}</div><div class="val">${oQ.data.filter(r=>r[3]||r[1]).length}${curLang==='es'?'':'건'}</div></div>`;
+
+    // 재주문 알림 (QRO)
+    document.getElementById('qroAlerts').innerHTML=qroReorders.map(r=>{
+      const moh=getMOH(r.stock,r.fc);
+      const incoming=pendingArrivals(r.item, inQ.data);
+      const hasIncoming=incoming.length>0;
+      const incomingHtml=hasIncoming
+        ?`<div class="a-incoming-list">🚚 ${curLang==='es'?'Llegando: ':'입고 예정: '}${incoming.map(x=>`${x.eta}${x.qty?' ('+x.qty+')':''}`).join(', ')}</div>`
+        :'';
+      return `<div class="alert${hasIncoming?' incoming':''}">
+        <div><div class="a-name">${r.item}</div><div class="a-info">${curLang==='es'?'Stock':'재고'} ${r.stock} ${r.type} · FORECAST ${r.fc}${curLang==='es'?'/mes':'/월'}${r.open?' · OPEN '+r.open:''}</div></div>
+        <div class="a-info">${r.client}</div>
+        <div class="a-badge">MOH ${moh}${T().moh}</div>
+        ${incomingHtml}
+      </div>`;
+    }).join('');
 
     document.getElementById('qroInvBody').innerHTML=G.qroInv.map(r=>{
       const moh=getMOH(r.stock,r.fc);
