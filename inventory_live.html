@@ -157,7 +157,7 @@ tr:last-child td{border-bottom:none;}
           <thead><tr>
             <th>NO</th><th>ORIGIN</th><th>ITEM</th><th>TYPE</th><th>CLIENT</th>
             <th class="r" data-ko="재고" data-es="Stock">재고</th><th class="r" data-ko="발주수량" data-es="Cant. Pedida">발주수량</th><th class="r">FORECAST/월</th>
-            <th class="r" style="min-width:120px;">MOH</th><th data-ko="상태" data-es="Estado">상태</th>
+            <th class="r" style="min-width:120px;">MOH</th><th data-ko="상태" data-es="Estado">상태</th><th data-ko="비고" data-es="Nota">비고</th>
           </tr></thead>
           <tbody id="mtyInvBody"></tbody>
         </table></div>
@@ -217,7 +217,7 @@ tr:last-child td{border-bottom:none;}
           <thead><tr>
             <th>ORIGIN</th><th>ITEM</th><th>TYPE</th><th>CLIENT</th>
             <th class="r" data-ko="재고" data-es="Stock">재고</th><th class="r" data-ko="발주수량" data-es="Cant. Pedida">발주수량</th><th class="r">FORECAST/월</th>
-            <th class="r" style="min-width:120px;">MOH</th><th data-ko="상태" data-es="Estado">상태</th>
+            <th class="r" style="min-width:120px;">MOH</th><th data-ko="상태" data-es="Estado">상태</th><th data-ko="비고" data-es="Nota">비고</th>
           </tr></thead>
           <tbody id="qroInvBody"></tbody>
         </table></div>
@@ -371,7 +371,7 @@ async function load(){
     // 시트 컬럼: NO(0), ORIGIN(1), ITEM(2), TYPE(3), CLIENT(4), INVENTORY(5), OPEN_ITEMS(6), REORDER_PT(7), NOTE(8)
     G.mtyInv = iM.data.filter(r=>r[2]&&r[2].trim()).map(r=>({
       no:r[0], origin:r[1], item:r[2], type:r[3], client:r[4],
-      stock:toN(r[5]), open:toN(r[6]), fc:getFC(r[2])
+      stock:toN(r[5]), open:toN(r[6]), fc:getFC(r[2]), note:r[8]||''
     }));
 
     function mohColor(m){return m<3?'var(--danger)':m<6?'var(--warn)':'var(--ok)';}
@@ -417,11 +417,13 @@ async function load(){
       const incomingHtml=hasIncoming
         ?`<div class="a-incoming-list">🚚 ${curLang==='es'?'Llegando: ':'입고 예정: '}${incoming.map(x=>`${x.eta}${x.qty?' ('+x.qty+')':''}`).join(', ')}</div>`
         :'';
+      const noteHtml=r.note?`<div class="a-incoming-list" style="color:var(--muted);">📝 ${r.note}</div>`:'';
       return `<div class="alert${hasIncoming?' incoming':''}">
         <div><div class="a-name">${r.item}</div><div class="a-info">${curLang==='es'?'Stock':'재고'} ${r.stock} ${r.type} · FORECAST ${r.fc}${curLang==='es'?'/mes':'/월'}${r.open?' · '+(curLang==='es'?'Cant. Pedida ':'발주수량 ')+r.open:''}</div></div>
         <div class="a-info">${r.client}</div>
         <div class="a-badge">MOH ${moh}${T().moh}</div>
         ${incomingHtml}
+        ${noteHtml}
       </div>`;
     }).join('');
 
@@ -451,6 +453,7 @@ async function load(){
             <div class="moh-gauge"><div class="moh-fill" style="width:${bw}%;background:${bc};"></div></div>
           </div></td>
           <td><span class="badge ${badge}">${status}</span></td>
+          <td style="font-size:11px;color:var(--muted);">${r.note||'-'}</td>
         </tr>`;
       }).join('');
     };
@@ -513,7 +516,7 @@ async function load(){
     // 시트 컬럼: NO(0), ORIGIN(1), ITEM(2), TYPE(3), CLIENT(4), INVENTORY(5), OPEN_ITEMS(6), REORDER_PT(7), NOTE(8)
     G.qroInv=iQ.data.filter(r=>r[2]&&r[2].trim()).map(r=>({
       origin:r[1], item:r[2], type:r[3], client:r[4],
-      stock:toN(r[5]), open:toN(r[6]), fc:getFC(r[2])
+      stock:toN(r[5]), open:toN(r[6]), fc:getFC(r[2]), note:r[8]||''
     }));
 
     const qroReorders=G.qroInv.filter(r=>{const m=getMOH(r.stock,r.fc);return m&&parseFloat(m)<2&&r.fc>0;});
@@ -531,11 +534,13 @@ async function load(){
       const incomingHtml=hasIncoming
         ?`<div class="a-incoming-list">🚚 ${curLang==='es'?'Llegando: ':'입고 예정: '}${incoming.map(x=>`${x.eta}${x.qty?' ('+x.qty+')':''}`).join(', ')}</div>`
         :'';
+      const noteHtml=r.note?`<div class="a-incoming-list" style="color:var(--muted);">📝 ${r.note}</div>`:'';
       return `<div class="alert${hasIncoming?' incoming':''}">
         <div><div class="a-name">${r.item}</div><div class="a-info">${curLang==='es'?'Stock':'재고'} ${r.stock} ${r.type} · FORECAST ${r.fc}${curLang==='es'?'/mes':'/월'}${r.open?' · '+(curLang==='es'?'Cant. Pedida ':'발주수량 ')+r.open:''}</div></div>
         <div class="a-info">${r.client}</div>
         <div class="a-badge">MOH ${moh}${T().moh}</div>
         ${incomingHtml}
+        ${noteHtml}
       </div>`;
     }).join('');
 
@@ -555,6 +560,7 @@ async function load(){
           <div class="moh-gauge"><div class="moh-fill" style="width:${bw}%;background:${bc};"></div></div>
         </div></td>
         <td><span class="badge ${badge}">${status}</span></td>
+        <td style="font-size:11px;color:var(--muted);">${r.note||'-'}</td>
       </tr>`;
     }).join('');
 
