@@ -156,7 +156,7 @@ tr:last-child td{border-bottom:none;}
         <div class="tbl-wrap"><table>
           <thead><tr>
             <th>NO</th><th>ORIGIN</th><th>ITEM</th><th>TYPE</th><th>CLIENT</th>
-            <th class="r" data-ko="재고" data-es="Stock">재고</th><th class="r">OPEN</th><th class="r">FORECAST/월</th>
+            <th class="r" data-ko="재고" data-es="Stock">재고</th><th class="r" data-ko="발주수량" data-es="Cant. Pedida">발주수량</th><th class="r">FORECAST/월</th>
             <th class="r" style="min-width:120px;">MOH</th><th data-ko="상태" data-es="Estado">상태</th>
           </tr></thead>
           <tbody id="mtyInvBody"></tbody>
@@ -216,7 +216,7 @@ tr:last-child td{border-bottom:none;}
         <div class="tbl-wrap"><table>
           <thead><tr>
             <th>ORIGIN</th><th>ITEM</th><th>TYPE</th><th>CLIENT</th>
-            <th class="r" data-ko="재고" data-es="Stock">재고</th><th class="r">OPEN</th><th class="r">FORECAST/월</th>
+            <th class="r" data-ko="재고" data-es="Stock">재고</th><th class="r" data-ko="발주수량" data-es="Cant. Pedida">발주수량</th><th class="r">FORECAST/월</th>
             <th class="r" style="min-width:120px;">MOH</th><th data-ko="상태" data-es="Estado">상태</th>
           </tr></thead>
           <tbody id="qroInvBody"></tbody>
@@ -418,7 +418,7 @@ async function load(){
         ?`<div class="a-incoming-list">🚚 ${curLang==='es'?'Llegando: ':'입고 예정: '}${incoming.map(x=>`${x.eta}${x.qty?' ('+x.qty+')':''}`).join(', ')}</div>`
         :'';
       return `<div class="alert${hasIncoming?' incoming':''}">
-        <div><div class="a-name">${r.item}</div><div class="a-info">${curLang==='es'?'Stock':'재고'} ${r.stock} ${r.type} · FORECAST ${r.fc}${curLang==='es'?'/mes':'/월'}${r.open?' · OPEN '+r.open:''}</div></div>
+        <div><div class="a-name">${r.item}</div><div class="a-info">${curLang==='es'?'Stock':'재고'} ${r.stock} ${r.type} · FORECAST ${r.fc}${curLang==='es'?'/mes':'/월'}${r.open?' · '+(curLang==='es'?'Cant. Pedida ':'발주수량 ')+r.open:''}</div></div>
         <div class="a-info">${r.client}</div>
         <div class="a-badge">MOH ${moh}${T().moh}</div>
         ${incomingHtml}
@@ -532,7 +532,7 @@ async function load(){
         ?`<div class="a-incoming-list">🚚 ${curLang==='es'?'Llegando: ':'입고 예정: '}${incoming.map(x=>`${x.eta}${x.qty?' ('+x.qty+')':''}`).join(', ')}</div>`
         :'';
       return `<div class="alert${hasIncoming?' incoming':''}">
-        <div><div class="a-name">${r.item}</div><div class="a-info">${curLang==='es'?'Stock':'재고'} ${r.stock} ${r.type} · FORECAST ${r.fc}${curLang==='es'?'/mes':'/월'}${r.open?' · OPEN '+r.open:''}</div></div>
+        <div><div class="a-name">${r.item}</div><div class="a-info">${curLang==='es'?'Stock':'재고'} ${r.stock} ${r.type} · FORECAST ${r.fc}${curLang==='es'?'/mes':'/월'}${r.open?' · '+(curLang==='es'?'Cant. Pedida ':'발주수량 ')+r.open:''}</div></div>
         <div class="a-info">${r.client}</div>
         <div class="a-badge">MOH ${moh}${T().moh}</div>
         ${incomingHtml}
