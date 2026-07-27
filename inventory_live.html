@@ -368,10 +368,10 @@ async function load(){
     const CUR=new Date().getMonth(); // 0-indexed
 
     // ===== MTY 재고 =====
-    // 시트 컬럼: NO(0), ORIGIN(1), ITEM(2), TYPE(3), CLIENT(4), INVENTORY(5), OPEN_ITEMS(6), REORDER_PT(7), NOTE(8)
+    // 시트 컬럼: NO(0), ORIGIN(1), ITEM(2), TYPE(3), CLIENT(4), INVENTORY(5), ORDER_QTY(6), REORDER_PT(7), KG_UNIT(8), NOTE(9)
     G.mtyInv = iM.data.filter(r=>r[2]&&r[2].trim()).map(r=>({
       no:r[0], origin:r[1], item:r[2], type:r[3], client:r[4],
-      stock:toN(r[5]), open:toN(r[6]), fc:getFC(r[2]), note:r[8]||''
+      stock:toN(r[5]), open:toN(r[6]), fc:getFC(r[2]), kgUnit:r[8]||'', note:r[9]||''
     }));
 
     function mohColor(m){return m<3?'var(--danger)':m<6?'var(--warn)':'var(--ok)';}
@@ -513,10 +513,10 @@ async function load(){
 
 
     // ===== QRO 재고 =====
-    // 시트 컬럼: NO(0), ORIGIN(1), ITEM(2), TYPE(3), CLIENT(4), INVENTORY(5), OPEN_ITEMS(6), REORDER_PT(7), NOTE(8)
+    // 시트 컬럼: NO(0), ORIGIN(1), ITEM(2), TYPE(3), CLIENT(4), INVENTORY(5), ORDER_QTY(6), REORDER_PT(7), KG_UNIT(8), NOTE(9)
     G.qroInv=iQ.data.filter(r=>r[2]&&r[2].trim()).map(r=>({
       origin:r[1], item:r[2], type:r[3], client:r[4],
-      stock:toN(r[5]), open:toN(r[6]), fc:getFC(r[2]), note:r[8]||''
+      stock:toN(r[5]), open:toN(r[6]), fc:getFC(r[2]), kgUnit:r[8]||'', note:r[9]||''
     }));
 
     const qroReorders=G.qroInv.filter(r=>{const m=getMOH(r.stock,r.fc);return m&&parseFloat(m)<2&&r.fc>0;});
