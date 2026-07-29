@@ -111,7 +111,7 @@ function initNav(){
   nav.id = 'mexcor-nav';
   nav.innerHTML = `
     <div class="mn-logo">
-      <img src="logo.svg" alt="MEXCOR" onerror="window._mexcorLogoFallback(this)">
+      <img src="logo_icon.png" alt="MEXCOR" onerror="window._mexcorLogoFallback(this)">
       <span class="mn-logo-word">MEXCOR</span>
     </div>
     <div class="mn-tabs">
