@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MEXCOR 인트라넷 - 로그인</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    background:#1c2140;
+    min-height:100vh;
+    display:flex;align-items:center;justify-content:center;
+    padding:20px;
+  }
+  .box{
+    background:#2b3260;
+    border:0.5px solid #4a5290;
+    border-radius:14px;
+    padding:36px 32px;
+    width:100%;max-width:340px;
+  }
+  .logo-row{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:24px;}
+  .logo-row img{height:36px;filter:brightness(0) invert(1);opacity:.92;}
+  .logo-word{font-family:'Poppins',sans-serif;font-weight:600;font-size:12px;letter-spacing:2px;color:#d8dae8;opacity:.85;}
+  .sub{font-size:12px;color:#a8a6c8;text-align:center;margin-bottom:24px;}
+  label{font-size:12px;color:#d8dae8;display:block;margin-bottom:6px;}
+  input{
+    width:100%;padding:10px 12px;margin-bottom:16px;
+    background:#1f2450;border:0.5px solid #4a5290;border-radius:8px;
+    color:#fff;font-size:14px;font-family:inherit;
+  }
+  input:focus{outline:none;border-color:#5a6090;}
+  button{
+    width:100%;padding:11px;background:#5a6090;border:none;border-radius:8px;
+    color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;
+  }
+  button:hover{background:#6a70a8;}
+  button:disabled{opacity:.5;cursor:default;}
+  .err{
+    background:#5c1a1a;color:#F09595;font-size:12px;border-radius:8px;
+    padding:8px 12px;margin-bottom:16px;display:none;
+  }
+  .lang-row{display:flex;justify-content:center;gap:6px;margin-top:20px;}
+  .lang-btn{
+    width:auto;padding:4px 10px;background:transparent;border:0.5px solid #4a5290;
+    color:#9a98a0;font-size:11px;font-weight:500;
+  }
+  .lang-btn.active{background:#5a6090;color:#fff;}
+</style>
+</head>
+<body>
+  <div class="box">
+    <div class="logo-row">
+      <img src="logo.svg" alt="MEXCOR" onerror="this.style.display='none'">
+      <span class="logo-word">MEXCOR</span>
+    </div>
+    <p class="sub" id="subText">인트라넷 로그인</p>
+    <div class="err" id="errBox"></div>
+    <form id="loginForm">
+      <label id="lblId">아이디</label>
+      <input type="text" id="username" autocomplete="username" autocapitalize="off" autocorrect="off" required>
+      <label id="lblPw">비밀번호</label>
+      <input type="password" id="password" autocomplete="current-password" required>
+      <button type="submit" id="submitBtn">로그인</button>
+    </form>
+    <div class="lang-row">
+      <button class="lang-btn active" id="btnKo" onclick="setLang('ko')">한국어</button>
+      <button class="lang-btn" id="btnEs" onclick="setLang('es')">Español</button>
+    </div>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SB_URL='https://oezergrrqcinclorwvnk.supabase.co';
+const SB_KEY='sb_publishable_1eqTksIg-IetXykOBHf0rg_19ourTmF';
+const sb = supabase.createClient(SB_URL, SB_KEY);
+
+let lang = localStorage.getItem('mexcor_lang') || 'ko';
+
+const T = {
+  ko:{sub:'인트라넷 로그인', id:'아이디', pw:'비밀번호', btn:'로그인', loading:'로그인 중...',
+      errEmpty:'아이디와 비밀번호를 입력해주세요.', errAuth:'아이디 또는 비밀번호가 올바르지 않습니다.'},
+  es:{sub:'Iniciar sesión', id:'Usuario', pw:'Contraseña', btn:'Entrar', loading:'Ingresando...',
+      errEmpty:'Ingrese usuario y contraseña.', errAuth:'Usuario o contraseña incorrectos.'}
+};
+
+function applyLang(){
+  const t = T[lang];
+  document.getElementById('subText').textContent = t.sub;
+  document.getElementById('lblId').textContent = t.id;
+  document.getElementById('lblPw').textContent = t.pw;
+  document.getElementById('submitBtn').textContent = t.btn;
+  document.getElementById('btnKo').classList.toggle('active', lang==='ko');
+  document.getElementById('btnEs').classList.toggle('active', lang==='es');
+}
+function setLang(l){ lang=l; localStorage.setItem('mexcor_lang', l); applyLang(); }
+applyLang();
+
+// 이미 로그인된 상태면 바로 이동
+(async function checkExisting(){
+  const {data:{session}} = await sb.auth.getSession();
+  if(session){
+    const params = new URLSearchParams(location.search);
+    location.href = params.get('redirect') || 'summary_live.html';
+  }
+})();
+
+document.getElementById('loginForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const errBox = document.getElementById('errBox');
+  errBox.style.display='none';
+  const username = document.getElementById('username').value.trim().toLowerCase();
+  const password = document.getElementById('password').value;
+  if(!username || !password){
+    errBox.textContent = T[lang].errEmpty;
+    errBox.style.display='block';
+    return;
+  }
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = T[lang].loading;
+
+  const fakeEmail = username + '@mexcor.internal';
+  const {data, error} = await sb.auth.signInWithPassword({email: fakeEmail, password});
+
+  if(error){
+    errBox.textContent = T[lang].errAuth;
+    errBox.style.display='block';
+    btn.disabled = false;
+    btn.textContent = T[lang].btn;
+    return;
+  }
+
+  const params = new URLSearchParams(location.search);
+  location.href = params.get('redirect') || 'summary_live.html';
+});
+</script>
+</body>
+</html>

@@ -1,4 +1,45 @@
-// MEXCOR 인트라넷 공통 네비게이션
+// MEXCOR 인트라넷 공통 네비게이션 + 로그인 게이트
+document.documentElement.style.visibility = 'hidden';
+
+const SB_URL='https://oezergrrqcinclorwvnk.supabase.co';
+const SB_KEY='sb_publishable_1eqTksIg-IetXykOBHf0rg_19ourTmF';
+
+function _mexcorLoadSDK(){
+  return new Promise((resolve,reject)=>{
+    if(window.supabase){ resolve(); return; }
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js';
+    s.onload=resolve;
+    s.onerror=reject;
+    document.head.appendChild(s);
+  });
+}
+
+(async function _mexcorAuthGate(){
+  try{
+    await _mexcorLoadSDK();
+    const sbAuth = supabase.createClient(SB_URL, SB_KEY);
+    window._mexcorSb = sbAuth;
+    const {data:{session}} = await sbAuth.auth.getSession();
+    if(!session){
+      const cur = location.pathname.split('/').pop()||'summary_live.html';
+      if(cur==='login.html') { document.documentElement.style.visibility='visible'; return; }
+      location.href = 'login.html?redirect='+encodeURIComponent(cur);
+      return;
+    }
+    window._mexcorUser = session.user;
+    document.documentElement.style.visibility = 'visible';
+    initNav();
+    document.dispatchEvent(new CustomEvent('mexcorAuthReady',{detail:{user:session.user}}));
+  }catch(e){
+    console.error('인증 확인 실패 - 네비게이션만 표시:', e);
+    document.documentElement.style.visibility='visible';
+    initNav();
+    document.dispatchEvent(new CustomEvent('mexcorAuthReady',{detail:{user:null}}));
+  }
+})();
+
+function initNav(){
 (function(){
   const PAGES = [
     {id:'summary',file:'summary_live.html',icon:'🏠',ko:'Summary',es:'Resumen'},
@@ -57,6 +98,11 @@
     .mn-s-warn { background: #5c3a0a; color: #EF9F27; }
     .mn-s-danger { background: #5c1a1a; color: #F09595; }
     .mn-s-gray { background: #2a2a3a; color: #666; }
+    .mn-user { font-size: 11px; color: #d8dae8; display:flex; align-items:center; gap:5px; }
+    .mn-user-role { font-size: 9px; padding: 1px 6px; border-radius: 20px; background: #3a4278; color: #b8c4ff; }
+    .mn-logout { background: transparent; border: 0.5px solid #4a5290; border-radius: 5px; color: #b0aeb8;
+      font-size: 11px; padding: 4px 8px; cursor: pointer; font-family: inherit; }
+    .mn-logout:hover { background: #3a4278; color: #fff; }
   `;
   document.head.appendChild(style);
 
@@ -75,11 +121,13 @@
       </a>`).join('')}
     </div>
     <div class="mn-right">
+      <span class="mn-user" id="nav-user"></span>
       <span class="mn-time" id="nav-time"></span>
       <div class="mn-lang-toggle">
         <button class="mn-lang-opt${lang==='ko'?' active':''}" onclick="window._navSetLang('ko')" title="한국어">한</button>
         <button class="mn-lang-opt${lang==='es'?' active':''}" onclick="window._navSetLang('es')" title="Español">ES</button>
       </div>
+      <button class="mn-logout" onclick="window._navLogout()" data-ko="로그아웃" data-es="Salir">로그아웃</button>
     </div>
   `;
   window._mexcorLogoFallback = function(img){
@@ -87,6 +135,20 @@
   };
 
   document.body.prepend(nav);
+
+  // 로그인 사용자 표시
+  const u = window._mexcorUser;
+  if(u){
+    const role = u.user_metadata?.role || 'view';
+    const roleLabel = role==='edit' ? (lang==='ko'?'수정가능':'Editor') : (lang==='ko'?'조회전용':'Solo lectura');
+    const displayId = (u.email||'').split('@')[0];
+    document.getElementById('nav-user').innerHTML = `${displayId} <span class="mn-user-role">${roleLabel}</span>`;
+  }
+  window._navLogout = async function(){
+    if(!confirm(window._mexcorLang==='es'?'¿Cerrar sesión?':'로그아웃 하시겠어요?')) return;
+    if(window._mexcorSb) await window._mexcorSb.auth.signOut();
+    location.href='login.html';
+  };
 
   function updateTime(){ document.getElementById('nav-time').textContent=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}); }
   updateTime(); setInterval(updateTime,60000);
@@ -147,3 +209,4 @@
     applyLang();
   }
 })();
+}

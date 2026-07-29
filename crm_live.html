@@ -470,7 +470,8 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 const SURL='https://oezergrrqcinclorwvnk.supabase.co';
 const SKEY='sb_publishable_1eqTksIg-IetXykOBHf0rg_19ourTmF';
 let sb=null;
-try{ sb=supabase.createClient(SURL,SKEY); }
+let canEdit=false; // mexcorAuthReady 이벤트에서 실제 값으로 세팅됨
+try{ sb=window._mexcorSb||supabase.createClient(SURL,SKEY); }
 catch(e){ console.error('Supabase 초기화 실패:', e); }
 
 // Supabase 쓰기 작업 결과 확인 - 에러를 조용히 삼키지 않고 사용자에게 표시
@@ -653,7 +654,7 @@ function makeCard(a,isCancelled){
   const div=document.createElement('div');
   div.className='card'+(selectedId===a.id?' selected':'');
   div.dataset.id=a.id;
-  div.draggable=true;
+  div.draggable=canEdit;
   const daysSince=lastContactDays(a.id);
   const daysHtml=daysSince===null
     ?'<span class="card-days" style="color:var(--hint);">'+T().noRecord+'</span>'
@@ -725,6 +726,7 @@ function setupDrop(col){
   col.ondragleave=()=>col.classList.remove('drag-over');
   col.ondrop=async e=>{
     e.preventDefault();col.classList.remove('drag-over');
+    if(!canEdit) return;
     const id=e.dataTransfer.getData('id');
     const newStage=col.dataset.stage;
     if(!id||!newStage) return;
@@ -751,6 +753,7 @@ function closeCancelModal(){
   document.getElementById('cancelModal').style.display='none';
 }
 async function confirmCancelMove(){
+  if(!canEdit) return;
   if(!pendingCancelId) return;
   const reason=document.getElementById('cancelReason').value.trim();
   if(!reason){ showToast(curLang==='es'?'Ingrese un motivo':'사유를 입력해주세요'); return; }
@@ -777,6 +780,15 @@ async function openDetail(id){
   document.getElementById('dpSub').textContent=(a.industry||'-')+' · '+(a.location||'-');
   document.getElementById('dpStageSelect').value=a.stage||'prospect';
   document.getElementById('dpPriority').value=a.priority||'medium';
+  document.getElementById('dpStageSelect').disabled=!canEdit;
+  document.getElementById('dpPriority').disabled=!canEdit;
+  const editBtn=document.getElementById('dpEditBtn'), delBtn=document.getElementById('dpDeleteBtn');
+  if(editBtn) editBtn.style.display=canEdit?'':'none';
+  if(delBtn) delBtn.style.display=canEdit?'':'none';
+  const contactInput=document.getElementById('contactInput');
+  if(contactInput){ contactInput.disabled=!canEdit; contactInput.placeholder=canEdit?contactInput.placeholder:(curLang==='es'?'Solo lectura':'조회 전용'); }
+  const contactBtn=document.querySelector('.input-footer .btn-primary');
+  if(contactBtn) contactBtn.style.display=canEdit?'':'none';
   const wp=a.win_probability||0;
   document.getElementById('dpWinPct').textContent=wp+'%';
   document.getElementById('dpWinFill').style.width=wp+'%';
@@ -805,6 +817,7 @@ function closeDetail(){
 }
 
 async function deleteAccount(){
+  if(!canEdit) return;
   if(!selectedId) return;
   const a=accounts.find(x=>x.id===selectedId);
   if(!a) return;
@@ -819,6 +832,7 @@ async function deleteAccount(){
 }
 
 async function deleteLog(logId){
+  if(!canEdit) return;
   if(!confirm(curLang==='es'?'¿Eliminar este registro?':'이 기록을 삭제할까요?')) return;
   if(!await sbWrite(sb.from('contact_logs').delete().eq('id',logId))) return;
   await loadAll();
@@ -838,6 +852,7 @@ function renderTimeline(id){
 }
 
 async function changeStage(v){
+  if(!canEdit) return;
   if(!selectedId) return;
   const a=accounts.find(x=>x.id===selectedId);
   if(v==='cancelled'){
@@ -852,6 +867,7 @@ async function changeStage(v){
 }
 
 async function changePriority(v){
+  if(!canEdit) return;
   if(!selectedId) return;
   if(!await sbWrite(sb.from('accounts').update({priority:v}).eq('id',selectedId))) return;
   await loadAll();
@@ -865,7 +881,7 @@ function winPctFromEvent(e,track){
   return Math.max(0,Math.min(100,Math.round(x/rect.width*100)));
 }
 async function commitWinProbability(pct){
-  if(!selectedId) return;
+  if(!selectedId||!canEdit) return;
   document.getElementById('dpWinPct').textContent=pct+'%';
   document.getElementById('dpWinFill').style.width=pct+'%';
   document.getElementById('dpWinFill').style.background=pct>=60?'var(--ok)':pct>=30?'var(--warn)':'var(--danger)';
@@ -891,6 +907,7 @@ async function commitWinProbability(pct){
 })();
 
 async function saveContact(){
+  if(!canEdit) return;
   const content=document.getElementById('contactInput').value.trim();
   const loggedBy=document.getElementById('loggedBy').value;
   if(!content||!selectedId) return;
@@ -934,6 +951,7 @@ async function getAISummary(id,a){
 function openNewModal(){document.getElementById('newModal').style.display='flex';}
 function closeNewModal(){document.getElementById('newModal').style.display='none';}
 async function createAccount(){
+  if(!canEdit) return;
   const name=document.getElementById('nName').value.trim();
   if(!name){showToast(curLang==='es'?'Ingrese el nombre del cliente':'거래처명을 입력해주세요');return;}
   const ok = await sbWrite(sb.from('accounts').insert({
@@ -955,21 +973,50 @@ async function createAccount(){
   showToast(curLang==='es'?`${name} agregado`:`${name} 추가됨`);
 }
 
-// ===== Realtime =====
-sb.channel('crm')
-  .on('postgres_changes',{event:'*',schema:'public',table:'accounts'},()=>loadAll())
-  .on('postgres_changes',{event:'*',schema:'public',table:'contact_logs'},()=>loadAll())
-  .on('postgres_changes',{event:'*',schema:'public',table:'notices'},()=>loadNotices())
-  .on('postgres_changes',{event:'*',schema:'public',table:'quick_notes'},()=>loadMemos())
-  .subscribe();
-
 function showToast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2000);
 }
 
-loadAll();
+// nav.js의 로그인 확인이 끝난 뒤에 시작해야 sb/canEdit가 정확함
+function _startCrm(user){
+  canEdit = (user?.user_metadata?.role||'view')==='edit';
+  sb = window._mexcorSb || sb;
+  applyViewOnlyLock();
+
+  sb.channel('crm')
+    .on('postgres_changes',{event:'*',schema:'public',table:'accounts'},()=>loadAll())
+    .on('postgres_changes',{event:'*',schema:'public',table:'contact_logs'},()=>loadAll())
+    .on('postgres_changes',{event:'*',schema:'public',table:'notices'},()=>loadNotices())
+    .on('postgres_changes',{event:'*',schema:'public',table:'quick_notes'},()=>loadMemos())
+    .subscribe();
+
+  loadAll();
+}
+if(window._mexcorUser!==undefined){
+  // 이미 인증 게이트가 끝난 뒤라면(드문 타이밍) 바로 시작
+  _startCrm(window._mexcorUser);
+} else {
+  document.addEventListener('mexcorAuthReady', e=>_startCrm(e.detail.user));
+}
+
+// 조회 전용 사용자는 쓰기 관련 버튼/드래그를 비활성화
+function applyViewOnlyLock(){
+  if(canEdit) return;
+  const style=document.createElement('style');
+  style.textContent=`
+    .view-only-hide{display:none!important;}
+    .card{cursor:default!important;}
+  `;
+  document.head.appendChild(style);
+  const newBtn=document.querySelector('.header button.btn-primary');
+  if(newBtn) newBtn.classList.add('view-only-hide');
+  const addBtns=document.querySelectorAll('.sb-add-btn');
+  addBtns.forEach(b=>b.classList.add('view-only-hide'));
+  const memoRow=document.getElementById('memoInput')?.parentElement;
+  if(memoRow) memoRow.classList.add('view-only-hide');
+}
 
 // ===== 편집 모드 =====
 let editMode = false;
@@ -1013,6 +1060,7 @@ function renderEditMode(){
 }
 
 async function saveEdit(){
+  if(!canEdit) return false;
   if(!selectedId) return false;
   const fields = ['contact_person','location','industry','expected_value','monthly_fc','ytd_rate','products','next_action','next_action_date','note'];
   const updates = {updated_at: new Date()};
@@ -1137,6 +1185,7 @@ async function loadNotices(){
 function openNoticeModal(){document.getElementById('noticeModal').style.display='flex';}
 function closeNoticeModal(){document.getElementById('noticeModal').style.display='none';}
 async function saveNotice(){
+  if(!canEdit) return;
   const content=document.getElementById('nContent').value.trim();
   if(!content){showToast(curLang==='es'?'Ingrese el contenido':'내용을 입력해주세요');return;}
   const ok = await sbWrite(sb.from('notices').insert({type:document.getElementById('nType').value,content,author:document.getElementById('nAuthor').value}));
@@ -1147,6 +1196,7 @@ async function saveNotice(){
   showToast(curLang==='es'?'Aviso guardado':'공지 저장됨');
 }
 async function deleteNotice(id){
+  if(!canEdit) return;
   if(!confirm(curLang==='es'?'¿Eliminar?':'삭제할까요?')) return;
   if(!await sbWrite(sb.from('notices').delete().eq('id',id))) return;
   loadNotices();
@@ -1167,6 +1217,7 @@ async function loadMemos(){
   }).join('');
 }
 async function saveMemo(){
+  if(!canEdit) return;
   const inp=document.getElementById('memoInput');
   const content=inp.value.trim();
   if(!content) return;
@@ -1177,29 +1228,10 @@ async function saveMemo(){
   showToast(curLang==='es'?'Nota guardada':'메모 저장됨');
 }
 async function deleteMemo(id){
+  if(!canEdit) return;
   if(!await sbWrite(sb.from('quick_notes').delete().eq('id',id))) return;
   loadMemos();
 }
-
-
-
-window.loadAll = async function(){
-  const {data:acc}=await sb.from('accounts').select('*').order('name');
-  if(acc) accounts=acc;
-  const {data:lg}=await sb.from('contact_logs').select('*').order('created_at',{ascending:false});
-  if(lg){
-    allLogs=lg;logs={};
-    lg.forEach(l=>{if(!logs[l.account_id])logs[l.account_id]=[];logs[l.account_id].push(l);});
-  }
-  renderAll();updateStats();renderAlerts();renderPipeline();renderFeed();
-  renderActionList();
-  renderMiniCal();
-  loadNotices();
-  loadMemos();
-  document.getElementById('lastUpdate').textContent=(curLang==='es'?'Actualizado ':'업데이트 ')+new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
-};
-
-loadAll();
 </script>
 </body>
 </html>
