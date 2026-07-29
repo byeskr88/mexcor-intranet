@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MEXCOR 인트라넷 - 로그인</title>
+<title>MEXCOR Workspace - 로그인</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600&display=swap');
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -21,8 +21,9 @@
     padding:36px 32px;
     width:100%;max-width:340px;
   }
-  .logo-row{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:24px;}
-  .logo-row img{height:36px;filter:brightness(0) invert(1);opacity:.92;}
+  .logo-row{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:24px;}
+  .logo-row .logo-chip{background:#fff;border-radius:12px;padding:12px 20px;}
+  .logo-row img{height:44px;display:block;}
   .logo-word{font-family:'Poppins',sans-serif;font-weight:600;font-size:12px;letter-spacing:2px;color:#d8dae8;opacity:.85;}
   .sub{font-size:12px;color:#a8a6c8;text-align:center;margin-bottom:24px;}
   label{font-size:12px;color:#d8dae8;display:block;margin-bottom:6px;}
@@ -53,10 +54,12 @@
 <body>
   <div class="box">
     <div class="logo-row">
-      <img src="logo.svg" alt="MEXCOR" onerror="this.style.display='none'">
-      <span class="logo-word">MEXCOR</span>
+      <div class="logo-chip">
+        <img src="logo.svg" alt="MEXCOR" onerror="this.parentElement.style.display='none'">
+      </div>
+      <span class="logo-word">MEXCOR Workspace</span>
     </div>
-    <p class="sub" id="subText">인트라넷 로그인</p>
+    <p class="sub" id="subText">로그인</p>
     <div class="err" id="errBox"></div>
     <form id="loginForm">
       <label id="lblId">아이디</label>
@@ -80,7 +83,7 @@ const sb = supabase.createClient(SB_URL, SB_KEY);
 let lang = localStorage.getItem('mexcor_lang') || 'ko';
 
 const T = {
-  ko:{sub:'인트라넷 로그인', id:'아이디', pw:'비밀번호', btn:'로그인', loading:'로그인 중...',
+  ko:{sub:'로그인', id:'아이디', pw:'비밀번호', btn:'로그인', loading:'로그인 중...',
       errEmpty:'아이디와 비밀번호를 입력해주세요.', errAuth:'아이디 또는 비밀번호가 올바르지 않습니다.'},
   es:{sub:'Iniciar sesión', id:'Usuario', pw:'Contraseña', btn:'Entrar', loading:'Ingresando...',
       errEmpty:'Ingrese usuario y contraseña.', errAuth:'Usuario o contraseña incorrectos.'}
