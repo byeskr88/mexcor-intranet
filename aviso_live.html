@@ -190,6 +190,13 @@ function renderSummary(){
   document.getElementById('statusBox').className = 'status success';
   document.getElementById('statusBox').textContent = T().syncOk(groups.length);
   document.getElementById('lastUpdate').textContent = T().lastUpd+new Date().toLocaleString('ko-KR');
+
+  const pendCount = groups.filter(g=>{
+    const s=(g.estatus||'').toUpperCase();
+    return s==='PROCESO'||s==='PENDING'||s==='PENDIENTE';
+  }).length;
+  window._mexcorSetStatus?.('aviso', pendCount>5?'danger':pendCount>0?'warn':'ok',
+    pendCount>0?pendCount+(curLang==='es'?'':'건'):(curLang==='es'?'OK':'정상'));
 }
 
 function renderTable(data){

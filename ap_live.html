@@ -371,6 +371,11 @@ function renderSummaryCards(){
   document.getElementById('statusBox').className='status-bar success';
   document.getElementById('statusBox').textContent=T().syncOk(allData.gen.length,allData.hw.length,allData.mkc.length);
   document.getElementById('lastUpdate').textContent=T().lastUpd+new Date().toLocaleString('ko-KR');
+
+  const genPendUSD=genPend.filter(r=>r['MONEDA']==='USD').reduce((s,r)=>s+(parseFloat((r['TOTAL']||'0').replace(/,/g,''))||0),0);
+  const totalPendUSD=genPendUSD+hwAmt+mkcAmt;
+  window._mexcorSetStatus?.('ap', totalPendUSD>100000?'danger':totalPendUSD>0?'warn':'ok',
+    totalPendUSD>0?'$'+Math.round(totalPendUSD/1000)+'K':(curLang==='es'?'OK':'정상'));
 }
 
 function setF(tab,type,val,btn){
