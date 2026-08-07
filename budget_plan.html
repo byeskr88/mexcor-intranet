@@ -45,13 +45,18 @@ h1{font-size:20px;font-weight:600;padding:20px 0 4px;}
 .quickadd button:hover{background:#3a4278;}
 
 .week-block{background:var(--surface);border:0.5px solid var(--border);border-radius:10px;margin-bottom:12px;overflow:hidden;}
+.week-block.current{border:2px solid var(--steel);}
 .week-head{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:var(--navy);color:#fff;cursor:pointer;font-size:13px;font-weight:600;}
+.week-block.current .week-head{background:var(--steel);}
 .week-head .meta{font-size:11px;font-weight:400;opacity:.8;}
+.week-head .curbadge{background:#fff;color:var(--steel);font-size:10px;padding:1px 7px;border-radius:10px;margin-left:8px;font-weight:600;}
 .week-grid{display:none;grid-template-columns:56px repeat(6,1fr);}
 .week-grid.open{display:grid;}
 .dhead{font-size:11px;color:var(--muted);text-align:center;padding:8px 4px;border-bottom:0.5px solid var(--border);background:#fafaf7;}
+.dhead.today{background:var(--warn-bg);color:var(--warn-text);font-weight:600;}
 .rowlbl{font-size:11px;font-weight:600;color:var(--muted);padding:8px 6px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;}
 .daycell{padding:4px;border-bottom:0.5px solid var(--border);border-left:0.5px solid var(--border);min-height:30px;}
+.daycell.past{background:#f7f6f2;opacity:.7;}
 .daycell.balance{background:#fafaf7;font-size:12px;text-align:center;padding:8px 4px;font-weight:600;}
 .daycell.balance .usd{color:var(--muted);font-weight:400;font-size:11px;display:block;}
 .entry{font-size:11px;padding:5px 6px;border-radius:4px;margin-bottom:3px;position:relative;}
@@ -64,6 +69,11 @@ h1{font-size:20px;font-weight:600;padding:20px 0 4px;}
 .entry .del:hover{opacity:1;}
 .addline{font-size:10px;color:var(--muted);border:1px dashed var(--border);border-radius:4px;text-align:center;padding:4px;cursor:pointer;}
 .addline:hover{border-color:var(--steel);color:var(--steel);}
+.inline-add{background:#fafaf7;border:0.5px solid var(--steel);border-radius:4px;padding:5px;}
+.inline-add input{width:100%;font-size:11px;padding:4px 5px;margin-bottom:4px;border:0.5px solid var(--border);border-radius:4px;box-sizing:border-box;}
+.inline-add .btns{display:flex;gap:4px;}
+.inline-add button{flex:1;font-size:10px;padding:4px;border-radius:4px;cursor:pointer;border:0.5px solid var(--border);}
+.inline-add button.save{background:var(--navy);color:#fff;border:none;}
 .empty{padding:16px;font-size:13px;color:var(--muted);text-align:center;}
 
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:500;}
@@ -351,8 +361,9 @@ const DOW_ES=['Lun','Mar','Mié','Jue','Vie','Sáb'];
 function renderWeeks(){
   const sel = document.getElementById('monthFilter');
   const month = sel ? sel.value : new Date().toISOString().slice(0,7);
-  const monthWeeks = weeksInMonth(month).reverse(); // 최신 주 먼저
+  const monthWeeks = weeksInMonth(month); // 달력 순서 그대로 (오름차순)
   const todayStr = new Date().toISOString().slice(0,10);
+  const todayWk = isoWeek(todayStr).key;
   const container = document.getElementById('weeksContainer');
   const dowLabels = curLang==='es'?DOW_ES:DOW_KO;
 
@@ -362,17 +373,20 @@ function renderWeeks(){
     const dayKeys = days.map(d=>d.toISOString().slice(0,10));
     const weekItems = entries.filter(e=>dayKeys.includes(e.entry_date));
     const isFutureWeek = w.start.toISOString().slice(0,10) > todayStr;
+    const isCurrentWeek = w.key === todayWk;
 
     const apRow = dayKeys.map(dk=>{
       const items = weekItems.filter(e=>e.entry_date===dk && e.type==='AP');
       const cards = items.map(e=>`<div class="entry ap">${escapeHtml(e.item)}<span class="amt">$${fmtMoney(e.amount)} ${e.currency}</span><span class="who">${escapeHtml(e.created_by||'')} · ${dk.slice(5).replace('-','/')}</span><span class="del" onclick="deleteEntry('${e.id}')">✕</span></div>`).join('');
-      return `<div class="daycell">${cards}<div class="addline" onclick="setQDate('${dk}');document.getElementById('qType').value='AP';">+ 추가</div></div>`;
+      const pastCls = dk<todayStr?' past':'';
+      return `<div class="daycell${pastCls}" id="cell-AP-${dk}">${cards}<div class="addline" onclick="showInlineAdd('${dk}','AP',this)">+ 추가</div></div>`;
     }).join('');
 
     const arRow = dayKeys.map(dk=>{
       const items = weekItems.filter(e=>e.entry_date===dk && e.type==='AR');
       const cards = items.map(e=>`<div class="entry ar">${escapeHtml(e.item)}<span class="amt">$${fmtMoney(e.amount)} ${e.currency}</span><span class="who">${escapeHtml(e.created_by||'')} · ${dk.slice(5).replace('-','/')}</span><span class="del" onclick="deleteEntry('${e.id}')">✕</span></div>`).join('');
-      return `<div class="daycell">${cards}<div class="addline" onclick="setQDate('${dk}');document.getElementById('qType').value='AR';">+ 추가</div></div>`;
+      const pastCls = dk<todayStr?' past':'';
+      return `<div class="daycell${pastCls}" id="cell-AR-${dk}">${cards}<div class="addline" onclick="showInlineAdd('${dk}','AR',this)">+ 추가</div></div>`;
     }).join('');
 
     const adjItems = weekItems.filter(e=>e.type==='ADJUSTMENT');
@@ -380,12 +394,14 @@ function renderWeeks(){
     const adjRow = dayKeys.map(dk=>{
       const items = adjItems.filter(e=>e.entry_date===dk);
       const cards = items.map(e=>`<div class="entry adj">${curLang==='es'?'Ajuste':'잔고 수동 수정'}<span class="amt">=$${fmtMoney(e.amount)} ${e.currency}</span><span class="who">${escapeHtml(e.created_by||'')} · ${e.note?escapeHtml(e.note)+' · ':''}${dk.slice(5).replace('-','/')}</span></div>`).join('');
-      return `<div class="daycell">${cards}</div>`;
+      const pastCls = dk<todayStr?' past':'';
+      return `<div class="daycell${pastCls}">${cards}</div>`;
     }).join('');
 
     const fxRow = dayKeys.map(dk=>{
       const rate = getFxRate(dk);
-      return `<div class="daycell" style="text-align:center;"><input type="number" step="0.01" value="${rate.toFixed(2)}" style="width:100%;font-size:11px;padding:3px;border:0.5px solid var(--border);border-radius:4px;text-align:center;" onchange="saveFxRate('${dk}',this.value)"></div>`;
+      const pastCls = dk<todayStr?' past':'';
+      return `<div class="daycell${pastCls}" style="text-align:center;"><input type="number" step="0.01" value="${rate.toFixed(2)}" style="width:100%;font-size:11px;padding:3px;border:0.5px solid var(--border);border-radius:4px;text-align:center;" onchange="saveFxRate('${dk}',this.value)"></div>`;
     }).join('');
 
     const balRow = dayKeys.map(dk=>{
@@ -399,14 +415,14 @@ function renderWeeks(){
     const fmt = d => (d.getMonth()+1)+'/'+d.getDate();
     const totalCount = weekItems.filter(e=>e.type!=='ADJUSTMENT').length;
 
-    return `<div class="week-block">
+    return `<div class="week-block${isCurrentWeek?' current':''}">
       <div class="week-head" onclick="this.nextElementSibling.classList.toggle('open')">
-        <span>${fmt(w.start)} — ${fmt(w.end)}${isFutureWeek?(curLang==='es'?' · próxima':' · 예정'):''}</span>
+        <span>${fmt(w.start)} — ${fmt(w.end)}${isFutureWeek?(curLang==='es'?' · próxima':' · 예정'):''}${isCurrentWeek?`<span class="curbadge">${curLang==='es'?'ESTA SEMANA':'이번 주'}</span>`:''}</span>
         <span class="meta">${totalCount}${T().cnt}</span>
       </div>
-      <div class="week-grid${idx===0?' open':''}">
+      <div class="week-grid${isCurrentWeek?' open':''}">
         <div class="dhead"></div>
-        ${days.map((d,i)=>`<div class="dhead">${d.getMonth()+1}/${d.getDate()}<br>${dowLabels[i]}</div>`).join('')}
+        ${days.map((d,i)=>`<div class="dhead${dayKeys[i]===todayStr?' today':''}">${d.getMonth()+1}/${d.getDate()}<br>${dowLabels[i]}</div>`).join('')}
         <div class="rowlbl">AP</div>${apRow}
         <div class="rowlbl">AR</div>${arRow}
         ${hasAdj?`<div class="rowlbl">${curLang==='es'?'Ajuste':'조정'}</div>${adjRow}`:''}
@@ -415,6 +431,38 @@ function renderWeeks(){
       </div>
     </div>`;
   }).join('');
+}
+
+function showInlineAdd(dateStr, type, btnEl){
+  const wrap = document.createElement('div');
+  wrap.className = 'inline-add';
+  wrap.innerHTML = `
+    <input type="text" placeholder="항목명" class="ia-item">
+    <input type="number" placeholder="금액" class="ia-amt">
+    <select class="ia-cur" style="width:100%;font-size:11px;padding:4px;margin-bottom:4px;border:0.5px solid var(--border);border-radius:4px;">
+      <option value="MXN">MXN</option><option value="USD">USD</option>
+    </select>
+    <div class="btns">
+      <button class="save">${curLang==='es'?'Guardar':'저장'}</button>
+      <button class="cancel">${curLang==='es'?'Cancelar':'취소'}</button>
+    </div>`;
+  btnEl.replaceWith(wrap);
+  wrap.querySelector('.ia-item').focus();
+  wrap.querySelector('.save').onclick = ()=>saveInlineAdd(dateStr, type, wrap);
+  wrap.querySelector('.cancel').onclick = ()=>renderWeeks();
+  wrap.querySelector('.ia-amt').addEventListener('keydown', e=>{ if(e.key==='Enter') saveInlineAdd(dateStr,type,wrap); });
+}
+
+async function saveInlineAdd(dateStr, type, wrap){
+  const item = wrap.querySelector('.ia-item').value.trim();
+  const amount = parseFloat(wrap.querySelector('.ia-amt').value);
+  const currency = wrap.querySelector('.ia-cur').value;
+  if(!item || !amount) return;
+  const {error} = await sb.from('budget_entries').insert({
+    entry_date: dateStr, type, currency, item, amount, created_by: currentUserId()
+  });
+  if(error){ alert((curLang==='es'?'Error: ':'오류: ')+error.message); return; }
+  await loadAll();
 }
 
 function escapeHtml(s){
