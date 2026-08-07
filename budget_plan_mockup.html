@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Budget Plan — MEXCOR Workspace (시안)</title>
+<style>
+:root{
+  --navy:#2b3260; --steel:#3a6eb5; --bg:#f0f2f8;
+  --surface:#ffffff; --border:#e4e2d8; --text:#1a1a18; --muted:#767464;
+  --danger-bg:#fcebeb; --danger-text:#a32d2d;
+  --ok-bg:#eaf3de; --ok-text:#3b6d11;
+  --warn-bg:#faeeda; --warn-text:#854f0b;
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
+body{background:var(--bg);color:var(--text);padding:0 5%;}
+.banner{background:var(--warn-bg);color:var(--warn-text);font-size:12px;padding:8px 16px;text-align:center;margin:0 -5%;}
+h1{font-size:20px;font-weight:600;padding:20px 0 4px;}
+.sub{font-size:12px;color:var(--muted);padding-bottom:16px;}
+
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
+.card{background:var(--surface);border:0.5px solid var(--border);border-radius:10px;padding:14px 16px;}
+.card .lbl{font-size:12px;color:var(--muted);margin-bottom:4px;}
+.card .val{font-size:20px;font-weight:600;}
+.card .val.danger{color:var(--danger-text);}
+.card .val.ok{color:var(--ok-text);}
+
+.toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.toolbar select{padding:6px 10px;border:0.5px solid var(--border);border-radius:6px;background:var(--surface);font-size:13px;}
+.chips{display:flex;flex-wrap:wrap;gap:6px;}
+.chip{font-size:11px;padding:4px 10px;background:var(--surface);border:0.5px solid var(--border);border-radius:20px;color:var(--muted);cursor:pointer;}
+.chip:hover{border-color:var(--steel);color:var(--steel);}
+.chip .x{margin-left:5px;opacity:.5;}
+.chip.add{border-style:dashed;}
+
+.week-block{background:var(--surface);border:0.5px solid var(--border);border-radius:10px;margin-bottom:14px;overflow:hidden;}
+.week-head{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:var(--navy);color:#fff;cursor:pointer;font-size:13px;font-weight:600;}
+.week-head .meta{font-size:11px;font-weight:400;opacity:.75;}
+.week-body{display:grid;grid-template-columns:70px repeat(6,1fr);}
+.week-body.collapsed{display:none;}
+.dcol{border-left:0.5px solid var(--border);}
+.dcol:first-child{border-left:none;}
+.dhead{font-size:11px;color:var(--muted);text-align:center;padding:8px 4px;border-bottom:0.5px solid var(--border);background:#fafaf7;}
+.rowlbl{font-size:11px;font-weight:600;color:var(--muted);padding:8px 6px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;}
+.entry{font-size:11px;padding:4px 6px;border-radius:4px;margin:3px 4px;cursor:text;position:relative;}
+.entry.ap{background:var(--danger-bg);color:var(--danger-text);}
+.entry.ar{background:var(--ok-bg);color:var(--ok-text);}
+.entry.manual{background:var(--warn-bg);color:var(--warn-text);}
+.entry .amt{font-weight:600;}
+.entry .who{font-size:9px;opacity:.7;display:block;margin-top:1px;}
+.daycell{padding:4px;border-bottom:0.5px solid var(--border);min-height:28px;}
+.daycell.balance{background:#fafaf7;font-size:11px;text-align:center;padding:8px 4px;font-weight:600;}
+.addline{font-size:10px;color:var(--muted);border:1px dashed var(--border);border-radius:4px;text-align:center;padding:3px;margin:3px 4px;cursor:pointer;}
+.addline:hover{border-color:var(--steel);color:var(--steel);}
+
+.quickadd{background:var(--surface);border:0.5px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:30px;}
+.quickadd .row{display:grid;grid-template-columns:70px 70px 1fr 110px 90px;gap:8px;margin-top:10px;}
+.quickadd select,.quickadd input{padding:7px 9px;border:0.5px solid var(--border);border-radius:6px;font-size:13px;background:#faf9f5;}
+.quickadd button{background:var(--navy);color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<div class="banner">시안 화면입니다 — 실제 데이터 연결 전 레이아웃 확인용</div>
+
+<h1>Budget Plan</h1>
+<p class="sub">최종 업데이트: 2026.8.7 · 조회 가능: 법인장 · 대표 · 회계 · Subdirector · DJ</p>
+
+<div class="cards">
+  <div class="card"><div class="lbl">MXN 잔고</div><div class="val">$14,726</div></div>
+  <div class="card"><div class="lbl">USD 잔고</div><div class="val">$3,516</div></div>
+  <div class="card"><div class="lbl">이번 주 AP</div><div class="val danger">$132,275</div></div>
+  <div class="card"><div class="lbl">이번 주 AR</div><div class="val ok">$296,728</div></div>
+</div>
+
+<div class="toolbar">
+  <select><option>2026년 8월</option><option>2026년 7월</option><option>2026년 6월</option></select>
+  <div class="chips" id="chips"></div>
+</div>
+
+<!-- W5 (펼쳐짐) -->
+<div class="week-block">
+  <div class="week-head" onclick="this.nextElementSibling.classList.toggle('collapsed')">
+    <span>W5 <span class="meta">1/29 (Mon) — 2/3 (Sat)</span></span>
+    <span class="meta">환율 16.8 — 17.1</span>
+  </div>
+  <div class="week-body">
+    <div class="dhead"></div>
+    <div class="dhead">1/29<br>Mon</div>
+    <div class="dhead">1/30<br>Tue</div>
+    <div class="dhead">1/31<br>Wed</div>
+    <div class="dhead">2/1<br>Thu</div>
+    <div class="dhead">2/2<br>Fri</div>
+    <div class="dhead">2/3<br>Sat</div>
+
+    <div class="rowlbl">AP</div>
+    <div class="daycell">
+      <div class="entry ap" contenteditable>MTS→RMT Loan Payback<br><span class="amt">$137,378 MXN</span><span class="who">DJ · 8/6</span></div>
+      <div class="entry ap" contenteditable>Sestar<br><span class="amt">$150,800 MXN</span><span class="who">DJ · 8/6</span></div>
+      <div class="addline" onclick="alert('실제 화면에서는 여기서 바로 입력창이 열려요')">+ 추가</div>
+    </div>
+    <div class="daycell"><div class="addline">+ 추가</div></div>
+    <div class="daycell">
+      <div class="entry ap" contenteditable>Bank commission<br><span class="amt">$292 MXN</span><span class="who">회계 · 8/6</span></div>
+      <div class="addline">+ 추가</div>
+    </div>
+    <div class="daycell">
+      <div class="entry ap" contenteditable>Customs clearance<br><span class="amt">$1,277,566 MXN</span><span class="who">DJ · 8/6</span></div>
+      <div class="addline">+ 추가</div>
+    </div>
+    <div class="daycell">
+      <div class="entry ap" contenteditable>Warehouse rent<br><span class="amt">$61,965 MXN</span><span class="who">회계 · 8/6</span></div>
+      <div class="entry ap" contenteditable>Customs clearance<br><span class="amt">$600,937 MXN</span><span class="who">DJ · 8/6</span></div>
+      <div class="addline">+ 추가</div>
+    </div>
+    <div class="daycell"><div class="addline">+ 추가</div></div>
+
+    <div class="rowlbl">AR</div>
+    <div class="daycell"><div class="addline">+ 추가</div></div>
+    <div class="daycell"><div class="addline">+ 추가</div></div>
+    <div class="daycell">
+      <div class="entry ar" contenteditable>USD → MXN Exchange<br><span class="amt">$1,282,125 MXN</span><span class="who">DJ · 8/6</span></div>
+      <div class="addline">+ 추가</div>
+    </div>
+    <div class="daycell">
+      <div class="entry ar" contenteditable>Recicladora La Fe<br><span class="amt">$55,964 MXN</span><span class="who">DJ · 8/6</span></div>
+      <div class="addline">+ 추가</div>
+    </div>
+    <div class="daycell">
+      <div class="entry ar" contenteditable>RMT → MTS Loan<br><span class="amt">$750,000 MXN</span><span class="who">Subdirector · 8/6</span></div>
+      <div class="addline">+ 추가</div>
+    </div>
+    <div class="daycell"><div class="addline">+ 추가</div></div>
+
+    <div class="rowlbl">조정</div>
+    <div class="daycell"></div>
+    <div class="daycell"></div>
+    <div class="daycell"></div>
+    <div class="daycell"></div>
+    <div class="daycell"></div>
+    <div class="daycell">
+      <div class="entry manual" contenteditable>잔고 수동 수정<br><span class="amt">$14,726 USD</span><span class="who">회계 · 은행 실잔고와 $312 차이, 수수료 반영 누락 · 8/7</span></div>
+    </div>
+
+    <div class="rowlbl">잔고</div>
+    <div class="daycell balance">3,681<br><span style="color:var(--muted);font-weight:400;">USD 12,336</span></div>
+    <div class="daycell balance">3,681<br><span style="color:var(--muted);font-weight:400;">USD 12,336</span></div>
+    <div class="daycell balance">1,285,514<br><span style="color:var(--muted);font-weight:400;">USD 85,918</span></div>
+    <div class="daycell balance">63,912<br><span style="color:var(--muted);font-weight:400;">USD 9,416</span></div>
+    <div class="daycell balance">14,727<br><span style="color:var(--muted);font-weight:400;">USD 9,416</span></div>
+    <div class="daycell balance">14,727<br><span style="color:var(--muted);font-weight:400;">USD 3,516</span></div>
+  </div>
+</div>
+
+<!-- W4 (접힘 예시) -->
+<div class="week-block">
+  <div class="week-head" onclick="this.nextElementSibling.classList.toggle('collapsed')">
+    <span>W4 <span class="meta">1/22 (Mon) — 1/27 (Sat)</span></span>
+    <span class="meta">클릭해서 펼치기</span>
+  </div>
+  <div class="week-body collapsed">
+    <div class="rowlbl" style="grid-column:1/-1;justify-content:center;padding:16px;">펼치면 W5랑 같은 형태로 보여요</div>
+  </div>
+</div>
+
+<div class="quickadd">
+  <div style="font-size:13px;font-weight:600;">빠른 입력</div>
+  <div class="row">
+    <select><option>AP</option><option>AR</option></select>
+    <select><option>MXN</option><option>USD</option></select>
+    <input type="text" placeholder="항목명 (칩 클릭 시 자동 입력)">
+    <input type="number" placeholder="금액">
+    <button>추가</button>
+  </div>
+</div>
+
+<script>
+let frequent = ['Nomina','Customs clearance','Warehouse rent','Transportation','Bank commission'];
+function renderChips(){
+  const el = document.getElementById('chips');
+  el.innerHTML = '';
+  frequent.forEach((name,i)=>{
+    const c = document.createElement('span');
+    c.className = 'chip';
+    c.innerHTML = name + '<span class="x">✕</span>';
+    c.onclick = (e) => {
+      if(e.target.classList.contains('x')){ frequent.splice(i,1); renderChips(); return; }
+      document.querySelector('.quickadd input[type=text]').value = name;
+    };
+    el.appendChild(c);
+  });
+  const add = document.createElement('span');
+  add.className = 'chip add';
+  add.textContent = '+ 항목 추가';
+  add.onclick = () => {
+    const v = prompt('새 항목명');
+    if(v && !frequent.includes(v)){ frequent.push(v); renderChips(); }
+  };
+  el.appendChild(add);
+}
+renderChips();
+</script>
+
+</body>
+</html>

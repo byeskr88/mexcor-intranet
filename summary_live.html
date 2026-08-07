@@ -101,6 +101,17 @@ hr{border:none;border-top:0.5px solid var(--border);margin:18px 0;}
   </div>
   <div class="sbar loading" id="sbar">데이터 불러오는 중...</div>
 
+  <!-- Budget Plan (권한자만) -->
+  <div id="budgetSec" style="display:none;">
+    <div class="sec"><span><i class="ti ti-wallet"></i> Budget Plan</span></div>
+    <div class="sales-cards" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px;">
+      <div class="s-card"><div class="lbl" data-ko="MXN 잔고" data-es="Saldo MXN">MXN 잔고</div><div class="val" id="bgMXN">-</div></div>
+      <div class="s-card"><div class="lbl" data-ko="USD 잔고" data-es="Saldo USD">USD 잔고</div><div class="val" id="bgUSD">-</div></div>
+      <div class="s-card"><div class="lbl" data-ko="이번 주 AP" data-es="CxP esta semana">이번 주 AP</div><div class="val" id="bgAP" style="color:var(--danger-text);">-</div></div>
+      <div class="s-card"><div class="lbl" data-ko="이번 주 AR" data-es="CxC esta semana">이번 주 AR</div><div class="val" id="bgAR" style="color:var(--ok-text);">-</div></div>
+    </div>
+  </div>
+
   <!-- 매출 -->
   <div class="sec" id="sec-sales"><span data-ko="📊 매출 현황" data-es="📊 Ventas">📊 매출 현황</span></div>
   <div class="sales-cards">
@@ -415,6 +426,42 @@ async function load(){
   document.getElementById('sbar').textContent = errs.length?(curLang==='es'?'⚠ Error: ':'⚠ 오류: ')+errs.join(' / '):(curLang==='es'?'✓ Datos sincronizados':'✓ 데이터 연동 성공');
   document.getElementById('pageTs').textContent='최종 업데이트: '+new Date().toLocaleString('ko-KR');
 }
+
+async function checkBudgetAccess(user){
+  if(!user || !user.user_metadata?.budget) return;
+  document.getElementById('budgetSec').style.display='block';
+  try{
+    const sb = window._mexcorSb;
+    if(!sb) return;
+    const {data:ent} = await sb.from('budget_entries').select('*').order('entry_date',{ascending:false}).order('created_at',{ascending:false});
+    if(!ent) return;
+    function computeBalance(currency){
+      const rel = ent.filter(e=>e.currency===currency);
+      const lastAdj = rel.filter(e=>e.type==='ADJUSTMENT').sort((a,b)=>b.entry_date.localeCompare(a.entry_date)||b.created_at.localeCompare(a.created_at))[0];
+      let base=0, fromDate=null;
+      if(lastAdj){ base=parseFloat(lastAdj.amount); fromDate=lastAdj.entry_date; }
+      const since = rel.filter(e=>e.type!=='ADJUSTMENT' && (!fromDate || e.entry_date>fromDate || (e.entry_date===fromDate && e.created_at>lastAdj.created_at)));
+      return base + since.reduce((s,e)=>s+(e.type==='AR'?parseFloat(e.amount):-parseFloat(e.amount)),0);
+    }
+    const now=new Date();
+    const day=now.getDay()===0?7:now.getDay();
+    const monday=new Date(now); monday.setDate(now.getDate()-day+1);
+    const saturday=new Date(monday); saturday.setDate(monday.getDate()+5);
+    const weekEnt = ent.filter(e=>{const ed=new Date(e.entry_date+'T00:00:00'); return ed>=monday&&ed<=saturday;});
+    const weekAP = weekEnt.filter(e=>e.type==='AP').reduce((s,e)=>s+parseFloat(e.amount),0);
+    const weekAR = weekEnt.filter(e=>e.type==='AR').reduce((s,e)=>s+parseFloat(e.amount),0);
+    document.getElementById('bgMXN').textContent='$'+Math.round(computeBalance('MXN')).toLocaleString();
+    document.getElementById('bgUSD').textContent='$'+Math.round(computeBalance('USD')).toLocaleString();
+    document.getElementById('bgAP').textContent='$'+Math.round(weekAP).toLocaleString();
+    document.getElementById('bgAR').textContent='$'+Math.round(weekAR).toLocaleString();
+  }catch(e){ console.error('Budget summary load failed:', e); }
+}
+if(window._mexcorUser!==undefined){
+  checkBudgetAccess(window._mexcorUser);
+} else {
+  document.addEventListener('mexcorAuthReady', e=>checkBudgetAccess(e.detail.user));
+}
+
 load();
 
 // 언어 변경 수신

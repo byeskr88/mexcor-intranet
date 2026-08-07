@@ -41,7 +41,7 @@ function _mexcorLoadSDK(){
 
 function initNav(){
 (function(){
-  const PAGES = [
+  const ALL_PAGES = [
     {id:'summary',file:'summary_live.html',icon:'🏠',ko:'Summary',es:'Resumen'},
     {id:'aviso',file:'aviso_live.html',icon:'📋',ko:'AVISO',es:'AVISO'},
     {id:'ar',file:'ar_live.html',icon:'💰',ko:'AR',es:'AR'},
@@ -49,7 +49,10 @@ function initNav(){
     {id:'sales',file:'sales_live.html',icon:'📊',ko:'매출',es:'Ventas'},
     {id:'inv',file:'inventory_live.html',icon:'📦',ko:'재고',es:'Inventario'},
     {id:'crm',file:'crm_live.html',icon:'🤝',ko:'고객관리',es:'Clientes'},
+    {id:'budget',file:'budget_plan.html',icon:'💵',ko:'Budget',es:'Budget',restricted:true},
   ];
+  const _hasBudgetAccess = !!(window._mexcorUser?.user_metadata?.budget);
+  const PAGES = ALL_PAGES.filter(p=>!p.restricted||_hasBudgetAccess);
 
   let lang = localStorage.getItem('mexcor_lang')||'ko';
   const curFile = location.pathname.split('/').pop()||'summary_live.html';
