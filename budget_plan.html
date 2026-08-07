@@ -47,18 +47,23 @@ h1{font-size:20px;font-weight:600;padding:20px 0 4px;}
 .week-block{background:var(--surface);border:0.5px solid var(--border);border-radius:10px;margin-bottom:12px;overflow:hidden;}
 .week-head{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:var(--navy);color:#fff;cursor:pointer;font-size:13px;font-weight:600;}
 .week-head .meta{font-size:11px;font-weight:400;opacity:.8;}
-.week-body{display:none;}
-.week-body.open{display:block;}
-.day-row{display:flex;justify-content:space-between;align-items:flex-start;padding:9px 16px;border-top:0.5px solid var(--border);font-size:13px;gap:10px;}
-.day-row .left{flex:1;min-width:0;}
-.day-row .tag{font-weight:600;font-size:11px;padding:1px 6px;border-radius:4px;margin-right:6px;}
-.day-row .tag.ap{background:var(--danger-bg);color:var(--danger-text);}
-.day-row .tag.ar{background:var(--ok-bg);color:var(--ok-text);}
-.day-row .tag.adj{background:var(--warn-bg);color:var(--warn-text);}
-.day-row .who{font-size:11px;color:var(--muted);display:block;margin-top:2px;}
-.day-row .amt{font-weight:600;white-space:nowrap;}
-.day-row .del{color:var(--muted);cursor:pointer;font-size:14px;margin-left:8px;}
-.day-row .del:hover{color:var(--danger-text);}
+.week-grid{display:none;grid-template-columns:56px repeat(6,1fr);}
+.week-grid.open{display:grid;}
+.dhead{font-size:11px;color:var(--muted);text-align:center;padding:8px 4px;border-bottom:0.5px solid var(--border);background:#fafaf7;}
+.rowlbl{font-size:11px;font-weight:600;color:var(--muted);padding:8px 6px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;}
+.daycell{padding:4px;border-bottom:0.5px solid var(--border);border-left:0.5px solid var(--border);min-height:30px;}
+.daycell.balance{background:#fafaf7;font-size:12px;text-align:center;padding:8px 4px;font-weight:600;}
+.daycell.balance .usd{color:var(--muted);font-weight:400;font-size:11px;display:block;}
+.entry{font-size:11px;padding:5px 6px;border-radius:4px;margin-bottom:3px;position:relative;}
+.entry.ap{background:var(--danger-bg);color:var(--danger-text);}
+.entry.ar{background:var(--ok-bg);color:var(--ok-text);}
+.entry.adj{background:var(--warn-bg);color:var(--warn-text);}
+.entry .amt{font-weight:600;display:block;margin-top:1px;}
+.entry .who{font-size:9px;opacity:.75;display:block;margin-top:2px;}
+.entry .del{position:absolute;top:3px;right:4px;font-size:11px;cursor:pointer;opacity:.6;}
+.entry .del:hover{opacity:1;}
+.addline{font-size:10px;color:var(--muted);border:1px dashed var(--border);border-radius:4px;text-align:center;padding:4px;cursor:pointer;}
+.addline:hover{border-color:var(--steel);color:var(--steel);}
 .empty{padding:16px;font-size:13px;color:var(--muted);text-align:center;}
 
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:500;}
@@ -107,7 +112,8 @@ h1{font-size:20px;font-weight:600;padding:20px 0 4px;}
 
   <div class="quickadd">
     <div class="lbl" data-ko="빠른 입력" data-es="Entrada rápida">빠른 입력</div>
-    <div class="row">
+    <div class="row" style="grid-template-columns:100px 70px 70px 1fr 110px 90px;">
+      <input type="date" id="qDate">
       <select id="qType"><option value="AP">AP</option><option value="AR">AR</option></select>
       <select id="qCur"><option value="MXN">MXN</option><option value="USD">USD</option></select>
       <input type="text" id="qItem" placeholder="항목명" data-ko-ph="항목명" data-es-ph="Concepto">
@@ -169,6 +175,12 @@ if(window._mexcorUser!==undefined){
 
 function currentUserId(){
   return (window._mexcorUser?.email||'user').split('@')[0];
+}
+document.getElementById('qDate').value = new Date().toISOString().slice(0,10);
+function setQDate(dateStr){
+  document.getElementById('qDate').value = dateStr;
+  document.getElementById('qItem').focus();
+  document.getElementById('qDate').scrollIntoView({behavior:'smooth',block:'center'});
 }
 
 async function loadAll(){
@@ -290,13 +302,17 @@ function populateMonthFilter(){
   sel.onchange = renderWeeks;
 }
 
+const DOW_KO=['월','화','수','목','금','토'];
+const DOW_ES=['Lun','Mar','Mié','Jue','Vie','Sáb'];
+
 function renderWeeks(){
   const sel = document.getElementById('monthFilter');
   const month = sel ? sel.value : new Date().toISOString().slice(0,7);
-  const filtered = entries.filter(e=>e.entry_date.slice(0,7)===month);
+  const filtered = entries.filter(e=>e.entry_date.slice(0,7)===month && e.type!=='ADJUSTMENT');
+  const adjustments = entries.filter(e=>e.entry_date.slice(0,7)===month && e.type==='ADJUSTMENT');
 
   const weeks = {};
-  filtered.forEach(e=>{
+  filtered.concat(adjustments).forEach(e=>{
     const wk = isoWeek(e.entry_date);
     if(!weeks[wk.key]) weeks[wk.key]={start:wk.start,end:wk.end,items:[]};
     weeks[wk.key].items.push(e);
@@ -307,31 +323,56 @@ function renderWeeks(){
     container.innerHTML = '<div class="empty">'+T().noEntries+'</div>';
     return;
   }
+  const dowLabels = curLang==='es'?DOW_ES:DOW_KO;
+
   container.innerHTML = keys.map((k,idx)=>{
     const w = weeks[k];
-    const fmt = d => (d.getMonth()+1)+'/'+d.getDate();
-    const items = w.items.slice().sort((a,b)=>b.entry_date.localeCompare(a.entry_date)||b.created_at.localeCompare(a.created_at));
-    const rows = items.map(e=>{
-      const tagClass = e.type==='AP'?'ap':e.type==='AR'?'ar':'adj';
-      const tagLabel = e.type==='ADJUSTMENT'?(curLang==='es'?'AJUSTE':'조정'):e.type;
-      const sign = e.type==='AP'?'-':e.type==='AR'?'+':'=';
-      return `<div class="day-row">
-        <div class="left">
-          <span class="tag ${tagClass}">${tagLabel}</span>${escapeHtml(e.item)}
-          <span class="who">${e.entry_date} · ${escapeHtml(e.created_by||'')}${e.note?' · '+escapeHtml(e.note):''}</span>
-        </div>
-        <div style="display:flex;align-items:center;">
-          <span class="amt">${sign}$${fmtMoney(e.amount)} ${e.currency}</span>
-          <i class="del" onclick="deleteEntry('${e.id}')" title="삭제">✕</i>
-        </div>
-      </div>`;
+    const days = [];
+    for(let i=0;i<6;i++){ const d=new Date(w.start); d.setDate(w.start.getDate()+i); days.push(d); }
+    const dayKeys = days.map(d=>d.toISOString().slice(0,10));
+
+    const apRow = dayKeys.map(dk=>{
+      const items = w.items.filter(e=>e.entry_date===dk && e.type==='AP');
+      const cards = items.map(e=>`<div class="entry ap">${escapeHtml(e.item)}<span class="amt">$${fmtMoney(e.amount)} ${e.currency}</span><span class="who">${escapeHtml(e.created_by||'')} · ${dk.slice(5).replace('-','/')}</span><span class="del" onclick="deleteEntry('${e.id}')">✕</span></div>`).join('');
+      return `<div class="daycell">${cards}<div class="addline" onclick="setQDate('${dk}');document.getElementById('qType').value='AP';">+ 추가</div></div>`;
     }).join('');
+
+    const arRow = dayKeys.map(dk=>{
+      const items = w.items.filter(e=>e.entry_date===dk && e.type==='AR');
+      const cards = items.map(e=>`<div class="entry ar">${escapeHtml(e.item)}<span class="amt">$${fmtMoney(e.amount)} ${e.currency}</span><span class="who">${escapeHtml(e.created_by||'')} · ${dk.slice(5).replace('-','/')}</span><span class="del" onclick="deleteEntry('${e.id}')">✕</span></div>`).join('');
+      return `<div class="daycell">${cards}<div class="addline" onclick="setQDate('${dk}');document.getElementById('qType').value='AR';">+ 추가</div></div>`;
+    }).join('');
+
+    const adjItems = w.items.filter(e=>e.type==='ADJUSTMENT');
+    const hasAdj = adjItems.length>0;
+    const adjRow = dayKeys.map(dk=>{
+      const items = adjItems.filter(e=>e.entry_date===dk);
+      const cards = items.map(e=>`<div class="entry adj">${curLang==='es'?'Ajuste':'잔고 수동 수정'}<span class="amt">=$${fmtMoney(e.amount)} ${e.currency}</span><span class="who">${escapeHtml(e.created_by||'')} · ${e.note?escapeHtml(e.note)+' · ':''}${dk.slice(5).replace('-','/')}</span></div>`).join('');
+      return `<div class="daycell">${cards}</div>`;
+    }).join('');
+
+    const balRow = dayKeys.map(dk=>{
+      const bMXN = computeBalance('MXN', dk);
+      const bUSD = computeBalance('USD', dk);
+      return `<div class="daycell balance">${fmtMoney(bMXN)}<span class="usd">USD ${fmtMoney(bUSD)}</span></div>`;
+    }).join('');
+
+    const fmt = d => (d.getMonth()+1)+'/'+d.getDate();
+    const totalCount = w.items.filter(e=>e.type!=='ADJUSTMENT').length;
+
     return `<div class="week-block">
       <div class="week-head" onclick="this.nextElementSibling.classList.toggle('open')">
         <span>${fmt(w.start)} — ${fmt(w.end)}</span>
-        <span class="meta">${items.length}${T().cnt}</span>
+        <span class="meta">${totalCount}${T().cnt}</span>
       </div>
-      <div class="week-body${idx===0?' open':''}">${rows}</div>
+      <div class="week-grid${idx===0?' open':''}">
+        <div class="dhead"></div>
+        ${days.map((d,i)=>`<div class="dhead">${d.getMonth()+1}/${d.getDate()}<br>${dowLabels[i]}</div>`).join('')}
+        <div class="rowlbl">AP</div>${apRow}
+        <div class="rowlbl">AR</div>${arRow}
+        ${hasAdj?`<div class="rowlbl">${curLang==='es'?'Ajuste':'조정'}</div>${adjRow}`:''}
+        <div class="rowlbl">${curLang==='es'?'Saldo':'잔고'}</div>${balRow}
+      </div>
     </div>`;
   }).join('');
 }
@@ -347,9 +388,10 @@ async function quickAdd(){
   const currency = document.getElementById('qCur').value;
   const item = document.getElementById('qItem').value.trim();
   const amount = parseFloat(document.getElementById('qAmt').value);
+  const entryDate = document.getElementById('qDate').value || new Date().toISOString().slice(0,10);
   if(!item || !amount){ return; }
   const {error} = await sb.from('budget_entries').insert({
-    entry_date: new Date().toISOString().slice(0,10),
+    entry_date: entryDate,
     type, currency, item, amount,
     created_by: currentUserId()
   });
