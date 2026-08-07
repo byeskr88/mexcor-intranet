@@ -39,6 +39,8 @@ h1{font-size:20px;font-weight:600;padding:20px 0 4px;}
 
 .quickadd{background:var(--surface);border:0.5px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:20px;}
 .quickadd .lbl{font-size:13px;font-weight:600;margin-bottom:10px;}
+.trendbox{background:var(--surface);border:0.5px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:20px;}
+.trendbox .lbl{font-size:13px;font-weight:600;margin-bottom:10px;}
 .quickadd .row{display:grid;grid-template-columns:70px 70px 1fr 120px 90px;gap:8px;}
 .quickadd select,.quickadd input{padding:8px 9px;border:0.5px solid var(--border);border-radius:6px;font-size:13px;background:#faf9f5;}
 .quickadd button{background:var(--navy);color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;}
@@ -57,8 +59,8 @@ h1{font-size:20px;font-weight:600;padding:20px 0 4px;}
 .rowlbl{font-size:11px;font-weight:600;color:var(--muted);padding:8px 6px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;}
 .daycell{padding:4px;border-bottom:0.5px solid var(--border);border-left:0.5px solid var(--border);min-height:30px;}
 .daycell.past{background:#f7f6f2;opacity:.7;}
-.daycell.balance{background:#fafaf7;font-size:12px;text-align:center;padding:8px 4px;font-weight:600;}
-.daycell.balance .usd{color:var(--muted);font-weight:400;font-size:11px;display:block;}
+.daycell.balance{background:var(--navy);color:#fff;font-size:14px;text-align:center;padding:10px 4px;font-weight:700;}
+.daycell.balance .usd{color:#c8ccdf;font-weight:400;font-size:10px;display:block;margin-top:2px;}
 .entry{font-size:11px;padding:5px 6px;border-radius:4px;margin-bottom:3px;position:relative;}
 .entry.ap{background:var(--danger-bg);color:var(--danger-text);}
 .entry.ar{background:var(--ok-bg);color:var(--ok-text);}
@@ -120,15 +122,10 @@ h1{font-size:20px;font-weight:600;padding:20px 0 4px;}
     <div class="chips" id="chips"></div>
   </div>
 
-  <div class="quickadd">
-    <div class="lbl" data-ko="빠른 입력" data-es="Entrada rápida">빠른 입력</div>
-    <div class="row" style="grid-template-columns:100px 70px 70px 1fr 110px 90px;">
-      <input type="date" id="qDate">
-      <select id="qType"><option value="AP">AP</option><option value="AR">AR</option></select>
-      <select id="qCur"><option value="MXN">MXN</option><option value="USD">USD</option></select>
-      <input type="text" id="qItem" placeholder="항목명" data-ko-ph="항목명" data-es-ph="Concepto">
-      <input type="number" id="qAmt" placeholder="금액" data-ko-ph="금액" data-es-ph="Monto">
-      <button onclick="quickAdd()" data-ko="추가" data-es="Agregar">추가</button>
+  <div class="trendbox">
+    <div class="lbl" data-ko="잔고 추이 (MXN 환산 총합)" data-es="Tendencia de saldo (total en MXN)">잔고 추이 (MXN 환산 총합)</div>
+    <div style="height:150px;position:relative;">
+      <canvas id="trendChart"></canvas>
     </div>
   </div>
 
@@ -150,6 +147,7 @@ h1{font-size:20px;font-weight:600;padding:20px 0 4px;}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="nav.js"></script>
 <script>
 const SURL='https://oezergrrqcinclorwvnk.supabase.co';
@@ -202,12 +200,6 @@ async function saveFxRate(dateStr, val){
 }
 function currentUserId(){
   return (window._mexcorUser?.email||'user').split('@')[0];
-}
-document.getElementById('qDate').value = new Date().toISOString().slice(0,10);
-function setQDate(dateStr){
-  document.getElementById('qDate').value = dateStr;
-  document.getElementById('qItem').focus();
-  document.getElementById('qDate').scrollIntoView({behavior:'smooth',block:'center'});
 }
 
 async function loadAll(){
@@ -303,6 +295,47 @@ function renderAll(){
 
   renderChips();
   renderWeeks();
+  renderTrend();
+}
+
+let trendChartInst=null;
+function renderTrend(){
+  const sel = document.getElementById('monthFilter');
+  const month = sel ? sel.value : new Date().toISOString().slice(0,7);
+  const weeks = weeksInMonth(month);
+  const labels = weeks.map(w=>{
+    const fmt=d=>(d.getMonth()+1)+'/'+d.getDate();
+    return fmt(w.start)+'-'+fmt(w.end);
+  });
+  const data = weeks.map(w=>{
+    const endStr = w.end.toISOString().slice(0,10);
+    const bMXN = computeBalance('MXN', endStr);
+    const bUSD = computeBalance('USD', endStr);
+    const rate = getFxRate(endStr);
+    return Math.round(bMXN + bUSD*rate);
+  });
+  const todayStr = new Date().toISOString().slice(0,10);
+  const pointColors = weeks.map(w=>w.end.toISOString().slice(0,10)>=todayStr?'#3a6eb5':'#767464');
+
+  const ctx = document.getElementById('trendChart');
+  if(trendChartInst) trendChartInst.destroy();
+  trendChartInst = new Chart(ctx, {
+    type:'line',
+    data:{ labels, datasets:[{
+      data, borderColor:'#2b3260', backgroundColor:'rgba(43,50,96,0.06)',
+      borderWidth:2, pointRadius:5, pointBackgroundColor:pointColors,
+      fill:true, tension:0.25
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false},
+        tooltip:{ callbacks:{ label: c => '$'+c.parsed.y.toLocaleString() } } },
+      scales:{
+        x:{ grid:{display:false}, ticks:{color:'#888780', font:{size:10}} },
+        y:{ grid:{color:'#e4e2d8'}, ticks:{color:'#888780', font:{size:10}, callback:v=>'$'+(v/1000).toFixed(0)+'K'} }
+      }
+    }
+  });
 }
 
 function renderChips(){
@@ -314,8 +347,6 @@ function renderChips(){
     c.innerHTML = f.name + '<span class="x">✕</span>';
     c.onclick = (e)=>{
       if(e.target.classList.contains('x')){ deleteFrequent(f.id); return; }
-      document.getElementById('qItem').value = f.name;
-      document.getElementById('qAmt').focus();
     };
     el.appendChild(c);
   });
@@ -427,7 +458,7 @@ function renderWeeks(){
         <div class="rowlbl">AR</div>${arRow}
         ${hasAdj?`<div class="rowlbl">${curLang==='es'?'Ajuste':'조정'}</div>${adjRow}`:''}
         <div class="rowlbl">${curLang==='es'?'T.C.':'환율'}</div>${fxRow}
-        <div class="rowlbl">${curLang==='es'?'Total':'총합'}</div>${balRow}
+        <div class="rowlbl" style="background:var(--navy);color:#fff;">${curLang==='es'?'Total':'총합'}</div>${balRow}
       </div>
     </div>`;
   }).join('');
@@ -437,7 +468,11 @@ function showInlineAdd(dateStr, type, btnEl){
   const wrap = document.createElement('div');
   wrap.className = 'inline-add';
   wrap.innerHTML = `
-    <input type="text" placeholder="항목명" class="ia-item">
+    <div style="display:flex;gap:2px;margin-bottom:4px;">
+      <input type="text" placeholder="항목명" class="ia-item" style="margin-bottom:0;flex:1;">
+      <button class="ia-freq-toggle" type="button" title="자주 쓰는 항목" style="width:24px;padding:0;border:0.5px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:10px;">▾</button>
+    </div>
+    <div class="ia-freq-list" style="display:none;max-height:90px;overflow-y:auto;margin-bottom:4px;border:0.5px solid var(--border);border-radius:4px;background:#fff;"></div>
     <input type="number" placeholder="금액" class="ia-amt">
     <select class="ia-cur" style="width:100%;font-size:11px;padding:4px;margin-bottom:4px;border:0.5px solid var(--border);border-radius:4px;">
       <option value="MXN">MXN</option><option value="USD">USD</option>
@@ -448,6 +483,22 @@ function showInlineAdd(dateStr, type, btnEl){
     </div>`;
   btnEl.replaceWith(wrap);
   wrap.querySelector('.ia-item').focus();
+
+  const freqList = wrap.querySelector('.ia-freq-list');
+  freqList.innerHTML = frequent.map(f=>`<div class="ia-freq-opt" style="padding:5px 7px;font-size:11px;cursor:pointer;" data-name="${escapeHtml(f.name)}">${escapeHtml(f.name)}</div>`).join('') || `<div style="padding:5px 7px;font-size:11px;color:var(--muted);">${curLang==='es'?'Sin items frecuentes':'없음'}</div>`;
+  freqList.querySelectorAll('.ia-freq-opt').forEach(opt=>{
+    opt.onmouseenter = ()=>opt.style.background='var(--bg,#f1efe8)';
+    opt.onmouseleave = ()=>opt.style.background='';
+    opt.onclick = ()=>{
+      wrap.querySelector('.ia-item').value = opt.dataset.name;
+      freqList.style.display='none';
+      wrap.querySelector('.ia-amt').focus();
+    };
+  });
+  wrap.querySelector('.ia-freq-toggle').onclick = ()=>{
+    freqList.style.display = freqList.style.display==='none'?'block':'none';
+  };
+
   wrap.querySelector('.save').onclick = ()=>saveInlineAdd(dateStr, type, wrap);
   wrap.querySelector('.cancel').onclick = ()=>renderWeeks();
   wrap.querySelector('.ia-amt').addEventListener('keydown', e=>{ if(e.key==='Enter') saveInlineAdd(dateStr,type,wrap); });
@@ -462,7 +513,28 @@ async function saveInlineAdd(dateStr, type, wrap){
     entry_date: dateStr, type, currency, item, amount, created_by: currentUserId()
   });
   if(error){ alert((curLang==='es'?'Error: ':'오류: ')+error.message); return; }
+  await maybeAutoFrequent(item);
   await loadAll();
+}
+
+// 같은 항목명이 3번 이상 쓰이면 자주쓰는 항목에 자동 추가
+async function maybeAutoFrequent(itemName){
+  if(frequent.some(f=>f.name===itemName)) return;
+  const usageCount = entries.filter(e=>e.item===itemName).length + 1;
+  if(usageCount>=3){
+    const {error} = await sb.from('budget_frequent_items').insert({name:itemName});
+    if(!error) showAutoFrequentToast(itemName);
+  }
+}
+function showAutoFrequentToast(name){
+  const msg = curLang==='es'
+    ? `"${name}" agregado a items frecuentes (usado 3+ veces)`
+    : `"${name}" 자주쓰는 항목에 자동 추가됨 (3회 이상 사용)`;
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;font-size:12px;padding:8px 16px;border-radius:20px;z-index:600;';
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),3000);
 }
 
 function escapeHtml(s){
@@ -471,24 +543,7 @@ function escapeHtml(s){
   return d.innerHTML;
 }
 
-async function quickAdd(){
-  const type = document.getElementById('qType').value;
-  const currency = document.getElementById('qCur').value;
-  const item = document.getElementById('qItem').value.trim();
-  const amount = parseFloat(document.getElementById('qAmt').value);
-  const entryDate = document.getElementById('qDate').value || new Date().toISOString().slice(0,10);
-  if(!item || !amount){ return; }
-  const {error} = await sb.from('budget_entries').insert({
-    entry_date: entryDate,
-    type, currency, item, amount,
-    created_by: currentUserId()
-  });
-  if(error){ alert((curLang==='es'?'Error al guardar: ':'저장 실패: ')+error.message); return; }
-  document.getElementById('qItem').value='';
-  document.getElementById('qAmt').value='';
-  document.getElementById('qItem').focus();
-  await loadAll();
-}
+
 
 async function deleteEntry(id){
   if(!confirm(curLang==='es'?'¿Eliminar este registro?':'이 항목을 삭제할까요?')) return;
