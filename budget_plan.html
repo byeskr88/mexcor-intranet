@@ -119,17 +119,17 @@ h1{font-size:20px;font-weight:600;padding:20px 0 4px;}
 
   <div class="toolbar">
     <select id="monthFilter"></select>
-    <div class="chips" id="chips"></div>
   </div>
 
   <div class="trendbox">
     <div class="lbl" data-ko="잔고 추이 (MXN 환산 총합)" data-es="Tendencia de saldo (total en MXN)">잔고 추이 (MXN 환산 총합)</div>
-    <div style="height:150px;position:relative;">
+    <div style="height:190px;position:relative;">
       <canvas id="trendChart"></canvas>
     </div>
   </div>
 
   <div id="weeksContainer"></div>
+  <div id="nextMonthContainer" style="margin-top:6px;"></div>
 
 </div>
 
@@ -293,7 +293,6 @@ function renderAll(){
   document.getElementById('weekAP').textContent = '$'+fmtMoney(weekAP);
   document.getElementById('weekAR').textContent = '$'+fmtMoney(weekAR);
 
-  renderChips();
   renderWeeks();
   renderTrend();
 }
@@ -315,7 +314,28 @@ function renderTrend(){
     return Math.round(bMXN + bUSD*rate);
   });
   const todayStr = new Date().toISOString().slice(0,10);
-  const pointColors = weeks.map(w=>w.end.toISOString().slice(0,10)>=todayStr?'#3a6eb5':'#767464');
+  const pointColors = weeks.map((w,i)=>{
+    if(data[i]<0) return '#a32d2d';
+    return w.end.toISOString().slice(0,10)>=todayStr?'#3a6eb5':'#888780';
+  });
+
+  const valueLabelPlugin = {
+    id:'valueLabels',
+    afterDatasetsDraw(chart){
+      const {ctx} = chart;
+      const meta = chart.getDatasetMeta(0);
+      ctx.save();
+      ctx.font = '600 12px -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      meta.data.forEach((point,i)=>{
+        const val = data[i];
+        ctx.fillStyle = val<0 ? '#a32d2d' : '#2b3260';
+        const label = (val<0?'-$':'$')+Math.abs(Math.round(val/1000))+'K';
+        ctx.fillText(label, point.x, point.y-14);
+      });
+      ctx.restore();
+    }
+  };
 
   const ctx = document.getElementById('trendChart');
   if(trendChartInst) trendChartInst.destroy();
@@ -323,38 +343,22 @@ function renderTrend(){
     type:'line',
     data:{ labels, datasets:[{
       data, borderColor:'#2b3260', backgroundColor:'rgba(43,50,96,0.06)',
-      borderWidth:2, pointRadius:5, pointBackgroundColor:pointColors,
+      borderWidth:3, pointRadius:6, pointBackgroundColor:pointColors,
+      pointBorderColor:'#fff', pointBorderWidth:2,
       fill:true, tension:0.25
     }]},
+    plugins:[valueLabelPlugin],
     options:{
       responsive:true, maintainAspectRatio:false,
+      layout:{ padding:{top:20} },
       plugins:{ legend:{display:false},
         tooltip:{ callbacks:{ label: c => '$'+c.parsed.y.toLocaleString() } } },
       scales:{
-        x:{ grid:{display:false}, ticks:{color:'#888780', font:{size:10}} },
-        y:{ grid:{color:'#e4e2d8'}, ticks:{color:'#888780', font:{size:10}, callback:v=>'$'+(v/1000).toFixed(0)+'K'} }
+        x:{ grid:{display:false}, ticks:{color:'#3a3a38', font:{size:12, weight:'600'}} },
+        y:{ grid:{color:'#e4e2d8'}, ticks:{color:'#3a3a38', font:{size:11}, callback:v=>'$'+(v/1000).toFixed(0)+'K'} }
       }
     }
   });
-}
-
-function renderChips(){
-  const el = document.getElementById('chips');
-  el.innerHTML = '';
-  frequent.forEach(f=>{
-    const c = document.createElement('span');
-    c.className = 'chip';
-    c.innerHTML = f.name + '<span class="x">✕</span>';
-    c.onclick = (e)=>{
-      if(e.target.classList.contains('x')){ deleteFrequent(f.id); return; }
-    };
-    el.appendChild(c);
-  });
-  const add = document.createElement('span');
-  add.className = 'chip add';
-  add.textContent = curLang==='es'?'+ agregar':'+ 항목 추가';
-  add.onclick = addFrequent;
-  el.appendChild(add);
 }
 
 async function addFrequent(){
@@ -392,13 +396,38 @@ const DOW_ES=['Lun','Mar','Mié','Jue','Vie','Sáb'];
 function renderWeeks(){
   const sel = document.getElementById('monthFilter');
   const month = sel ? sel.value : new Date().toISOString().slice(0,7);
+  document.getElementById('weeksContainer').innerHTML = buildWeeksHtml(month, true);
+
+  const [y,m] = month.split('-').map(Number);
+  const nextMonth = new Date(y, m, 1).toISOString().slice(0,7);
+  const nextLabel = nextMonth.slice(0,4)+'년 '+parseInt(nextMonth.slice(5,7))+'월';
+  const nextContainer = document.getElementById('nextMonthContainer');
+  const nextOpen = localStorage.getItem('mexcor_budget_nextmonth_open')==='1';
+  nextContainer.innerHTML = `
+    <div class="week-block" style="border:0.5px dashed var(--border);">
+      <div class="week-head" style="background:#5f5e5a;" onclick="toggleNextMonth()">
+        <span>${curLang==='es'?'Vista previa: ':'다음달 미리보기: '}${nextLabel}</span>
+        <span class="meta" id="nextMonthChevron">${nextOpen?'▲':'▼'}</span>
+      </div>
+      <div id="nextMonthBody" style="display:${nextOpen?'block':'none'};">${buildWeeksHtml(nextMonth, false)}</div>
+    </div>`;
+}
+
+function toggleNextMonth(){
+  const body = document.getElementById('nextMonthBody');
+  const isOpen = body.style.display!=='none';
+  body.style.display = isOpen?'none':'block';
+  document.getElementById('nextMonthChevron').textContent = isOpen?'▼':'▲';
+  localStorage.setItem('mexcor_budget_nextmonth_open', isOpen?'0':'1');
+}
+
+function buildWeeksHtml(month, autoOpenCurrent){
   const monthWeeks = weeksInMonth(month); // 달력 순서 그대로 (오름차순)
   const todayStr = new Date().toISOString().slice(0,10);
   const todayWk = isoWeek(todayStr).key;
-  const container = document.getElementById('weeksContainer');
   const dowLabels = curLang==='es'?DOW_ES:DOW_KO;
 
-  container.innerHTML = monthWeeks.map((w,idx)=>{
+  return monthWeeks.map((w,idx)=>{
     const days = [];
     for(let i=0;i<6;i++){ const d=new Date(w.start); d.setDate(w.start.getDate()+i); days.push(d); }
     const dayKeys = days.map(d=>d.toISOString().slice(0,10));
@@ -440,7 +469,8 @@ function renderWeeks(){
       const bUSD = computeBalance('USD', dk);
       const rate = getFxRate(dk);
       const total = bMXN + bUSD*rate;
-      return `<div class="daycell balance">${fmtMoney(total)}<span class="usd">MXN ${fmtMoney(bMXN)} · USD ${fmtMoney(bUSD)}</span></div>`;
+      const bg = total<0 ? 'var(--danger-text)' : total<100000 ? '#854f0b' : 'var(--navy)';
+      return `<div class="daycell balance" style="background:${bg};">${fmtMoney(total)}<span class="usd">MXN ${fmtMoney(bMXN)} · USD ${fmtMoney(bUSD)}</span></div>`;
     }).join('');
 
     const fmt = d => (d.getMonth()+1)+'/'+d.getDate();
@@ -451,7 +481,7 @@ function renderWeeks(){
         <span>${fmt(w.start)} — ${fmt(w.end)}${isFutureWeek?(curLang==='es'?' · próxima':' · 예정'):''}${isCurrentWeek?`<span class="curbadge">${curLang==='es'?'ESTA SEMANA':'이번 주'}</span>`:''}</span>
         <span class="meta">${totalCount}${T().cnt}</span>
       </div>
-      <div class="week-grid${isCurrentWeek?' open':''}">
+      <div class="week-grid${(autoOpenCurrent&&isCurrentWeek)?' open':''}">
         <div class="dhead"></div>
         ${days.map((d,i)=>`<div class="dhead${dayKeys[i]===todayStr?' today':''}">${d.getMonth()+1}/${d.getDate()}<br>${dowLabels[i]}</div>`).join('')}
         <div class="rowlbl">AP</div>${apRow}
@@ -483,25 +513,34 @@ function showInlineAdd(dateStr, type, btnEl){
     </div>`;
   btnEl.replaceWith(wrap);
   wrap.querySelector('.ia-item').focus();
-
-  const freqList = wrap.querySelector('.ia-freq-list');
-  freqList.innerHTML = frequent.map(f=>`<div class="ia-freq-opt" style="padding:5px 7px;font-size:11px;cursor:pointer;" data-name="${escapeHtml(f.name)}">${escapeHtml(f.name)}</div>`).join('') || `<div style="padding:5px 7px;font-size:11px;color:var(--muted);">${curLang==='es'?'Sin items frecuentes':'없음'}</div>`;
-  freqList.querySelectorAll('.ia-freq-opt').forEach(opt=>{
-    opt.onmouseenter = ()=>opt.style.background='var(--bg,#f1efe8)';
-    opt.onmouseleave = ()=>opt.style.background='';
-    opt.onclick = ()=>{
-      wrap.querySelector('.ia-item').value = opt.dataset.name;
-      freqList.style.display='none';
-      wrap.querySelector('.ia-amt').focus();
-    };
-  });
+  renderFreqOptions(wrap, dateStr, type);
   wrap.querySelector('.ia-freq-toggle').onclick = ()=>{
+    const freqList = wrap.querySelector('.ia-freq-list');
     freqList.style.display = freqList.style.display==='none'?'block':'none';
   };
 
   wrap.querySelector('.save').onclick = ()=>saveInlineAdd(dateStr, type, wrap);
   wrap.querySelector('.cancel').onclick = ()=>renderWeeks();
   wrap.querySelector('.ia-amt').addEventListener('keydown', e=>{ if(e.key==='Enter') saveInlineAdd(dateStr,type,wrap); });
+}
+
+function renderFreqOptions(wrap, dateStr, type){
+  const freqList = wrap.querySelector('.ia-freq-list');
+  freqList.innerHTML = frequent.map(f=>`<div class="ia-freq-opt" style="padding:5px 7px;font-size:11px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" data-id="${f.id}" data-name="${escapeHtml(f.name)}"><span class="ia-freq-name">${escapeHtml(f.name)}</span><span class="ia-freq-del" style="color:var(--muted);padding:0 3px;">✕</span></div>`).join('') || `<div style="padding:5px 7px;font-size:11px;color:var(--muted);">${curLang==='es'?'Sin items frecuentes':'없음'}</div>`;
+  freqList.querySelectorAll('.ia-freq-opt').forEach(opt=>{
+    opt.onmouseenter = ()=>opt.style.background='#f1efe8';
+    opt.onmouseleave = ()=>opt.style.background='';
+    opt.querySelector('.ia-freq-name').onclick = ()=>{
+      wrap.querySelector('.ia-item').value = opt.dataset.name;
+      freqList.style.display='none';
+      wrap.querySelector('.ia-amt').focus();
+    };
+    opt.querySelector('.ia-freq-del').onclick = async (e)=>{
+      e.stopPropagation();
+      await deleteFrequent(opt.dataset.id);
+      renderFreqOptions(wrap, dateStr, type);
+    };
+  });
 }
 
 async function saveInlineAdd(dateStr, type, wrap){
