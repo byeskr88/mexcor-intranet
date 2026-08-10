@@ -499,11 +499,11 @@ function showInlineAdd(dateStr, type, btnEl){
   wrap.className = 'inline-add';
   wrap.innerHTML = `
     <div style="display:flex;gap:2px;margin-bottom:4px;">
-      <input type="text" placeholder="항목명" class="ia-item" style="margin-bottom:0;flex:1;">
+      <input type="text" placeholder="${curLang==='es'?'Concepto':'항목명'}" class="ia-item" style="margin-bottom:0;flex:1;">
       <button class="ia-freq-toggle" type="button" title="자주 쓰는 항목" style="width:24px;padding:0;border:0.5px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:10px;">▾</button>
     </div>
-    <div class="ia-freq-list" style="display:none;max-height:90px;overflow-y:auto;margin-bottom:4px;border:0.5px solid var(--border);border-radius:4px;background:#fff;"></div>
-    <input type="number" placeholder="금액" class="ia-amt">
+    <div class="ia-freq-list" style="display:none;max-height:120px;overflow-y:auto;margin-bottom:4px;border:0.5px solid var(--border);border-radius:4px;background:#fff;"></div>
+    <input type="number" placeholder="${curLang==='es'?'Monto':'금액'}" class="ia-amt">
     <select class="ia-cur" style="width:100%;font-size:11px;padding:4px;margin-bottom:4px;border:0.5px solid var(--border);border-radius:4px;">
       <option value="MXN">MXN</option><option value="USD">USD</option>
     </select>
@@ -526,7 +526,10 @@ function showInlineAdd(dateStr, type, btnEl){
 
 function renderFreqOptions(wrap, dateStr, type){
   const freqList = wrap.querySelector('.ia-freq-list');
-  freqList.innerHTML = frequent.map(f=>`<div class="ia-freq-opt" style="padding:5px 7px;font-size:11px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" data-id="${f.id}" data-name="${escapeHtml(f.name)}"><span class="ia-freq-name">${escapeHtml(f.name)}</span><span class="ia-freq-del" style="color:var(--muted);padding:0 3px;">✕</span></div>`).join('') || `<div style="padding:5px 7px;font-size:11px;color:var(--muted);">${curLang==='es'?'Sin items frecuentes':'없음'}</div>`;
+  const optsHtml = frequent.map(f=>`<div class="ia-freq-opt" style="padding:5px 7px;font-size:11px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" data-id="${f.id}" data-name="${escapeHtml(f.name)}"><span class="ia-freq-name">${escapeHtml(f.name)}</span><span class="ia-freq-del" style="color:var(--muted);padding:0 3px;">✕</span></div>`).join('');
+  const emptyHtml = frequent.length===0?`<div style="padding:5px 7px;font-size:11px;color:var(--muted);">${curLang==='es'?'Sin items frecuentes':'즐겨찾기 없음'}</div>`:'';
+  const addHtml = `<div class="ia-freq-addnew" style="padding:5px 7px;font-size:11px;cursor:pointer;color:var(--steel);border-top:0.5px solid var(--border);">+ ${curLang==='es'?'Agregar item frecuente':'즐겨찾기 항목 추가'}</div>`;
+  freqList.innerHTML = optsHtml + emptyHtml + addHtml;
   freqList.querySelectorAll('.ia-freq-opt').forEach(opt=>{
     opt.onmouseenter = ()=>opt.style.background='#f1efe8';
     opt.onmouseleave = ()=>opt.style.background='';
@@ -541,6 +544,20 @@ function renderFreqOptions(wrap, dateStr, type){
       renderFreqOptions(wrap, dateStr, type);
     };
   });
+  const addOpt = freqList.querySelector('.ia-freq-addnew');
+  addOpt.onmouseenter = ()=>addOpt.style.background='#f1efe8';
+  addOpt.onmouseleave = ()=>addOpt.style.background='';
+  addOpt.onclick = async ()=>{
+    const currentText = wrap.querySelector('.ia-item').value.trim();
+    const name = currentText || prompt(curLang==='es'?'Nombre del nuevo item frecuente':'즐겨찾기에 추가할 항목명');
+    if(!name || !name.trim()) return;
+    if(frequent.some(f=>f.name===name.trim())) return;
+    const {error} = await sb.from('budget_frequent_items').insert({name:name.trim()});
+    if(error){ alert(error.message); return; }
+    const {data:freq} = await sb.from('budget_frequent_items').select('*').order('name');
+    frequent = freq||[];
+    renderFreqOptions(wrap, dateStr, type);
+  };
 }
 
 async function saveInlineAdd(dateStr, type, wrap){
