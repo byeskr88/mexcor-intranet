@@ -11,6 +11,7 @@
   --danger-bg:#fcebeb; --danger-text:#a32d2d;
   --ok-bg:#eaf3de; --ok-text:#3b6d11;
   --warn-bg:#faeeda; --warn-text:#854f0b;
+  --mxn:#2a6cb7; --usd:#7b1fa2;
 }
 *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
 body{background:var(--bg);color:var(--text);padding:0 5% 60px;}
@@ -100,14 +101,14 @@ h1{font-size:20px;font-weight:600;padding:20px 0 4px;}
 <div id="mainContent" style="display:none;">
 
   <div class="cards">
-    <div class="card">
+    <div class="card" style="border-left:3px solid var(--mxn);">
       <div class="lbl" data-ko="MXN 잔고" data-es="Saldo MXN">MXN 잔고</div>
-      <div class="val" id="balMXN">-</div>
+      <div class="val" id="balMXN" style="color:var(--mxn);">-</div>
       <span class="adjbtn" onclick="openAdjust('MXN')" data-ko="잔고 수정" data-es="Ajustar saldo">잔고 수정</span>
     </div>
-    <div class="card">
+    <div class="card" style="border-left:3px solid var(--usd);">
       <div class="lbl" data-ko="USD 잔고" data-es="Saldo USD">USD 잔고</div>
-      <div class="val" id="balUSD">-</div>
+      <div class="val" id="balUSD" style="color:var(--usd);">-</div>
       <span class="adjbtn" onclick="openAdjust('USD')" data-ko="잔고 수정" data-es="Ajustar saldo">잔고 수정</span>
     </div>
     <div class="card">
@@ -275,6 +276,12 @@ function weeksInMonth(monthStr){
   return Object.values(weeks).sort((a,b)=>a.key.localeCompare(b.key));
 }
 
+function curLabel(cur, light){
+  const color = light
+    ? (cur==='USD' ? '#d9a6f0' : '#9fc4ec')
+    : (cur==='USD' ? 'var(--usd)' : 'var(--mxn)');
+  return `<span style="color:${color};font-weight:600;">${cur}</span>`;
+}
 function fmtMoney(n){
   return Math.round(n).toLocaleString('en-US');
 }
@@ -456,7 +463,7 @@ function buildWeeksHtml(month, autoOpenCurrent){
     const hasAdj = adjItems.length>0;
     const adjRow = dayKeys.map(dk=>{
       const items = adjItems.filter(e=>e.entry_date===dk);
-      const cards = items.map(e=>`<div class="entry adj">${curLang==='es'?'Ajuste':'잔고 수동 수정'}<span class="amt">=$${fmtMoney(e.amount)} ${e.currency}</span><span class="who">${escapeHtml(e.created_by||'')} · ${e.note?escapeHtml(e.note)+' · ':''}${dk.slice(5).replace('-','/')}</span></div>`).join('');
+      const cards = items.map(e=>`<div class="entry adj">${curLang==='es'?'Ajuste':'잔고 수동 수정'}<span class="amt">=$${fmtMoney(e.amount)} ${curLabel(e.currency)}</span><span class="who">${escapeHtml(e.created_by||'')} · ${e.note?escapeHtml(e.note)+' · ':''}${dk.slice(5).replace('-','/')}</span></div>`).join('');
       const pastCls = dk<todayStr?' past':'';
       return `<div class="daycell${pastCls}">${cards}</div>`;
     }).join('');
@@ -473,7 +480,7 @@ function buildWeeksHtml(month, autoOpenCurrent){
       const rate = getFxRate(dk);
       const total = bMXN + bUSD*rate;
       const bg = total<0 ? 'var(--danger-text)' : total<100000 ? '#854f0b' : 'var(--navy)';
-      return `<div class="daycell balance" style="background:${bg};">${fmtMoney(total)}<span class="usd">MXN ${fmtMoney(bMXN)} · USD ${fmtMoney(bUSD)}</span></div>`;
+      return `<div class="daycell balance" style="background:${bg};">${fmtMoney(total)}<span class="usd">${curLabel('MXN',true)} ${fmtMoney(bMXN)} · ${curLabel('USD',true)} ${fmtMoney(bUSD)}</span></div>`;
     }).join('');
 
     const fmt = d => (d.getMonth()+1)+'/'+d.getDate();
@@ -503,7 +510,7 @@ function renderEntryCard(e, cls, dk){
     ? `${escapeHtml(e.created_by||'')} · ${dk.slice(5).replace('-','/')}<br><i class="edited">${curLang==='es'?'editado por':'수정:'} ${escapeHtml(e.updated_by)}</i>`
     : `${escapeHtml(e.created_by||'')} · ${dk.slice(5).replace('-','/')}`;
   return `<div class="entry ${cls}" id="entry-${e.id}">
-    <span class="edit-hit" onclick="showInlineEdit('${e.id}')">${escapeHtml(e.item)}<span class="amt">$${fmtMoney(e.amount)} ${e.currency}</span><span class="who">${whoLine}</span></span>
+    <span class="edit-hit" onclick="showInlineEdit('${e.id}')">${escapeHtml(e.item)}<span class="amt">$${fmtMoney(e.amount)} ${curLabel(e.currency)}</span><span class="who">${whoLine}</span></span>
     <span class="del" onclick="deleteEntry('${e.id}')">✕</span>
   </div>`;
 }
