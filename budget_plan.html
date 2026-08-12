@@ -287,8 +287,9 @@ function fmtMoney(n){
 }
 
 function renderAll(){
-  const bMXN = computeBalance('MXN');
-  const bUSD = computeBalance('USD');
+  const todayStr = new Date().toISOString().slice(0,10);
+  const bMXN = computeBalance('MXN', todayStr);
+  const bUSD = computeBalance('USD', todayStr);
   document.getElementById('balMXN').textContent = '$'+fmtMoney(bMXN);
   document.getElementById('balUSD').textContent = '$'+fmtMoney(bUSD);
 
@@ -670,7 +671,7 @@ async function deleteEntry(id){
 function openAdjust(currency){
   adjustCurrency = currency;
   document.getElementById('adjustTitle').textContent = (curLang==='es'?'Ajustar saldo ':'잔고 수정 — ')+currency;
-  document.getElementById('adjustAmount').value = Math.round(computeBalance(currency));
+  document.getElementById('adjustAmount').value = Math.round(computeBalance(currency, new Date().toISOString().slice(0,10)));
   document.getElementById('adjustReason').value = '';
   document.getElementById('adjustModal').style.display='flex';
 }

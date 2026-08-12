@@ -435,8 +435,8 @@ async function checkBudgetAccess(user){
     if(!sb) return;
     const {data:ent} = await sb.from('budget_entries').select('*').order('entry_date',{ascending:false}).order('created_at',{ascending:false});
     if(!ent) return;
-    function computeBalance(currency){
-      const rel = ent.filter(e=>e.currency===currency);
+    function computeBalance(currency, asOfDate){
+      const rel = ent.filter(e=>e.currency===currency && (!asOfDate || e.entry_date<=asOfDate));
       const lastAdj = rel.filter(e=>e.type==='ADJUSTMENT').sort((a,b)=>b.entry_date.localeCompare(a.entry_date)||b.created_at.localeCompare(a.created_at))[0];
       let base=0, fromDate=null;
       if(lastAdj){ base=parseFloat(lastAdj.amount); fromDate=lastAdj.entry_date; }
@@ -450,8 +450,9 @@ async function checkBudgetAccess(user){
     const weekEnt = ent.filter(e=>{const ed=new Date(e.entry_date+'T00:00:00'); return ed>=monday&&ed<=saturday;});
     const weekAP = weekEnt.filter(e=>e.type==='AP').reduce((s,e)=>s+parseFloat(e.amount),0);
     const weekAR = weekEnt.filter(e=>e.type==='AR').reduce((s,e)=>s+parseFloat(e.amount),0);
-    document.getElementById('bgMXN').textContent='$'+Math.round(computeBalance('MXN')).toLocaleString();
-    document.getElementById('bgUSD').textContent='$'+Math.round(computeBalance('USD')).toLocaleString();
+    const todayStr = new Date().toISOString().slice(0,10);
+    document.getElementById('bgMXN').textContent='$'+Math.round(computeBalance('MXN', todayStr)).toLocaleString();
+    document.getElementById('bgUSD').textContent='$'+Math.round(computeBalance('USD', todayStr)).toLocaleString();
     document.getElementById('bgAP').textContent='$'+Math.round(weekAP).toLocaleString();
     document.getElementById('bgAR').textContent='$'+Math.round(weekAR).toLocaleString();
   }catch(e){ console.error('Budget summary load failed:', e); }
