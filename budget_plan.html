@@ -80,6 +80,8 @@ h1{font-size:20px;font-weight:600;padding:20px 0 4px;}
 .inline-add .btns{display:flex;gap:4px;}
 .inline-add button{flex:1;font-size:10px;padding:4px;border-radius:4px;cursor:pointer;border:0.5px solid var(--border);}
 .inline-add button.save{background:var(--navy);color:#fff;border:none;}
+.daycell.drag-over{background:var(--warn-bg)!important;outline:2px dashed var(--steel);outline-offset:-2px;}
+.entry.dragging{opacity:.4;}
 .empty{padding:16px;font-size:13px;color:var(--muted);text-align:center;}
 
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:500;}
@@ -450,14 +452,14 @@ function buildWeeksHtml(month, autoOpenCurrent){
       const items = weekItems.filter(e=>e.entry_date===dk && e.type==='AP');
       const cards = items.map(e=>renderEntryCard(e,'ap',dk)).join('');
       const pastCls = dk<todayStr?' past':'';
-      return `<div class="daycell${pastCls}" id="cell-AP-${dk}">${cards}<div class="addline" onclick="showInlineAdd('${dk}','AP',this)">+ 추가</div></div>`;
+      return `<div class="daycell${pastCls}" id="cell-AP-${dk}" data-type="AP" data-date="${dk}" ondragover="onDayDragOver(event,this)" ondragleave="onDayDragLeave(event,this)" ondrop="onDayDrop(event,'${dk}','AP')">${cards}<div class="addline" onclick="showInlineAdd('${dk}','AP',this)">+ 추가</div></div>`;
     }).join('');
 
     const arRow = dayKeys.map(dk=>{
       const items = weekItems.filter(e=>e.entry_date===dk && e.type==='AR');
       const cards = items.map(e=>renderEntryCard(e,'ar',dk)).join('');
       const pastCls = dk<todayStr?' past':'';
-      return `<div class="daycell${pastCls}" id="cell-AR-${dk}">${cards}<div class="addline" onclick="showInlineAdd('${dk}','AR',this)">+ 추가</div></div>`;
+      return `<div class="daycell${pastCls}" id="cell-AR-${dk}" data-type="AR" data-date="${dk}" ondragover="onDayDragOver(event,this)" ondragleave="onDayDragLeave(event,this)" ondrop="onDayDrop(event,'${dk}','AR')">${cards}<div class="addline" onclick="showInlineAdd('${dk}','AR',this)">+ 추가</div></div>`;
     }).join('');
 
     const adjItems = weekItems.filter(e=>e.type==='ADJUSTMENT');
@@ -510,7 +512,8 @@ function renderEntryCard(e, cls, dk){
   const whoLine = wasEdited
     ? `${escapeHtml(e.created_by||'')} · ${dk.slice(5).replace('-','/')}<br><i class="edited">${curLang==='es'?'editado por':'수정:'} ${escapeHtml(e.updated_by)}</i>`
     : `${escapeHtml(e.created_by||'')} · ${dk.slice(5).replace('-','/')}`;
-  return `<div class="entry ${cls}" id="entry-${e.id}">
+  return `<div class="entry ${cls}" id="entry-${e.id}" draggable="true"
+    ondragstart="onEntryDragStart(event,'${e.id}')" ondragend="onEntryDragEnd(event)">
     <span class="edit-hit" onclick="showInlineEdit('${e.id}')">${escapeHtml(e.item)}<span class="amt">$${fmtMoney(e.amount)} ${curLabel(e.currency)}</span><span class="who">${whoLine}</span></span>
     <span class="del" onclick="deleteEntry('${e.id}')">✕</span>
   </div>`;
@@ -666,6 +669,53 @@ async function deleteEntry(id){
   const {error} = await sb.from('budget_entries').delete().eq('id',id);
   if(error){ alert(error.message); return; }
   await loadAll();
+}
+
+// ===== 항목 드래그로 날짜 이동 =====
+let dragEntryId=null, dragEntryType=null;
+function onEntryDragStart(ev, id){
+  const e = entries.find(x=>x.id===id);
+  if(!e) return;
+  dragEntryId = id;
+  dragEntryType = e.type;
+  ev.currentTarget.classList.add('dragging');
+  ev.dataTransfer.effectAllowed = 'move';
+  ev.dataTransfer.setData('text/plain', id);
+}
+function onEntryDragEnd(ev){
+  ev.currentTarget.classList.remove('dragging');
+  dragEntryId=null; dragEntryType=null;
+}
+function onDayDragOver(ev, cellEl){
+  if(cellEl.dataset.type!==dragEntryType) return; // AP는 AP 칸에만, AR은 AR 칸에만
+  ev.preventDefault();
+  cellEl.classList.add('drag-over');
+}
+function onDayDragLeave(ev, cellEl){
+  cellEl.classList.remove('drag-over');
+}
+async function onDayDrop(ev, newDate, type){
+  ev.preventDefault();
+  ev.currentTarget.classList.remove('drag-over');
+  if(!dragEntryId || dragEntryType!==type) return;
+  const e = entries.find(x=>x.id===dragEntryId);
+  if(!e || e.entry_date===newDate) return;
+  const {error} = await sb.from('budget_entries').update({
+    entry_date: newDate, updated_by: currentUserId(), updated_at: new Date().toISOString()
+  }).eq('id', dragEntryId);
+  if(error){ alert((curLang==='es'?'Error: ':'오류: ')+error.message); return; }
+  showMoveToast(e, newDate);
+  await loadAll();
+}
+function showMoveToast(e, newDate){
+  const msg = curLang==='es'
+    ? `"${e.item}" movido a ${newDate.slice(5).replace('-','/')} por ${currentUserId()}`
+    : `"${e.item}" → ${newDate.slice(5).replace('-','/')}로 이동 (${currentUserId()})`;
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;font-size:12px;padding:8px 16px;border-radius:20px;z-index:600;';
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),3000);
 }
 
 function openAdjust(currency){
