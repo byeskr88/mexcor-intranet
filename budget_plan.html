@@ -165,6 +165,7 @@ let entries=[];
 let frequent=[];
 let fxRates={};
 let adjustCurrency='MXN';
+let openWeeks=null; // 사용자가 펼쳐놓은 주 기억 (재렌더링에도 유지)
 
 const T_KO={loading:'데이터 불러오는 중...',syncOk:'✓ 데이터 연동 성공',syncFail:m=>'❌ 오류 — '+m,
   lastUpd:'최종 업데이트: ',noEntries:'입력된 내역이 없어요',today:'오늘',cnt:'건'};
@@ -434,11 +435,23 @@ function toggleNextMonth(){
   localStorage.setItem('mexcor_budget_nextmonth_open', isOpen?'0':'1');
 }
 
+function toggleWeek(weekKey){
+  if(openWeeks.has(weekKey)) openWeeks.delete(weekKey);
+  else openWeeks.add(weekKey);
+  // 전체 재렌더링 없이 그 블록만 즉시 토글 (반응성 유지)
+  document.querySelectorAll('.week-head').forEach(head=>{
+    if(head.getAttribute('onclick')===`toggleWeek('${weekKey}')`){
+      head.nextElementSibling.classList.toggle('open', openWeeks.has(weekKey));
+    }
+  });
+}
+
 function buildWeeksHtml(month, autoOpenCurrent){
   const monthWeeks = weeksInMonth(month); // 달력 순서 그대로 (오름차순)
   const todayStr = new Date().toISOString().slice(0,10);
   const todayWk = isoWeek(todayStr).key;
   const dowLabels = curLang==='es'?DOW_ES:DOW_KO;
+  if(openWeeks===null){ openWeeks=new Set(); openWeeks.add(todayWk); }
 
   return monthWeeks.map((w,idx)=>{
     const days = [];
@@ -490,11 +503,11 @@ function buildWeeksHtml(month, autoOpenCurrent){
     const totalCount = weekItems.filter(e=>e.type!=='ADJUSTMENT').length;
 
     return `<div class="week-block${isCurrentWeek?' current':''}">
-      <div class="week-head" onclick="this.nextElementSibling.classList.toggle('open')">
+      <div class="week-head" onclick="toggleWeek('${w.key}')">
         <span>${fmt(w.start)} — ${fmt(w.end)}${isFutureWeek?(curLang==='es'?' · próxima':' · 예정'):''}${isCurrentWeek?`<span class="curbadge">${curLang==='es'?'ESTA SEMANA':'이번 주'}</span>`:''}</span>
         <span class="meta">${totalCount}${T().cnt}</span>
       </div>
-      <div class="week-grid${(autoOpenCurrent&&isCurrentWeek)?' open':''}">
+      <div class="week-grid${openWeeks.has(w.key)?' open':''}">
         <div class="dhead"></div>
         ${days.map((d,i)=>`<div class="dhead${dayKeys[i]===todayStr?' today':''}">${d.getMonth()+1}/${d.getDate()}<br>${dowLabels[i]}</div>`).join('')}
         <div class="rowlbl">AP</div>${apRow}
