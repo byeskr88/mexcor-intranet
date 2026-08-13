@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>방습제 — MEXCOR Workspace</title>
+<title>신규 프로젝트 — MEXCOR Workspace</title>
 <style>
 :root{
   --bg:#f5f4f0;--surface:#fff;--s1:#f1efe8;--s2:#e8e6de;
@@ -12,6 +12,7 @@
   --warn:#BA7517;--warn-bg:#FAEEDA;--warn-text:#854F0B;
   --danger:#A32D2D;--danger-bg:#FCEBEB;--danger-text:#791F1F;
   --blue:#2a78d6;--blue-bg:#E6F1FB;--blue-text:#0C447C;
+  --purple:#7B1FA2;--purple-bg:#F3E5F9;--purple-text:#5A1478;
   --r:8px;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -24,7 +25,12 @@ h1{font-size:17px;font-weight:500;margin-bottom:3px;}
 .sbar.ok{background:var(--ok-bg);color:var(--ok-text);}
 .sbar.err{background:var(--danger-bg);color:var(--danger-text);}
 
-.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+.proj-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:16px;align-items:center;}
+.proj-tab{border:none;border-bottom:2.5px solid transparent;background:transparent;padding:9px 18px;font-size:13px;cursor:pointer;font-family:inherit;color:var(--muted);font-weight:400;display:flex;align-items:center;gap:6px;}
+.proj-tab.active{border-bottom-color:var(--purple);color:var(--purple-text);font-weight:600;}
+.proj-tab-add{margin-left:auto;font-size:11px;color:var(--muted);padding:9px 14px;opacity:.6;}
+
+.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px;}
 .card{background:var(--s1);border-radius:var(--r);padding:14px;}
 .card .lbl{font-size:11px;color:var(--muted);margin-bottom:4px;}
 .card .val{font-size:22px;font-weight:600;}
@@ -35,48 +41,65 @@ h1{font-size:17px;font-weight:500;margin-bottom:3px;}
 .alert .a-name{font-weight:600;color:var(--danger-text);}
 .alert .a-info{font-size:11px;color:var(--danger-text);opacity:.8;}
 .alert .a-badge{background:var(--danger-text);color:#fff;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;white-space:nowrap;}
+.no-alert{padding:10px 16px;background:var(--ok-bg);color:var(--ok-text);border-radius:var(--r);font-size:12px;margin-bottom:16px;}
 
-.sec-title{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:16px 0 8px;}
+.sec-title{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:16px 0 8px;display:flex;align-items:center;gap:6px;}
+
+.search-bar{display:flex;gap:8px;margin-bottom:10px;align-items:center;}
+.search-bar input{flex:1;padding:6px 12px;border:0.5px solid var(--border);border-radius:var(--r);font-size:12px;font-family:inherit;background:var(--s1);}
+.search-bar input:focus{outline:none;border-color:var(--purple);}
 
 .tbl-wrap{overflow-x:auto;border:0.5px solid var(--border);border-radius:var(--r);}
 table{width:100%;border-collapse:collapse;font-size:12px;}
-th{background:var(--s1);color:var(--muted);font-weight:600;text-align:left;padding:8px 10px;white-space:nowrap;position:sticky;top:0;}
+th{background:var(--s1);color:var(--muted);font-weight:600;text-align:left;padding:9px 10px;white-space:nowrap;}
 th.r,td.r{text-align:right;}
-td{padding:8px 10px;border-top:0.5px solid var(--border);white-space:nowrap;}
+td{padding:9px 10px;border-top:0.5px solid var(--border);white-space:nowrap;}
 tr:nth-child(odd) td{background:#fbfaf7;}
-.moh-bar{display:inline-block;width:44px;height:5px;border-radius:3px;background:var(--s2);overflow:hidden;vertical-align:middle;margin-right:5px;}
+tr:hover td{background:var(--purple-bg);}
+.moh-bar{display:inline-block;width:44px;height:5px;border-radius:3px;background:var(--s2);overflow:hidden;vertical-align:middle;margin-right:6px;}
 .moh-bar span{display:block;height:100%;}
-.badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;white-space:nowrap;}
+.badge{font-size:10px;padding:3px 9px;border-radius:10px;font-weight:600;white-space:nowrap;}
 .badge-danger{background:var(--danger-bg);color:var(--danger-text);}
 .badge-warn{background:var(--warn-bg);color:var(--warn-text);}
 .badge-ok{background:var(--ok-bg);color:var(--ok-text);}
 
-.recent-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;}
-.recent-box{border:0.5px solid var(--border);border-radius:var(--r);padding:10px;}
-.recent-box .rb-title{font-size:12px;font-weight:600;margin-bottom:8px;}
-.recent-row{display:flex;justify-content:space-between;font-size:11px;padding:5px 0;border-top:0.5px solid var(--border);}
+.recent-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px;}
+.recent-box{border:0.5px solid var(--border);border-radius:var(--r);overflow:hidden;}
+.recent-box .rb-title{font-size:12px;font-weight:600;padding:10px 14px;background:var(--s1);border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:6px;}
+.recent-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:8px 14px;border-top:0.5px solid var(--border);}
 .recent-row:first-of-type{border-top:none;}
-.recent-row .rr-item{color:var(--text);}
-.recent-row .rr-meta{color:var(--muted);}
+.recent-row .rr-item{color:var(--text);font-weight:500;}
+.recent-row .rr-sub{color:var(--muted);font-size:10.5px;display:block;margin-top:1px;}
+.recent-row .rr-meta{color:var(--muted);font-size:11px;text-align:right;}
+.empty-row{padding:16px;font-size:12px;color:var(--muted);text-align:center;}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1 data-ko="방습제 및 신규 프로젝트" data-es="Desecantes y Nuevos Proyectos">방습제 및 신규 프로젝트</h1>
+  <h1 data-ko="신규 프로젝트" data-es="Nuevos Proyectos">신규 프로젝트</h1>
   <p class="ts" id="ts" data-ko="데이터 불러오는 중..." data-es="Cargando datos...">데이터 불러오는 중...</p>
   <div class="sbar loading" id="sbar" data-ko="구글 시트에서 데이터를 불러오는 중..." data-es="Cargando datos de Google Sheets...">구글 시트에서 데이터를 불러오는 중...</div>
 
-  <div id="main" style="display:none;">
+  <div class="proj-tabs">
+    <button class="proj-tab active" onclick="switchProject('desiccant',this)">🧪 <span data-ko="방습제" data-es="Desecantes">방습제</span></button>
+    <span class="proj-tab-add" data-ko="+ 새 프로젝트 추가 예정" data-es="+ Próximos proyectos">+ 새 프로젝트 추가 예정</span>
+  </div>
+
+  <div id="p-desiccant">
     <div class="cards">
       <div class="card"><div class="lbl" data-ko="전체 품목" data-es="Artículos Totales">전체 품목</div><div class="val" id="cardTotal">-</div></div>
-      <div class="card"><div class="lbl" data-ko="재주문 필요 (MOH&lt;3)" data-es="Requiere Reorden (MOH&lt;3)">재주문 필요 (MOH&lt;3)</div><div class="val" id="cardReorder" style="color:var(--danger-text);">-</div></div>
+      <div class="card"><div class="lbl" data-ko="재주문 필요 (MOH&lt;3)" data-es="Reorden (MOH&lt;3)">재주문 필요 (MOH&lt;3)</div><div class="val" id="cardReorder" style="color:var(--danger-text);">-</div></div>
+      <div class="card"><div class="lbl" data-ko="재고 자산가치" data-es="Valor de Inventario">재고 자산가치</div><div class="val" id="cardValue" style="font-size:17px;">-</div></div>
       <div class="card"><div class="lbl" data-ko="이번달 입고" data-es="Entradas Este Mes">이번달 입고</div><div class="val" id="cardIn">-</div></div>
       <div class="card"><div class="lbl" data-ko="이번달 출고" data-es="Salidas Este Mes">이번달 출고</div><div class="val" id="cardOut">-</div></div>
     </div>
 
-    <div class="alerts" id="alerts"></div>
+    <div id="alertBox"></div>
 
-    <div class="sec-title" data-ko="품목 현황" data-es="Estado de Artículos">품목 현황</div>
+    <div class="sec-title"><span>📦</span><span data-ko="품목 현황" data-es="Estado de Artículos">품목 현황</span></div>
+    <div class="search-bar">
+      <input type="text" id="itemSearch" placeholder="품목명 검색..." oninput="renderItemTable()" data-ko-ph="품목명 검색..." data-es-ph="Buscar artículo...">
+    </div>
     <div class="tbl-wrap">
       <table>
         <thead><tr>
@@ -96,11 +119,11 @@ tr:nth-child(odd) td{background:#fbfaf7;}
 
     <div class="recent-grid">
       <div class="recent-box">
-        <div class="rb-title" data-ko="📥 최근 입고" data-es="📥 Entradas Recientes">📥 최근 입고</div>
+        <div class="rb-title"><span>📥</span><span data-ko="최근 입고" data-es="Entradas Recientes">최근 입고</span></div>
         <div id="recentIn"></div>
       </div>
       <div class="recent-box">
-        <div class="rb-title" data-ko="📤 최근 출고" data-es="📤 Salidas Recientes">📤 최근 출고</div>
+        <div class="rb-title"><span>📤</span><span data-ko="최근 출고" data-es="Salidas Recientes">최근 출고</span></div>
         <div id="recentOut"></div>
       </div>
     </div>
@@ -115,21 +138,19 @@ const URL_OUT='https://docs.google.com/spreadsheets/d/e/2PACX-1vRfv4TFloZqAVKyJX
 
 let curLang = localStorage.getItem('mexcor_lang')||'ko';
 const T_KO={loading:'구글 시트에서 데이터를 불러오는 중...',syncOk:n=>`✓ 구글 시트 연동 성공 — 품목 ${n}개`,syncFail:m=>'❌ 연동 실패 — '+m,
-  lastUpd:'최종 업데이트: ',reorder:'재주문 필요',attention:'주의',normal:'정상',cnt:'건',noRecord:'기록 없음',moh:'개월'};
+  lastUpd:'최종 업데이트: ',reorder:'재주문 필요',attention:'주의',normal:'정상',cnt:'건',noRecord:'기록 없음',moh:'개월',allNormal:'✓ 전체 정상 — 재주문 필요한 품목 없음'};
 const T_ES={loading:'Cargando datos de Google Sheets...',syncOk:n=>`✓ Sincronizado — ${n} artículos`,syncFail:m=>'❌ Error — '+m,
-  lastUpd:'Última actualización: ',reorder:'Requiere Reorden',attention:'Atención',normal:'Normal',cnt:'',noRecord:'Sin registros',moh:' meses'};
+  lastUpd:'Última actualización: ',reorder:'Requiere Reorden',attention:'Atención',normal:'Normal',cnt:'',noRecord:'Sin registros',moh:' meses',allNormal:'✓ Todo normal — ningún artículo requiere reorden'};
 function T(){ return curLang==='es'?T_ES:T_KO; }
 document.addEventListener('mexcorLangChange',function(e){ curLang=e.detail.lang; if(items.length) renderAll(); });
 
-function parseTSV(text){
-  const lines=text.replace(/\r/g,'').split('\n');
-  const headerLine = lines.findIndex(l=>l.includes('NO') && l.includes('ITEM')||l.trim().startsWith('\tNO\t'));
-  return lines;
+function switchProject(id, btn){
+  document.querySelectorAll('.proj-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
 }
 
 function normHeader(h){ return h.trim().replace(/\s+/g,' '); }
 
-// 시트가 앞에 빈 열(A) + 제목행 + 빈행이 있어서, 실제 헤더 행을 찾아서 그 아래부터 파싱
 function parseSheet(text, headerMustInclude){
   const rows = text.replace(/\r/g,'').split('\n').map(l=>l.split('\t'));
   let headerIdx=-1;
@@ -166,12 +187,11 @@ async function load(){
     items = summary.filter(r=>r['ITEM']).map(r=>{
       const name = r['ITEM'].trim();
       const stockIn = inRows.filter(x=>(x['ITEM']||'').trim()===name && (x['INCOMING STATUS']||'COMPLETE').trim()!=='PENDING')
-        .reduce((s,x)=>s+toNum(x['UNIT ARRIVED']||x['UNIT QTY ']||x['UNIT QTY']),0);
+        .reduce((s,x)=>s+toNum(x['UNIT ARRIVED']||x['UNIT QTY']),0);
       const stockOut = outRows.filter(x=>(x['ITEM']||'').trim()===name)
-        .reduce((s,x)=>s+toNum(x['UNIT QTY ']||x['UNIT QTY']),0);
+        .reduce((s,x)=>s+toNum(x['UNIT QTY']),0);
       const stock = stockIn - stockOut;
 
-      // 최근 3개월(달력 기준) 평균 출고량
       const now=new Date();
       const months=[];
       for(let i=0;i<3;i++){ const d=new Date(now.getFullYear(),now.getMonth()-i,1); months.push(d.getFullYear()+'-'+(d.getMonth()+1)); }
@@ -180,11 +200,11 @@ async function load(){
         const key = (x['YEAR']||'')+'-'+(x['MES']||'');
         return months.includes(key);
       });
-      const avgMonthly = recentOut.reduce((s,x)=>s+toNum(x['UNIT QTY ']||x['UNIT QTY']),0)/3;
+      const avgMonthly = recentOut.reduce((s,x)=>s+toNum(x['UNIT QTY']),0)/3;
       const moh = avgMonthly>0 ? (stock/avgMonthly) : null;
 
       return {
-        no:r['NO']||'', item:name, price:r['PRICE ']||r['PRICE']||'-',
+        no:r['NO']||'', item:name, price:r['PRICE']||'-',
         clientes:r['CLIENTES']||'-', note:r['NOTE']||'',
         stock, avgMonthly, moh
       };
@@ -194,7 +214,6 @@ async function load(){
     document.getElementById('sbar').className='sbar ok';
     document.getElementById('sbar').textContent=T().syncOk(items.length);
     document.getElementById('ts').textContent=T().lastUpd+new Date().toLocaleString('ko-KR');
-    document.getElementById('main').style.display='block';
   }catch(e){
     document.getElementById('sbar').className='sbar err';
     document.getElementById('sbar').textContent=T().syncFail(e.message);
@@ -215,10 +234,17 @@ function mohStatus(m){
   return [T().normal,'badge-ok'];
 }
 
+function priceNum(priceStr){
+  return toNum((priceStr||'').split(/USD|MXN/)[0]);
+}
+
 function renderAll(){
   const reorders = items.filter(it=>it.moh!==null && it.moh<3);
   document.getElementById('cardTotal').textContent = items.length;
   document.getElementById('cardReorder').textContent = reorders.length;
+
+  const totalValue = items.reduce((s,it)=>s+it.stock*priceNum(it.price),0);
+  document.getElementById('cardValue').textContent = '$'+Math.round(totalValue).toLocaleString();
 
   const now=new Date();
   const curKey = now.getFullYear()+'-'+(now.getMonth()+1);
@@ -231,14 +257,39 @@ function renderAll(){
   document.getElementById('cardIn').textContent = inThisMonth;
   document.getElementById('cardOut').textContent = outThisMonth;
 
-  document.getElementById('alerts').innerHTML = reorders.map(it=>`
-    <div class="alert">
-      <div><div class="a-name">${it.item}</div><div class="a-info">${curLang==='es'?'Stock':'재고'} ${it.stock.toLocaleString()} · ${curLang==='es'?'Prom.':'월평균'} ${Math.round(it.avgMonthly).toLocaleString()}</div></div>
-      <div class="a-info">${it.clientes}</div>
-      <div class="a-badge">MOH ${it.moh.toFixed(1)}${T().moh}</div>
-    </div>`).join('');
+  const alertBox = document.getElementById('alertBox');
+  if(reorders.length===0){
+    alertBox.innerHTML = `<div class="no-alert">${T().allNormal}</div>`;
+  } else {
+    alertBox.innerHTML = `<div class="alerts">` + reorders.map(it=>`
+      <div class="alert">
+        <div><div class="a-name">${it.item}</div><div class="a-info">${curLang==='es'?'Stock':'재고'} ${it.stock.toLocaleString()} · ${curLang==='es'?'Prom.':'월평균'} ${Math.round(it.avgMonthly).toLocaleString()}</div></div>
+        <div class="a-info">${it.clientes}</div>
+        <div class="a-badge">MOH ${it.moh.toFixed(1)}${T().moh}</div>
+      </div>`).join('') + `</div>`;
+  }
 
-  document.getElementById('itemBody').innerHTML = items.map(it=>{
+  renderItemTable();
+
+  const recentIn = inRows.slice().sort((a,b)=>(b['ETA MZL']||'').localeCompare(a['ETA MZL']||'')).slice(0,6);
+  document.getElementById('recentIn').innerHTML = recentIn.length ? recentIn.map(x=>`
+    <div class="recent-row">
+      <span><span class="rr-item">${(x['ITEM']||'').trim()}</span><span class="rr-sub">${(x['SUPPLIER']||x['CONTRAT NO']||'').trim()}</span></span>
+      <span class="rr-meta">${(x['UNIT ARRIVED']||x['UNIT QTY']||'').trim()}<span class="rr-sub">${(x['ETA MZL']||'-')}</span></span>
+    </div>`).join('') : `<div class="empty-row">${T().noRecord}</div>`;
+
+  const recentOut = outRows.slice().sort((a,b)=>(b['DELIVERY DATE']||'').localeCompare(a['DELIVERY DATE']||'')).slice(0,6);
+  document.getElementById('recentOut').innerHTML = recentOut.length ? recentOut.map(x=>`
+    <div class="recent-row">
+      <span><span class="rr-item">${(x['ITEM']||'').trim()}</span><span class="rr-sub">${(x['CLIENTE']||'').trim()}</span></span>
+      <span class="rr-meta">${(x['UNIT QTY']||'').trim()}<span class="rr-sub">${(x['DELIVERY DATE']||'-')}</span></span>
+    </div>`).join('') : `<div class="empty-row">${T().noRecord}</div>`;
+}
+
+function renderItemTable(){
+  const q = (document.getElementById('itemSearch').value||'').toLowerCase();
+  const filtered = items.filter(it=>it.item.toLowerCase().includes(q));
+  document.getElementById('itemBody').innerHTML = filtered.map(it=>{
     const [label,cls] = mohStatus(it.moh);
     const barPct = it.moh===null ? 100 : Math.min(100, (it.moh/6)*100);
     return `<tr>
@@ -252,17 +303,7 @@ function renderAll(){
       <td>${it.clientes}</td>
       <td style="color:var(--muted);">${it.note||'-'}</td>
     </tr>`;
-  }).join('');
-
-  const recentIn = inRows.slice().sort((a,b)=>(b['ETA MZL']||'').localeCompare(a['ETA MZL']||'')).slice(0,6);
-  document.getElementById('recentIn').innerHTML = recentIn.length ? recentIn.map(x=>`
-    <div class="recent-row"><span class="rr-item">${(x['ITEM']||'').trim()}</span><span class="rr-meta">${(x['UNIT ARRIVED']||x['UNIT QTY ']||'').trim()} · ${(x['ETA MZL']||'-')}</span></div>
-  `).join('') : `<div class="recent-row"><span class="rr-meta">${T().noRecord}</span></div>`;
-
-  const recentOut = outRows.slice().sort((a,b)=>(b['DELIVERY DATE']||'').localeCompare(a['DELIVERY DATE']||'')).slice(0,6);
-  document.getElementById('recentOut').innerHTML = recentOut.length ? recentOut.map(x=>`
-    <div class="recent-row"><span class="rr-item">${(x['CLIENTE']||'').trim()} · ${(x['ITEM']||'').trim()}</span><span class="rr-meta">${(x['UNIT QTY ']||'').trim()} · ${(x['DELIVERY DATE']||'-')}</span></div>
-  `).join('') : `<div class="recent-row"><span class="rr-meta">${T().noRecord}</span></div>`;
+  }).join('') || `<tr><td colspan="9" class="empty-row">${T().noRecord}</td></tr>`;
 }
 
 load();
