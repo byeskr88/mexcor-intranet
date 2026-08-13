@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>방습제 — MEXCOR Workspace</title>
+<style>
+:root{
+  --bg:#f5f4f0;--surface:#fff;--s1:#f1efe8;--s2:#e8e6de;
+  --border:#e2e0d8;--text:#1f1e1c;--muted:#5f5e5a;
+  --ok:#1D9E75;--ok-bg:#E1F5EE;--ok-text:#085041;
+  --warn:#BA7517;--warn-bg:#FAEEDA;--warn-text:#854F0B;
+  --danger:#A32D2D;--danger-bg:#FCEBEB;--danger-text:#791F1F;
+  --blue:#2a78d6;--blue-bg:#E6F1FB;--blue-text:#0C447C;
+  --r:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text);padding:20px;}
+.wrap{background:var(--surface);border:0.5px solid var(--border);border-radius:12px;padding:20px;}
+h1{font-size:17px;font-weight:500;margin-bottom:3px;}
+.ts{font-size:12px;color:var(--muted);margin-bottom:12px;}
+.sbar{padding:8px 14px;border-radius:var(--r);font-size:12px;margin-bottom:16px;}
+.sbar.loading{background:var(--s1);color:var(--muted);}
+.sbar.ok{background:var(--ok-bg);color:var(--ok-text);}
+.sbar.err{background:var(--danger-bg);color:var(--danger-text);}
+
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+.card{background:var(--s1);border-radius:var(--r);padding:14px;}
+.card .lbl{font-size:11px;color:var(--muted);margin-bottom:4px;}
+.card .val{font-size:22px;font-weight:600;}
+.card .sub{font-size:11px;color:var(--muted);margin-top:2px;}
+
+.alerts{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;}
+.alert{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:16px;padding:10px 16px;background:var(--danger-bg);border-left:3px solid var(--danger);border-radius:0 var(--r) var(--r) 0;font-size:12px;}
+.alert .a-name{font-weight:600;color:var(--danger-text);}
+.alert .a-info{font-size:11px;color:var(--danger-text);opacity:.8;}
+.alert .a-badge{background:var(--danger-text);color:#fff;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;white-space:nowrap;}
+
+.sec-title{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:16px 0 8px;}
+
+.tbl-wrap{overflow-x:auto;border:0.5px solid var(--border);border-radius:var(--r);}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{background:var(--s1);color:var(--muted);font-weight:600;text-align:left;padding:8px 10px;white-space:nowrap;position:sticky;top:0;}
+th.r,td.r{text-align:right;}
+td{padding:8px 10px;border-top:0.5px solid var(--border);white-space:nowrap;}
+tr:nth-child(odd) td{background:#fbfaf7;}
+.moh-bar{display:inline-block;width:44px;height:5px;border-radius:3px;background:var(--s2);overflow:hidden;vertical-align:middle;margin-right:5px;}
+.moh-bar span{display:block;height:100%;}
+.badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;white-space:nowrap;}
+.badge-danger{background:var(--danger-bg);color:var(--danger-text);}
+.badge-warn{background:var(--warn-bg);color:var(--warn-text);}
+.badge-ok{background:var(--ok-bg);color:var(--ok-text);}
+
+.recent-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;}
+.recent-box{border:0.5px solid var(--border);border-radius:var(--r);padding:10px;}
+.recent-box .rb-title{font-size:12px;font-weight:600;margin-bottom:8px;}
+.recent-row{display:flex;justify-content:space-between;font-size:11px;padding:5px 0;border-top:0.5px solid var(--border);}
+.recent-row:first-of-type{border-top:none;}
+.recent-row .rr-item{color:var(--text);}
+.recent-row .rr-meta{color:var(--muted);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 data-ko="방습제 및 신규 프로젝트" data-es="Desecantes y Nuevos Proyectos">방습제 및 신규 프로젝트</h1>
+  <p class="ts" id="ts" data-ko="데이터 불러오는 중..." data-es="Cargando datos...">데이터 불러오는 중...</p>
+  <div class="sbar loading" id="sbar" data-ko="구글 시트에서 데이터를 불러오는 중..." data-es="Cargando datos de Google Sheets...">구글 시트에서 데이터를 불러오는 중...</div>
+
+  <div id="main" style="display:none;">
+    <div class="cards">
+      <div class="card"><div class="lbl" data-ko="전체 품목" data-es="Artículos Totales">전체 품목</div><div class="val" id="cardTotal">-</div></div>
+      <div class="card"><div class="lbl" data-ko="재주문 필요 (MOH&lt;3)" data-es="Requiere Reorden (MOH&lt;3)">재주문 필요 (MOH&lt;3)</div><div class="val" id="cardReorder" style="color:var(--danger-text);">-</div></div>
+      <div class="card"><div class="lbl" data-ko="이번달 입고" data-es="Entradas Este Mes">이번달 입고</div><div class="val" id="cardIn">-</div></div>
+      <div class="card"><div class="lbl" data-ko="이번달 출고" data-es="Salidas Este Mes">이번달 출고</div><div class="val" id="cardOut">-</div></div>
+    </div>
+
+    <div class="alerts" id="alerts"></div>
+
+    <div class="sec-title" data-ko="품목 현황" data-es="Estado de Artículos">품목 현황</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>NO</th>
+          <th data-ko="품목" data-es="Artículo">품목</th>
+          <th data-ko="단가" data-es="Precio">단가</th>
+          <th class="r" data-ko="재고" data-es="Stock">재고</th>
+          <th class="r" data-ko="월평균 출고(최근3개월)" data-es="Prom. Mensual (3m)">월평균 출고(최근3개월)</th>
+          <th class="r">MOH</th>
+          <th data-ko="상태" data-es="Estado">상태</th>
+          <th data-ko="거래처" data-es="Cliente">거래처</th>
+          <th data-ko="비고" data-es="Nota">비고</th>
+        </tr></thead>
+        <tbody id="itemBody"></tbody>
+      </table>
+    </div>
+
+    <div class="recent-grid">
+      <div class="recent-box">
+        <div class="rb-title" data-ko="📥 최근 입고" data-es="📥 Entradas Recientes">📥 최근 입고</div>
+        <div id="recentIn"></div>
+      </div>
+      <div class="recent-box">
+        <div class="rb-title" data-ko="📤 최근 출고" data-es="📤 Salidas Recientes">📤 최근 출고</div>
+        <div id="recentOut"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="nav.js"></script>
+<script>
+const URL_SUMMARY='https://docs.google.com/spreadsheets/d/e/2PACX-1vRfv4TFloZqAVKyJXAoGCjP5xec3MvPGjTagc1btjwQzKXvICTmREywHrT1wNSl_6JN7vA_gsY2w8kB/pub?gid=417249657&single=true&output=tsv';
+const URL_IN='https://docs.google.com/spreadsheets/d/e/2PACX-1vRfv4TFloZqAVKyJXAoGCjP5xec3MvPGjTagc1btjwQzKXvICTmREywHrT1wNSl_6JN7vA_gsY2w8kB/pub?gid=920808887&single=true&output=tsv';
+const URL_OUT='https://docs.google.com/spreadsheets/d/e/2PACX-1vRfv4TFloZqAVKyJXAoGCjP5xec3MvPGjTagc1btjwQzKXvICTmREywHrT1wNSl_6JN7vA_gsY2w8kB/pub?gid=1355104888&single=true&output=tsv';
+
+let curLang = localStorage.getItem('mexcor_lang')||'ko';
+const T_KO={loading:'구글 시트에서 데이터를 불러오는 중...',syncOk:n=>`✓ 구글 시트 연동 성공 — 품목 ${n}개`,syncFail:m=>'❌ 연동 실패 — '+m,
+  lastUpd:'최종 업데이트: ',reorder:'재주문 필요',attention:'주의',normal:'정상',cnt:'건',noRecord:'기록 없음',moh:'개월'};
+const T_ES={loading:'Cargando datos de Google Sheets...',syncOk:n=>`✓ Sincronizado — ${n} artículos`,syncFail:m=>'❌ Error — '+m,
+  lastUpd:'Última actualización: ',reorder:'Requiere Reorden',attention:'Atención',normal:'Normal',cnt:'',noRecord:'Sin registros',moh:' meses'};
+function T(){ return curLang==='es'?T_ES:T_KO; }
+document.addEventListener('mexcorLangChange',function(e){ curLang=e.detail.lang; if(items.length) renderAll(); });
+
+function parseTSV(text){
+  const lines=text.replace(/\r/g,'').split('\n');
+  const headerLine = lines.findIndex(l=>l.includes('NO') && l.includes('ITEM')||l.trim().startsWith('\tNO\t'));
+  return lines;
+}
+
+function normHeader(h){ return h.trim().replace(/\s+/g,' '); }
+
+// 시트가 앞에 빈 열(A) + 제목행 + 빈행이 있어서, 실제 헤더 행을 찾아서 그 아래부터 파싱
+function parseSheet(text, headerMustInclude){
+  const rows = text.replace(/\r/g,'').split('\n').map(l=>l.split('\t'));
+  let headerIdx=-1;
+  for(let i=0;i<rows.length;i++){
+    if(rows[i].some(c=>normHeader(c)===headerMustInclude)){ headerIdx=i; break; }
+  }
+  if(headerIdx===-1) return {headers:[],data:[]};
+  const headers=rows[headerIdx].map(h=>normHeader(h));
+  const data=rows.slice(headerIdx+1).filter(r=>r.some(v=>v&&v.trim())).map(r=>{
+    const obj={};
+    headers.forEach((h,i)=>{ if(h) obj[h]=(r[i]||'').trim(); });
+    return obj;
+  });
+  return {headers,data};
+}
+
+function toNum(v){
+  if(!v) return 0;
+  const n = parseFloat(String(v).replace(/[$,\s]/g,''));
+  return isNaN(n)?0:n;
+}
+
+let items=[], inRows=[], outRows=[];
+
+async function load(){
+  try{
+    const [rs,ri,ro] = await Promise.all([fetch(URL_SUMMARY),fetch(URL_IN),fetch(URL_OUT)]);
+    const [ts,ti,to_] = await Promise.all([rs.text(),ri.text(),ro.text()]);
+
+    const summary = parseSheet(ts,'ITEM').data;
+    inRows = parseSheet(ti,'ITEM').data;
+    outRows = parseSheet(to_,'ITEM').data;
+
+    items = summary.filter(r=>r['ITEM']).map(r=>{
+      const name = r['ITEM'].trim();
+      const stockIn = inRows.filter(x=>(x['ITEM']||'').trim()===name && (x['INCOMING STATUS']||'COMPLETE').trim()!=='PENDING')
+        .reduce((s,x)=>s+toNum(x['UNIT ARRIVED']||x['UNIT QTY ']||x['UNIT QTY']),0);
+      const stockOut = outRows.filter(x=>(x['ITEM']||'').trim()===name)
+        .reduce((s,x)=>s+toNum(x['UNIT QTY ']||x['UNIT QTY']),0);
+      const stock = stockIn - stockOut;
+
+      // 최근 3개월(달력 기준) 평균 출고량
+      const now=new Date();
+      const months=[];
+      for(let i=0;i<3;i++){ const d=new Date(now.getFullYear(),now.getMonth()-i,1); months.push(d.getFullYear()+'-'+(d.getMonth()+1)); }
+      const recentOut = outRows.filter(x=>{
+        if((x['ITEM']||'').trim()!==name) return false;
+        const key = (x['YEAR']||'')+'-'+(x['MES']||'');
+        return months.includes(key);
+      });
+      const avgMonthly = recentOut.reduce((s,x)=>s+toNum(x['UNIT QTY ']||x['UNIT QTY']),0)/3;
+      const moh = avgMonthly>0 ? (stock/avgMonthly) : null;
+
+      return {
+        no:r['NO']||'', item:name, price:r['PRICE ']||r['PRICE']||'-',
+        clientes:r['CLIENTES']||'-', note:r['NOTE']||'',
+        stock, avgMonthly, moh
+      };
+    });
+
+    renderAll();
+    document.getElementById('sbar').className='sbar ok';
+    document.getElementById('sbar').textContent=T().syncOk(items.length);
+    document.getElementById('ts').textContent=T().lastUpd+new Date().toLocaleString('ko-KR');
+    document.getElementById('main').style.display='block';
+  }catch(e){
+    document.getElementById('sbar').className='sbar err';
+    document.getElementById('sbar').textContent=T().syncFail(e.message);
+    console.error(e);
+  }
+}
+
+function mohColor(m){
+  if(m===null) return 'var(--muted)';
+  if(m<3) return 'var(--danger)';
+  if(m<6) return 'var(--warn)';
+  return 'var(--ok)';
+}
+function mohStatus(m){
+  if(m===null) return [T().normal,'badge-ok'];
+  if(m<3) return [T().reorder,'badge-danger'];
+  if(m<6) return [T().attention,'badge-warn'];
+  return [T().normal,'badge-ok'];
+}
+
+function renderAll(){
+  const reorders = items.filter(it=>it.moh!==null && it.moh<3);
+  document.getElementById('cardTotal').textContent = items.length;
+  document.getElementById('cardReorder').textContent = reorders.length;
+
+  const now=new Date();
+  const curKey = now.getFullYear()+'-'+(now.getMonth()+1);
+  const inThisMonth = inRows.filter(x=>{
+    const d=x['ETA MZL']||x['ETA PESQUERIA']||'';
+    const dt=new Date(d);
+    return !isNaN(dt) && (dt.getFullYear()+'-'+(dt.getMonth()+1))===curKey;
+  }).length;
+  const outThisMonth = outRows.filter(x=>(x['YEAR']||'')+'-'+(x['MES']||'')===curKey).length;
+  document.getElementById('cardIn').textContent = inThisMonth;
+  document.getElementById('cardOut').textContent = outThisMonth;
+
+  document.getElementById('alerts').innerHTML = reorders.map(it=>`
+    <div class="alert">
+      <div><div class="a-name">${it.item}</div><div class="a-info">${curLang==='es'?'Stock':'재고'} ${it.stock.toLocaleString()} · ${curLang==='es'?'Prom.':'월평균'} ${Math.round(it.avgMonthly).toLocaleString()}</div></div>
+      <div class="a-info">${it.clientes}</div>
+      <div class="a-badge">MOH ${it.moh.toFixed(1)}${T().moh}</div>
+    </div>`).join('');
+
+  document.getElementById('itemBody').innerHTML = items.map(it=>{
+    const [label,cls] = mohStatus(it.moh);
+    const barPct = it.moh===null ? 100 : Math.min(100, (it.moh/6)*100);
+    return `<tr>
+      <td>${it.no}</td>
+      <td>${it.item}</td>
+      <td>${it.price}</td>
+      <td class="r">${it.stock.toLocaleString()}</td>
+      <td class="r">${Math.round(it.avgMonthly).toLocaleString()}</td>
+      <td class="r"><span class="moh-bar"><span style="width:${barPct}%;background:${mohColor(it.moh)};"></span></span>${it.moh===null?'-':it.moh.toFixed(1)}</td>
+      <td><span class="badge ${cls}">${label}</span></td>
+      <td>${it.clientes}</td>
+      <td style="color:var(--muted);">${it.note||'-'}</td>
+    </tr>`;
+  }).join('');
+
+  const recentIn = inRows.slice().sort((a,b)=>(b['ETA MZL']||'').localeCompare(a['ETA MZL']||'')).slice(0,6);
+  document.getElementById('recentIn').innerHTML = recentIn.length ? recentIn.map(x=>`
+    <div class="recent-row"><span class="rr-item">${(x['ITEM']||'').trim()}</span><span class="rr-meta">${(x['UNIT ARRIVED']||x['UNIT QTY ']||'').trim()} · ${(x['ETA MZL']||'-')}</span></div>
+  `).join('') : `<div class="recent-row"><span class="rr-meta">${T().noRecord}</span></div>`;
+
+  const recentOut = outRows.slice().sort((a,b)=>(b['DELIVERY DATE']||'').localeCompare(a['DELIVERY DATE']||'')).slice(0,6);
+  document.getElementById('recentOut').innerHTML = recentOut.length ? recentOut.map(x=>`
+    <div class="recent-row"><span class="rr-item">${(x['CLIENTE']||'').trim()} · ${(x['ITEM']||'').trim()}</span><span class="rr-meta">${(x['UNIT QTY ']||'').trim()} · ${(x['DELIVERY DATE']||'-')}</span></div>
+  `).join('') : `<div class="recent-row"><span class="rr-meta">${T().noRecord}</span></div>`;
+}
+
+load();
+</script>
+</body>
+</html>

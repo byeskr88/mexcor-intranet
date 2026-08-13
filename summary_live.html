@@ -171,6 +171,14 @@ hr{border:none;border-top:0.5px solid var(--border);margin:18px 0;}
       <div class="inner" id="qroInv"><div style="font-size:12px;color:var(--hint);">로드 중...</div></div>
     </div>
   </div>
+
+  <!-- 방습제 및 신규 프로젝트 (용접봉이랑 구분되게 별도 톤) -->
+  <div id="desiccantSec" style="display:none;margin-top:14px;border:0.5px solid #d8c9e8;border-radius:8px;background:#f8f2fc;padding:10px 12px;">
+    <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#6a3494;margin-bottom:8px;">
+      <span>🧪</span><span data-ko="방습제 · 신규 프로젝트 — 재주문 필요" data-es="Desecantes · Nuevos Proyectos — Reorden">방습제 · 신규 프로젝트 — 재주문 필요</span>
+    </div>
+    <div id="desiccantList" style="font-size:12px;color:var(--hint);">로드 중...</div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -464,6 +472,56 @@ if(window._mexcorUser!==undefined){
 }
 
 load();
+
+async function loadDesiccant(){
+  try{
+    const URL_SUMMARY='https://docs.google.com/spreadsheets/d/e/2PACX-1vRfv4TFloZqAVKyJXAoGCjP5xec3MvPGjTagc1btjwQzKXvICTmREywHrT1wNSl_6JN7vA_gsY2w8kB/pub?gid=417249657&single=true&output=tsv';
+    const URL_OUT='https://docs.google.com/spreadsheets/d/e/2PACX-1vRfv4TFloZqAVKyJXAoGCjP5xec3MvPGjTagc1btjwQzKXvICTmREywHrT1wNSl_6JN7vA_gsY2w8kB/pub?gid=1355104888&single=true&output=tsv';
+    const URL_IN='https://docs.google.com/spreadsheets/d/e/2PACX-1vRfv4TFloZqAVKyJXAoGCjP5xec3MvPGjTagc1btjwQzKXvICTmREywHrT1wNSl_6JN7vA_gsY2w8kB/pub?gid=920808887&single=true&output=tsv';
+    function parseSheet(text, key){
+      const norm=h=>h.trim().replace(/\s+/g,' ');
+      const rows=text.replace(/\r/g,'').split('\n').map(l=>l.split('\t'));
+      let hi=-1;
+      for(let i=0;i<rows.length;i++){ if(rows[i].some(c=>norm(c)===key)){ hi=i; break; } }
+      if(hi===-1) return [];
+      const headers=rows[hi].map(h=>norm(h));
+      return rows.slice(hi+1).filter(r=>r.some(v=>v&&v.trim())).map(r=>{
+        const obj={}; headers.forEach((h,i)=>{ if(h) obj[h]=(r[i]||'').trim(); }); return obj;
+      });
+    }
+    function toN(v){ if(!v) return 0; const n=parseFloat(String(v).replace(/[$,\s]/g,'')); return isNaN(n)?0:n; }
+
+    const [rs,ri,ro]=await Promise.all([fetch(URL_SUMMARY),fetch(URL_IN),fetch(URL_OUT)]);
+    const [ts,ti,to_]=await Promise.all([rs.text(),ri.text(),ro.text()]);
+    const summary=parseSheet(ts,'ITEM');
+    const inRows=parseSheet(ti,'ITEM');
+    const outRows=parseSheet(to_,'ITEM');
+
+    const now=new Date();
+    const months=[]; for(let i=0;i<3;i++){ const d=new Date(now.getFullYear(),now.getMonth()-i,1); months.push(d.getFullYear()+'-'+(d.getMonth()+1)); }
+
+    const reorders=[];
+    summary.filter(r=>r['ITEM']).forEach(r=>{
+      const name=r['ITEM'].trim();
+      const stockIn=inRows.filter(x=>(x['ITEM']||'').trim()===name).reduce((s,x)=>s+toN(x['UNIT ARRIVED']||x['UNIT QTY ']||x['UNIT QTY']),0);
+      const stockOut=outRows.filter(x=>(x['ITEM']||'').trim()===name).reduce((s,x)=>s+toN(x['UNIT QTY ']||x['UNIT QTY']),0);
+      const stock=stockIn-stockOut;
+      const recentOut=outRows.filter(x=>(x['ITEM']||'').trim()===name && months.includes((x['YEAR']||'')+'-'+(x['MES']||'')));
+      const avgMonthly=recentOut.reduce((s,x)=>s+toN(x['UNIT QTY ']||x['UNIT QTY']),0)/3;
+      const moh=avgMonthly>0?(stock/avgMonthly):null;
+      if(moh!==null && moh<3) reorders.push({name, moh, stock});
+    });
+
+    document.getElementById('desiccantSec').style.display='block';
+    const el=document.getElementById('desiccantList');
+    if(reorders.length===0){
+      el.innerHTML='<div style="font-size:12px;color:#6a3494;">'+(curLang==='es'?'✓ Todo normal':'✓ 전체 정상')+'</div>';
+    } else {
+      el.innerHTML=reorders.map(r=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;"><span>${r.name}</span><span style="color:#a32d2d;font-weight:600;">MOH ${r.moh.toFixed(1)}${curLang==='es'?'m':'개월'}</span></div>`).join('');
+    }
+  }catch(e){ console.error('Desiccant summary load failed:', e); }
+}
+loadDesiccant();
 
 // 언어 변경 수신
 const LANG_KO={

@@ -48,6 +48,7 @@ function initNav(){
     {id:'ap',file:'ap_live.html',icon:'💳',ko:'AP',es:'AP'},
     {id:'sales',file:'sales_live.html',icon:'📊',ko:'매출',es:'Ventas'},
     {id:'inv',file:'inventory_live.html',icon:'📦',ko:'재고',es:'Inventario'},
+    {id:'desiccant',file:'desiccant_live.html',icon:'🧪',ko:'방습제',es:'Desecantes'},
     {id:'crm',file:'crm_live.html',icon:'🤝',ko:'고객관리',es:'Clientes'},
     {id:'budget',file:'budget_plan.html',icon:'💵',ko:'Budget',es:'Budget',restricted:true},
   ];
