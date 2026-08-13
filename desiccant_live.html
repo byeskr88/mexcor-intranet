@@ -85,7 +85,7 @@ tr:hover td{background:var(--purple-bg);}
     <span class="proj-tab-add" data-ko="+ 새 프로젝트 추가 예정" data-es="+ Próximos proyectos">+ 새 프로젝트 추가 예정</span>
   </div>
 
-  <div id="p-desiccant">
+  <div id="p-desiccant" class="proj-section" data-project="desiccant">
     <div class="cards">
       <div class="card"><div class="lbl" data-ko="전체 품목" data-es="Artículos Totales">전체 품목</div><div class="val" id="cardTotal">-</div></div>
       <div class="card"><div class="lbl" data-ko="재주문 필요 (MOH&lt;3)" data-es="Reorden (MOH&lt;3)">재주문 필요 (MOH&lt;3)</div><div class="val" id="cardReorder" style="color:var(--danger-text);">-</div></div>
@@ -147,6 +147,9 @@ document.addEventListener('mexcorLangChange',function(e){ curLang=e.detail.lang;
 function switchProject(id, btn){
   document.querySelectorAll('.proj-tab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+  document.querySelectorAll('.proj-section').forEach(sec=>{
+    sec.style.display = (sec.dataset.project===id) ? '' : 'none';
+  });
 }
 
 function normHeader(h){ return h.trim().replace(/\s+/g,' '); }
