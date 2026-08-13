@@ -25,10 +25,25 @@ h1{font-size:17px;font-weight:500;margin-bottom:3px;}
 .sbar.ok{background:var(--ok-bg);color:var(--ok-text);}
 .sbar.err{background:var(--danger-bg);color:var(--danger-text);}
 
-.proj-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:16px;align-items:center;}
-.proj-tab{border:none;border-bottom:2.5px solid transparent;background:transparent;padding:9px 18px;font-size:13px;cursor:pointer;font-family:inherit;color:var(--muted);font-weight:400;display:flex;align-items:center;gap:6px;}
-.proj-tab.active{border-bottom-color:var(--purple);color:var(--purple-text);font-weight:600;}
-.proj-tab-add{margin-left:auto;font-size:11px;color:var(--muted);padding:9px 14px;opacity:.6;}
+/* 프로젝트 카드 런처 */
+.proj-launcher{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:22px;}
+.proj-card{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;cursor:pointer;transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease;overflow:hidden;}
+.proj-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(123,31,162,.10);}
+.proj-card.active{border-color:var(--purple);box-shadow:0 6px 18px rgba(123,31,162,.14);}
+.proj-card.active::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--purple),#b46fd1);}
+.proj-card .pc-icon{width:36px;height:36px;border-radius:10px;background:var(--purple-bg);display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:10px;}
+.proj-card .pc-name{font-size:13px;font-weight:600;margin-bottom:3px;}
+.proj-card .pc-stat{font-size:11px;color:var(--muted);}
+.proj-card .pc-badge{position:absolute;top:14px;right:14px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--danger-bg);color:var(--danger-text);}
+.proj-card.add{border-style:dashed;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--muted);}
+.proj-card.add .pc-icon{background:var(--s1);color:var(--muted);}
+.proj-card.add:hover{border-color:var(--purple);color:var(--purple-text);}
+.proj-card.add:hover .pc-icon{background:var(--purple-bg);color:var(--purple-text);}
+
+.empty-state{border:1px dashed var(--border);border-radius:14px;padding:40px 24px;text-align:center;}
+.empty-state .es-icon{font-size:30px;margin-bottom:10px;}
+.empty-state h3{font-size:14px;font-weight:600;margin-bottom:6px;}
+.empty-state p{font-size:12px;color:var(--muted);max-width:420px;margin:0 auto 4px;line-height:1.6;}
 
 .cards{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px;}
 .card{background:var(--s1);border-radius:var(--r);padding:14px;}
@@ -80,9 +95,17 @@ tr:hover td{background:var(--purple-bg);}
   <p class="ts" id="ts" data-ko="데이터 불러오는 중..." data-es="Cargando datos...">데이터 불러오는 중...</p>
   <div class="sbar loading" id="sbar" data-ko="구글 시트에서 데이터를 불러오는 중..." data-es="Cargando datos de Google Sheets...">구글 시트에서 데이터를 불러오는 중...</div>
 
-  <div class="proj-tabs">
-    <button class="proj-tab active" onclick="switchProject('desiccant',this)">🧪 <span data-ko="방습제" data-es="Desecantes">방습제</span></button>
-    <span class="proj-tab-add" data-ko="+ 새 프로젝트 추가 예정" data-es="+ Próximos proyectos">+ 새 프로젝트 추가 예정</span>
+  <div class="proj-launcher" id="projLauncher">
+    <div class="proj-card active" data-project="desiccant" onclick="switchProject('desiccant',this)">
+      <div class="pc-icon">🧪</div>
+      <div class="pc-name" data-ko="실리카겔 · 방습제" data-es="Sílica Gel · Desecantes">실리카겔 · 방습제</div>
+      <div class="pc-stat" id="pcDesiccantStat" data-ko="품목 0개" data-es="0 artículos">품목 0개</div>
+    </div>
+    <div class="proj-card add" data-project="new" onclick="switchProject('new',this)">
+      <div class="pc-icon">➕</div>
+      <div class="pc-name" data-ko="신규 프로젝트" data-es="Nuevo Proyecto">신규 프로젝트</div>
+      <div class="pc-stat" data-ko="추가하기" data-es="Agregar">추가하기</div>
+    </div>
   </div>
 
   <div id="p-desiccant" class="proj-section" data-project="desiccant">
@@ -128,6 +151,14 @@ tr:hover td{background:var(--purple-bg);}
       </div>
     </div>
   </div>
+
+  <div id="p-new" class="proj-section" data-project="new" style="display:none;">
+    <div class="empty-state">
+      <div class="es-icon">🗂️</div>
+      <h3 data-ko="여기에 새 프로젝트가 표시됩니다" data-es="Aquí aparecerá el nuevo proyecto">여기에 새 프로젝트가 표시됩니다</h3>
+      <p data-ko="새 프로젝트 자료(구글시트 등)를 주시면, 이 자리에 전용 대시보드를 만들고 위에 카드도 하나 추가돼요. 여러 프로젝트가 생기면 카드를 눌러 바로바로 전환할 수 있어요." data-es="Cuando compartas los datos del nuevo proyecto (Google Sheets, etc.), se creará un panel dedicado aquí y se agregará una tarjeta arriba. Con varios proyectos, podrás cambiar entre ellos con solo hacer clic en la tarjeta correspondiente.">새 프로젝트 자료(구글시트 등)를 주시면, 이 자리에 전용 대시보드를 만들고 위에 카드도 하나 추가돼요. 여러 프로젝트가 생기면 카드를 눌러 바로바로 전환할 수 있어요.</p>
+    </div>
+  </div>
 </div>
 
 <script src="nav.js"></script>
@@ -145,7 +176,7 @@ function T(){ return curLang==='es'?T_ES:T_KO; }
 document.addEventListener('mexcorLangChange',function(e){ curLang=e.detail.lang; if(items.length) renderAll(); });
 
 function switchProject(id, btn){
-  document.querySelectorAll('.proj-tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.proj-card').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   document.querySelectorAll('.proj-section').forEach(sec=>{
     sec.style.display = (sec.dataset.project===id) ? '' : 'none';
@@ -245,6 +276,18 @@ function renderAll(){
   const reorders = items.filter(it=>it.moh!==null && it.moh<3);
   document.getElementById('cardTotal').textContent = items.length;
   document.getElementById('cardReorder').textContent = reorders.length;
+
+  const statEl = document.getElementById('pcDesiccantStat');
+  statEl.textContent = (curLang==='es'?`${items.length} artículos`:`품목 ${items.length}개`);
+  const launcherCard = document.querySelector('.proj-card[data-project="desiccant"]');
+  const existingBadge = launcherCard.querySelector('.pc-badge');
+  if(existingBadge) existingBadge.remove();
+  if(reorders.length>0){
+    const b = document.createElement('div');
+    b.className='pc-badge';
+    b.textContent = reorders.length;
+    launcherCard.appendChild(b);
+  }
 
   const totalValue = items.reduce((s,it)=>s+it.stock*priceNum(it.price),0);
   document.getElementById('cardValue').textContent = '$'+Math.round(totalValue).toLocaleString();
