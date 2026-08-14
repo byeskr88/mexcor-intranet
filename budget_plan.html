@@ -68,6 +68,7 @@ h1{font-size:20px;font-weight:600;padding:20px 0 4px;}
 .entry.adj{background:var(--warn-bg);color:var(--warn-text);}
 .entry .amt{font-weight:600;display:block;margin-top:1px;}
 .entry .who{font-size:9px;opacity:.75;display:block;margin-top:2px;}
+.entry .inv-tag{font-size:9px;background:rgba(0,0,0,.08);padding:1px 5px;border-radius:4px;margin-left:5px;font-weight:600;}
 .entry .who .edited{font-style:normal;opacity:.9;}
 .entry .edit-hit{cursor:pointer;display:block;padding-right:14px;}
 .entry .edit-hit:hover{text-decoration:underline;text-decoration-style:dotted;}
@@ -525,9 +526,10 @@ function renderEntryCard(e, cls, dk){
   const whoLine = wasEdited
     ? `${escapeHtml(e.created_by||'')} · ${dk.slice(5).replace('-','/')}<br><i class="edited">${curLang==='es'?'editado por':'수정:'} ${escapeHtml(e.updated_by)}</i>`
     : `${escapeHtml(e.created_by||'')} · ${dk.slice(5).replace('-','/')}`;
+  const invoiceTag = e.invoice_no ? `<span class="inv-tag">#${escapeHtml(e.invoice_no)}</span>` : '';
   return `<div class="entry ${cls}" id="entry-${e.id}" draggable="true"
     ondragstart="onEntryDragStart(event,'${e.id}')" ondragend="onEntryDragEnd(event)">
-    <span class="edit-hit" onclick="showInlineEdit('${e.id}')">${escapeHtml(e.item)}<span class="amt">$${fmtMoney(e.amount)} ${curLabel(e.currency)}</span><span class="who">${whoLine}</span></span>
+    <span class="edit-hit" onclick="showInlineEdit('${e.id}')">${escapeHtml(e.item)}${invoiceTag}<span class="amt">$${fmtMoney(e.amount)} ${curLabel(e.currency)}</span><span class="who">${whoLine}${e.note?'<br><i class="edited">'+escapeHtml(e.note)+'</i>':''}</span></span>
     <span class="del" onclick="deleteEntry('${e.id}')">✕</span>
   </div>`;
 }
@@ -539,6 +541,7 @@ function showInlineEdit(id){
   if(!el) return;
   const wrap = document.createElement('div');
   wrap.className = 'inline-add';
+  const hasMore = !!(e.invoice_no || e.note);
   wrap.innerHTML = `
     <input type="text" placeholder="${curLang==='es'?'Concepto':'항목명'}" class="ia-item" value="${escapeHtml(e.item)}">
     <input type="number" placeholder="${curLang==='es'?'Monto':'금액'}" class="ia-amt" value="${e.amount}">
@@ -546,12 +549,23 @@ function showInlineEdit(id){
       <option value="MXN"${e.currency==='MXN'?' selected':''}>MXN</option>
       <option value="USD"${e.currency==='USD'?' selected':''}>USD</option>
     </select>
+    <div class="ia-more-toggle" style="font-size:10px;color:var(--steel);cursor:pointer;margin-bottom:4px;">${hasMore?'−':'+'} ${curLang==='es'?'Info. adicional (No. Factura, nota)':'추가정보 (인보이스 No, 비고)'}</div>
+    <div class="ia-more" style="display:${hasMore?'block':'none'};">
+      <input type="text" placeholder="${curLang==='es'?'No. de Factura':'인보이스 No.'}" class="ia-invoice" value="${escapeHtml(e.invoice_no||'')}">
+      <input type="text" placeholder="${curLang==='es'?'Nota':'비고'}" class="ia-note" value="${escapeHtml(e.note||'')}">
+    </div>
     <div class="btns">
       <button class="save">${curLang==='es'?'Guardar':'저장'}</button>
       <button class="cancel">${curLang==='es'?'Cancelar':'취소'}</button>
     </div>`;
   el.replaceWith(wrap);
   wrap.querySelector('.ia-item').focus();
+  wrap.querySelector('.ia-more-toggle').onclick = function(){
+    const more = wrap.querySelector('.ia-more');
+    const open = more.style.display!=='none';
+    more.style.display = open?'none':'block';
+    this.textContent = (open?'+ ':'− ') + (curLang==='es'?'Info. adicional (No. Factura, nota)':'추가정보 (인보이스 No, 비고)');
+  };
   wrap.querySelector('.save').onclick = ()=>saveInlineEdit(id, wrap);
   wrap.querySelector('.cancel').onclick = ()=>renderWeeks();
   wrap.querySelector('.ia-amt').addEventListener('keydown', ev=>{ if(ev.key==='Enter') saveInlineEdit(id,wrap); });
@@ -561,9 +575,14 @@ async function saveInlineEdit(id, wrap){
   const item = wrap.querySelector('.ia-item').value.trim();
   const amount = parseFloat(wrap.querySelector('.ia-amt').value);
   const currency = wrap.querySelector('.ia-cur').value;
+  const invoiceEl = wrap.querySelector('.ia-invoice');
+  const noteEl = wrap.querySelector('.ia-note');
   if(!item || !amount) return;
   const {error} = await sb.from('budget_entries').update({
-    item, amount, currency, updated_by: currentUserId(), updated_at: new Date().toISOString()
+    item, amount, currency,
+    invoice_no: invoiceEl ? invoiceEl.value.trim() : null,
+    note: noteEl ? noteEl.value.trim() : null,
+    updated_by: currentUserId(), updated_at: new Date().toISOString()
   }).eq('id', id);
   if(error){ alert((curLang==='es'?'Error: ':'오류: ')+error.message); return; }
   await maybeAutoFrequent(item);
@@ -583,6 +602,11 @@ function showInlineAdd(dateStr, type, btnEl){
     <select class="ia-cur" style="width:100%;font-size:11px;padding:4px;margin-bottom:4px;border:0.5px solid var(--border);border-radius:4px;">
       <option value="MXN">MXN</option><option value="USD">USD</option>
     </select>
+    <div class="ia-more-toggle" style="font-size:10px;color:var(--steel);cursor:pointer;margin-bottom:4px;">+ ${curLang==='es'?'Info. adicional (No. Factura, nota)':'추가정보 (인보이스 No, 비고)'}</div>
+    <div class="ia-more" style="display:none;">
+      <input type="text" placeholder="${curLang==='es'?'No. de Factura':'인보이스 No.'}" class="ia-invoice">
+      <input type="text" placeholder="${curLang==='es'?'Nota':'비고'}" class="ia-note">
+    </div>
     <div class="btns">
       <button class="save">${curLang==='es'?'Guardar':'저장'}</button>
       <button class="cancel">${curLang==='es'?'Cancelar':'취소'}</button>
@@ -593,6 +617,12 @@ function showInlineAdd(dateStr, type, btnEl){
   wrap.querySelector('.ia-freq-toggle').onclick = ()=>{
     const freqList = wrap.querySelector('.ia-freq-list');
     freqList.style.display = freqList.style.display==='none'?'block':'none';
+  };
+  wrap.querySelector('.ia-more-toggle').onclick = function(){
+    const more = wrap.querySelector('.ia-more');
+    const open = more.style.display!=='none';
+    more.style.display = open?'none':'block';
+    this.textContent = (open?'+ ':'− ') + (curLang==='es'?'Info. adicional (No. Factura, nota)':'추가정보 (인보이스 No, 비고)');
   };
 
   wrap.querySelector('.save').onclick = ()=>saveInlineAdd(dateStr, type, wrap);
@@ -640,10 +670,15 @@ async function saveInlineAdd(dateStr, type, wrap){
   const item = wrap.querySelector('.ia-item').value.trim();
   const amount = parseFloat(wrap.querySelector('.ia-amt').value);
   const currency = wrap.querySelector('.ia-cur').value;
+  const invoiceEl = wrap.querySelector('.ia-invoice');
+  const noteEl = wrap.querySelector('.ia-note');
+  const invoice_no = invoiceEl ? invoiceEl.value.trim() : '';
+  const note = noteEl ? noteEl.value.trim() : '';
   if(!item || !amount) return;
-  const {error} = await sb.from('budget_entries').insert({
-    entry_date: dateStr, type, currency, item, amount, created_by: currentUserId()
-  });
+  const payload = {entry_date: dateStr, type, currency, item, amount, created_by: currentUserId()};
+  if(invoice_no) payload.invoice_no = invoice_no;
+  if(note) payload.note = note;
+  const {error} = await sb.from('budget_entries').insert(payload);
   if(error){ alert((curLang==='es'?'Error: ':'오류: ')+error.message); return; }
   await maybeAutoFrequent(item);
   await loadAll();
