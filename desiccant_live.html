@@ -91,31 +91,8 @@ tr:hover td{background:var(--purple-bg);}
 </head>
 <body>
 <div class="wrap">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-    <div>
-      <h1 data-ko="신규 프로젝트" data-es="Nuevos Proyectos">신규 프로젝트</h1>
-      <p class="ts" id="ts" data-ko="데이터 불러오는 중..." data-es="Cargando datos...">데이터 불러오는 중...</p>
-    </div>
-    <button id="settingsBtn" onclick="toggleSettings()" style="border:0.5px solid var(--border);background:var(--surface);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit;color:var(--muted);display:flex;align-items:center;gap:5px;">
-      <span>⚙</span><span data-ko="MOH 설정" data-es="Config. MOH">MOH 설정</span>
-    </button>
-  </div>
-
-  <div id="settingsPanel" style="display:none;background:var(--s1);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;">
-    <div style="font-size:12px;font-weight:600;margin-bottom:10px;" data-ko="MOH 계산 설정" data-es="Configuración de MOH">MOH 계산 설정</div>
-    <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-end;">
-      <div>
-        <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;" data-ko="평균 계산 기간 (개월)" data-es="Período de promedio (meses)">평균 계산 기간 (개월)</label>
-        <input type="number" id="setAvgMonths" min="1" max="12" style="width:70px;padding:6px 8px;border:0.5px solid var(--border);border-radius:6px;font-size:12px;">
-      </div>
-      <div>
-        <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;" data-ko="재주문 기준 (MOH 이 값 미만)" data-es="Umbral de reorden (MOH menor a)">재주문 기준 (MOH 이 값 미만)</label>
-        <input type="number" id="setReorderThreshold" min="1" max="12" style="width:70px;padding:6px 8px;border:0.5px solid var(--border);border-radius:6px;font-size:12px;">
-      </div>
-      <button onclick="saveSettings()" style="background:var(--purple);color:#fff;border:none;border-radius:6px;padding:8px 16px;font-size:12px;cursor:pointer;font-family:inherit;" data-ko="저장" data-es="Guardar">저장</button>
-      <span id="settingsSaved" style="font-size:11px;color:var(--ok-text);display:none;" data-ko="✓ 저장됨" data-es="✓ Guardado">✓ 저장됨</span>
-    </div>
-  </div>
+  <h1 data-ko="신규 프로젝트" data-es="Nuevos Proyectos">신규 프로젝트</h1>
+  <p class="ts" id="ts" data-ko="데이터 불러오는 중..." data-es="Cargando datos...">데이터 불러오는 중...</p>
 
   <div class="sbar loading" id="sbar" data-ko="구글 시트에서 데이터를 불러오는 중..." data-es="Cargando datos de Google Sheets...">구글 시트에서 데이터를 불러오는 중...</div>
 
@@ -154,7 +131,7 @@ tr:hover td{background:var(--purple-bg);}
           <th data-ko="품목" data-es="Artículo">품목</th>
           <th data-ko="단가" data-es="Precio">단가</th>
           <th class="r" data-ko="재고" data-es="Stock">재고</th>
-          <th class="r" data-ko="월평균 출고(최근3개월)" data-es="Prom. Mensual (3m)">월평균 출고(최근3개월)</th>
+          <th class="r" data-ko="월 FORECAST" data-es="Pronóstico Mensual">월 FORECAST</th>
           <th class="r">MOH</th>
           <th data-ko="상태" data-es="Estado">상태</th>
           <th data-ko="거래처" data-es="Cliente">거래처</th>
@@ -185,7 +162,6 @@ tr:hover td{background:var(--purple-bg);}
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="nav.js"></script>
 <script>
 const URL_SUMMARY='https://docs.google.com/spreadsheets/d/e/2PACX-1vRfv4TFloZqAVKyJXAoGCjP5xec3MvPGjTagc1btjwQzKXvICTmREywHrT1wNSl_6JN7vA_gsY2w8kB/pub?gid=417249657&single=true&output=tsv';
@@ -233,46 +209,7 @@ function toNum(v){
 }
 
 let items=[], inRows=[], outRows=[];
-let avgMonths=3, reorderThreshold=3;
-const SURL='https://oezergrrqcinclorwvnk.supabase.co';
-const SKEY='sb_publishable_1eqTksIg-IetXykOBHf0rg_19ourTmF';
-let sb=null;
-try{ sb=window._mexcorSb||supabase.createClient(SURL,SKEY); }catch(e){ console.error('Supabase 초기화 실패:',e); }
-
-async function loadSettings(){
-  if(!sb) return;
-  try{
-    const {data} = await sb.from('desiccant_settings').select('*');
-    (data||[]).forEach(r=>{
-      if(r.key==='avg_months') avgMonths = parseInt(r.value)||3;
-      if(r.key==='reorder_threshold') reorderThreshold = parseInt(r.value)||3;
-    });
-  }catch(e){ console.error('설정 불러오기 실패, 기본값 사용:', e); }
-  document.getElementById('setAvgMonths').value = avgMonths;
-  document.getElementById('setReorderThreshold').value = reorderThreshold;
-}
-
-function toggleSettings(){
-  const panel = document.getElementById('settingsPanel');
-  panel.style.display = panel.style.display==='none' ? 'block' : 'none';
-}
-
-async function saveSettings(){
-  const newAvg = parseInt(document.getElementById('setAvgMonths').value)||3;
-  const newThreshold = parseInt(document.getElementById('setReorderThreshold').value)||3;
-  avgMonths = newAvg; reorderThreshold = newThreshold;
-  if(sb){
-    try{
-      await sb.from('desiccant_settings').upsert({key:'avg_months', value:String(newAvg)}, {onConflict:'key'});
-      await sb.from('desiccant_settings').upsert({key:'reorder_threshold', value:String(newThreshold)}, {onConflict:'key'});
-    }catch(e){ console.error('설정 저장 실패:', e); }
-  }
-  const saved = document.getElementById('settingsSaved');
-  saved.style.display='inline';
-  setTimeout(()=>saved.style.display='none',2000);
-  recomputeItems();
-  renderAll();
-}
+let reorderThreshold=3; // MOH가 이 값 미만이면 재주문 알림 (고정 기준, 예측치는 시트에서 품목별로 입력)
 
 let summaryRaw=[];
 
@@ -285,28 +222,20 @@ function recomputeItems(){
       .reduce((s,x)=>s+toNum(x['UNIT QTY']),0);
     const stock = stockIn - stockOut;
 
-    const now=new Date();
-    const months=[];
-    for(let i=0;i<avgMonths;i++){ const d=new Date(now.getFullYear(),now.getMonth()-i,1); months.push(d.getFullYear()+'-'+(d.getMonth()+1)); }
-    const recentOut = outRows.filter(x=>{
-      if((x['ITEM']||'').trim()!==name) return false;
-      const key = (x['YEAR']||'')+'-'+(x['MES']||'');
-      return months.includes(key);
-    });
-    const avgMonthly = recentOut.reduce((s,x)=>s+toNum(x['UNIT QTY']),0)/avgMonths;
-    const moh = avgMonthly>0 ? (stock/avgMonthly) : null;
+    // 월 FORECAST: 구글시트에 품목별로 직접 입력한 예상 월 소진량 (용접봉 재고 탭이랑 동일한 방식)
+    const forecast = toNum(r['월 FORECAST']||r['FORECAST/월']||r['FORECAST']||r['REORDER POINT']);
+    const moh = forecast>0 ? (stock/forecast) : null;
 
     return {
       no:r['NO']||'', item:name, price:r['PRICE']||'-',
       clientes:r['CLIENTES']||'-', note:r['NOTE']||'',
-      stock, avgMonthly, moh
+      stock, avgMonthly:forecast, moh
     };
   });
 }
 
 async function load(){
   try{
-    await loadSettings();
     const [rs,ri,ro] = await Promise.all([fetch(URL_SUMMARY),fetch(URL_IN),fetch(URL_OUT)]);
     const [ts,ti,to_] = await Promise.all([rs.text(),ri.text(),ro.text()]);
 
@@ -381,7 +310,7 @@ function renderAll(){
   } else {
     alertBox.innerHTML = `<div class="alerts">` + reorders.map(it=>`
       <div class="alert">
-        <div><div class="a-name">${it.item}</div><div class="a-info">${curLang==='es'?'Stock':'재고'} ${it.stock.toLocaleString()} · ${curLang==='es'?'Prom.':'월평균'} ${Math.round(it.avgMonthly).toLocaleString()}</div></div>
+        <div><div class="a-name">${it.item}</div><div class="a-info">${curLang==='es'?'Stock':'재고'} ${it.stock.toLocaleString()} · FORECAST ${Math.round(it.avgMonthly).toLocaleString()}</div></div>
         <div class="a-info">${it.clientes}</div>
         <div class="a-badge">MOH ${it.moh.toFixed(1)}${T().moh}</div>
       </div>`).join('') + `</div>`;
