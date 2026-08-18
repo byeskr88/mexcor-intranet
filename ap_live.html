@@ -63,11 +63,15 @@
   td{padding:8px 10px;border-bottom:0.5px solid var(--border);vertical-align:middle;white-space:nowrap;}
   .row-paid td{background:#f9fafb;color:var(--text-secondary);}
   .row-pending td{background:#fffbf0;}
-  .row-overdue td{background:#fff0f0;}
-  .row-critical td{background:#ffebeb;}
+  .row-approaching td{background:#fff6e0;}
+  .row-overdue-mild td{background:#fff2ea;}
+  .row-overdue td{background:#ffe3e0;}
+  .row-critical td{background:#ffc9c4;}
   .badge{font-size:11px;padding:2px 8px;border-radius:var(--radius);display:inline-block;font-weight:500;}
   .badge-paid,.badge-pagado{background:var(--success-bg);color:var(--success-text);}
   .badge-pending,.badge-pendiente{background:var(--warning-bg);color:var(--warning-text);}
+  .badge-approaching{background:#ffe9b8;color:#8a5a00;}
+  .badge-overdue-mild{background:#ffd9cc;color:#a34a1f;}
   .badge-overdue{background:var(--danger-bg);color:var(--danger-text);}
   .badge-critical{background:var(--danger-text);color:#fff;}
   .loc-badge{font-size:10px;padding:1px 6px;border-radius:4px;font-weight:500;display:inline-block;}
@@ -75,6 +79,8 @@
   .loc-qro{background:#F3E5F5;color:#6A1B9A;}
   .num{text-align:right;}
   .overdue-red{color:var(--danger-text);font-weight:500;}
+  .overdue-mild{color:#a34a1f;font-weight:500;}
+  .overdue-approaching{color:#8a5a00;font-weight:500;}
   .overdue-warn{color:var(--warning-text);font-weight:500;}
   .overdue-critical{color:#fff;background:var(--danger-text);padding:1px 6px;border-radius:4px;font-weight:500;}
 </style>
@@ -349,7 +355,7 @@ function renderSummaryCards(){
   // 현대웰딩
   const hwPend=allData.hw.filter(r=>r['PAYMENT_STATUS']!=='PAID');
   const hwAmt=hwPend.reduce((s,r)=>s+(parseFloat((r['AMOUNT']||'0').replace(/,/g,''))||0),0);
-  const hwCritical=hwPend.filter(r=>{const d=parseInt(r['OVERDUE_DAYS']);return !isNaN(d)&&d>=-3&&d<=0;}).length;
+  const hwCritical=hwPend.filter(r=>{const d=parseInt(r['OVERDUE_DAYS']);return !isNaN(d)&&d>=-3;}).length;
 
   // MKC
   const mkcPend=allData.mkc.filter(r=>r['PAYMENT_STATUS']==='PENDING');
@@ -430,6 +436,17 @@ function sortBy(tab,col){
   applyFilter(tab);
 }
 
+function severityTier(d, isPaid){
+  // d: OVERDUE_DAYS (양수=이미 지남, 음수=아직 안 지남). 지날수록 더 빨갛게.
+  if(isPaid) return {cls:'row-paid', bc:'badge-paid', oc:''};
+  if(isNaN(d)) return {cls:'row-pending', bc:'badge-pending', oc:''};
+  if(d>60) return {cls:'row-critical', bc:'badge-critical', oc:'overdue-critical'};
+  if(d>30) return {cls:'row-overdue', bc:'badge-overdue', oc:'overdue-red'};
+  if(d>0) return {cls:'row-overdue-mild', bc:'badge-overdue-mild', oc:'overdue-mild'};
+  if(d>=-3) return {cls:'row-approaching', bc:'badge-approaching', oc:'overdue-approaching'};
+  return {cls:'row-pending', bc:'badge-pending', oc:''};
+}
+
 function renderTable(tab,rows){
   const tbody=document.getElementById('tbody-'+tab);
   if(rows.length===0){
@@ -458,11 +475,8 @@ function renderTable(tab,rows){
       const s=r['PAYMENT_STATUS']||'';
       const b=r['BUCKET']||'';
       const d=parseInt(r['OVERDUE_DAYS']);
-      const isCritical=!isNaN(d)&&d>=-3&&d<=0&&s!=='PAID';
-      const cls=s==='PAID'?'row-paid':isCritical?'row-critical':(b==='60일초과'||b==='30~60일'?'row-overdue':'row-pending');
-      const bc=s==='PAID'?'badge-paid':isCritical?'badge-critical':(b==='60일초과'||b==='30~60일'?'badge-overdue':'badge-pending');
+      const {cls,bc,oc}=severityTier(d, s==='PAID');
       const od=r['OVERDUE_DAYS']!==''?(d>0?d+T().dOver:(d===0?T().dday:'D'+d)):'-';
-      const oc=isCritical?'overdue-critical':(b==='60일초과'?'overdue-red':(b==='30~60일'||b==='30일이내'?'overdue-warn':''));
       const loc=r['LOC']||'';
       return`<tr class="${cls}">
         <td><span class="loc-badge ${loc==='MTY'?'loc-mty':'loc-qro'}">${fmt(loc)}</span></td>
@@ -482,11 +496,8 @@ function renderTable(tab,rows){
       const s=r['PAYMENT_STATUS']||'';
       const b=r['BUCKET']||'';
       const d=parseInt(r['OVERDUE_DAYS']);
-      const isCritical=!isNaN(d)&&d>=-3&&d<=0&&s!=='PAID';
-      const cls=s==='PAID'?'row-paid':isCritical?'row-critical':(b==='60일초과'||b==='30~60일'?'row-overdue':'row-pending');
-      const bc=s==='PAID'?'badge-paid':isCritical?'badge-critical':(b==='60일초과'||b==='30~60일'?'badge-overdue':'badge-pending');
+      const {cls,bc,oc}=severityTier(d, s==='PAID');
       const od=r['OVERDUE_DAYS']!==undefined&&r['OVERDUE_DAYS']!==''?(d>0?d+T().dOver:(d===0?T().dday:'D'+d)):'-';
-      const oc=isCritical?'overdue-critical':(b==='60일초과'?'overdue-red':(b==='30~60일'||b==='30일이내'?'overdue-warn':''));
       const containers=r['CONTAINERS']&&r['CONTAINERS']!=='-'?r['CONTAINERS']:'-';
       return`<tr class="${cls}">
         <td>${fmt(r['SHIPMODE'])}</td><td>${fmt(r['INVOICE_NO'])}</td>
