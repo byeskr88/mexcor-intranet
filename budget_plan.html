@@ -178,7 +178,7 @@ h1{font-size:20px;font-weight:600;padding:20px 0 4px;}
   <div class="tbl-wrap">
     <table>
       <thead><tr>
-        <th data-ko="날짜" data-es="Fecha">날짜</th>
+        <th style="cursor:pointer;" onclick="toggleLoanSort()"><span data-ko="날짜" data-es="Fecha">날짜</span> <span id="loanSortIcon">↑</span></th>
         <th data-ko="통화" data-es="Moneda">통화</th>
         <th data-ko="구분" data-es="Tipo">구분</th>
         <th class="r" data-ko="금액" data-es="Monto">금액</th>
@@ -276,6 +276,14 @@ async function loadLoans(){
   document.getElementById('loanDate').value = new Date().toISOString().slice(0,10);
 }
 
+let loanSortDesc=false; // 기본: 엑셀이랑 동일한 오름차순(오래된 것부터)
+
+function toggleLoanSort(){
+  loanSortDesc = !loanSortDesc;
+  document.getElementById('loanSortIcon').textContent = loanSortDesc?'↓':'↑';
+  renderLoans();
+}
+
 function renderLoans(){
   let mxnRunning=0, usdRunning=0;
   const rows = loanEntries.map(e=>{
@@ -292,7 +300,8 @@ function renderLoans(){
   const dirLabel = (d)=> d==='MTS_DEPOSIT' ? (curLang==='es'?'MTS Deposita':'MTS 예치') : (curLang==='es'?'RMT Paga':'RMT 상환');
   const dirColor = (d)=> d==='MTS_DEPOSIT' ? 'var(--danger-text)' : 'var(--ok-text)';
 
-  document.getElementById('loanBody').innerHTML = rows.slice().reverse().map(r=>`
+  const displayRows = loanSortDesc ? rows.slice().reverse() : rows;
+  document.getElementById('loanBody').innerHTML = displayRows.map(r=>`
     <tr>
       <td>${r.loan_date}</td>
       <td>${curLabel(r.currency)}</td>
