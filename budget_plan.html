@@ -101,6 +101,12 @@ h1{font-size:20px;font-weight:600;padding:20px 0 4px;}
 <p class="sub" id="lastUpdate">데이터 불러오는 중...</p>
 <div class="status-bar loading" id="statusBox">구글 시트에서 데이터를 불러오는 중...</div>
 
+<div class="bp-tabs">
+  <button class="bp-tab active" onclick="switchTab('budget',this)" data-ko="예산 계획" data-es="Plan de Presupuesto">예산 계획</button>
+  <button class="bp-tab" onclick="switchTab('loan',this)" data-ko="계열사대출" data-es="Préstamo Intercompañía">계열사대출</button>
+</div>
+
+<div id="tab-budget" class="bp-section">
 <div id="mainContent" style="display:none;">
 
   <div class="cards">
@@ -115,12 +121,12 @@ h1{font-size:20px;font-weight:600;padding:20px 0 4px;}
       <span class="adjbtn" onclick="openAdjust('USD')" data-ko="잔고 수정" data-es="Ajustar saldo">잔고 수정</span>
     </div>
     <div class="card">
-      <div class="lbl" data-ko="이번 주 AP" data-es="CxP esta semana">이번 주 AP</div>
-      <div class="val danger" id="weekAP">-</div>
-    </div>
-    <div class="card">
       <div class="lbl" data-ko="이번 주 AR" data-es="CxC esta semana">이번 주 AR</div>
       <div class="val ok" id="weekAR">-</div>
+    </div>
+    <div class="card">
+      <div class="lbl" data-ko="이번 주 AP" data-es="CxP esta semana">이번 주 AP</div>
+      <div class="val danger" id="weekAP">-</div>
     </div>
   </div>
 
@@ -139,6 +145,66 @@ h1{font-size:20px;font-weight:600;padding:20px 0 4px;}
   <div id="nextMonthContainer" style="margin-top:6px;"></div>
 
 </div>
+</div>
+
+<div id="tab-loan" class="bp-section" style="display:none;">
+  <div class="cards">
+    <div class="card" style="border-left:3px solid var(--mxn);">
+      <div class="lbl" data-ko="MXN 대출잔액" data-es="Saldo Préstamo MXN">MXN 대출잔액</div>
+      <div class="val" id="loanBalMXN" style="color:var(--mxn);">-</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:2px;" data-ko="+ 는 MTS→RMT 대여중, - 는 초과상환" data-es="+ = MTS presta a RMT">+ 는 MTS→RMT 대여중</div>
+    </div>
+    <div class="card" style="border-left:3px solid var(--usd);">
+      <div class="lbl" data-ko="USD 대출잔액" data-es="Saldo Préstamo USD">USD 대출잔액</div>
+      <div class="val" id="loanBalUSD" style="color:var(--usd);">-</div>
+    </div>
+  </div>
+
+  <div class="quickadd">
+    <div class="lbl" data-ko="새 거래 추가" data-es="Agregar transacción">새 거래 추가</div>
+    <div class="row" style="grid-template-columns:120px 80px 150px 1fr 90px;">
+      <input type="date" id="loanDate">
+      <select id="loanCur"><option value="MXN">MXN</option><option value="USD">USD</option></select>
+      <select id="loanDir">
+        <option value="MTS_DEPOSIT" data-ko="MTS 예치 (대여)" data-es="MTS Deposita (presta)">MTS 예치 (대여)</option>
+        <option value="RMT_PAYMENT" data-ko="RMT 상환 (갚음)" data-es="RMT Paga (devuelve)">RMT 상환 (갚음)</option>
+      </select>
+      <input type="number" id="loanAmt" placeholder="금액" data-ko-ph="금액" data-es-ph="Monto">
+      <button onclick="addLoanEntry()" data-ko="추가" data-es="Agregar">추가</button>
+    </div>
+  </div>
+
+  <div class="sec-title" data-ko="거래 내역" data-es="Historial">거래 내역</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th data-ko="날짜" data-es="Fecha">날짜</th>
+        <th data-ko="통화" data-es="Moneda">통화</th>
+        <th data-ko="구분" data-es="Tipo">구분</th>
+        <th class="r" data-ko="금액" data-es="Monto">금액</th>
+        <th class="r" data-ko="잔액" data-es="Saldo">잔액</th>
+        <th data-ko="입력자" data-es="Por">입력자</th>
+        <th></th>
+      </tr></thead>
+      <tbody id="loanBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<style>
+.bp-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:16px;}
+.bp-tab{border:none;border-bottom:2.5px solid transparent;background:transparent;padding:9px 18px;font-size:13px;cursor:pointer;font-family:inherit;color:var(--muted);}
+.bp-tab.active{border-bottom-color:var(--navy);color:var(--navy);font-weight:600;}
+.sec-title{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:16px 0 8px;}
+.tbl-wrap{overflow-x:auto;border:0.5px solid var(--border);border-radius:10px;}
+.tbl-wrap table{width:100%;border-collapse:collapse;font-size:12px;}
+.tbl-wrap th{background:#faf9f5;color:var(--muted);font-weight:600;text-align:left;padding:9px 10px;white-space:nowrap;}
+.tbl-wrap th.r,.tbl-wrap td.r{text-align:right;}
+.tbl-wrap td{padding:8px 10px;border-top:0.5px solid var(--border);white-space:nowrap;}
+.tbl-wrap tr:nth-child(odd) td{background:#fbfaf7;}
+.loan-del{color:var(--muted);cursor:pointer;}
+.loan-del:hover{color:var(--danger-text);}
+</style>
 
 <!-- 잔고 수동 수정 모달 -->
 <div class="modal-bg" id="adjustModal" onclick="if(event.target===this)closeAdjust()">
@@ -173,7 +239,7 @@ const T_KO={loading:'데이터 불러오는 중...',syncOk:'✓ 데이터 연동
 const T_ES={loading:'Cargando datos...',syncOk:'✓ Sincronizado',syncFail:m=>'❌ Error — '+m,
   lastUpd:'Última actualización: ',noEntries:'No hay registros',today:'Hoy',cnt:''};
 function T(){ return curLang==='es'?T_ES:T_KO; }
-document.addEventListener('mexcorLangChange',function(e){ curLang=e.detail.lang; renderAll(); });
+document.addEventListener('mexcorLangChange',function(e){ curLang=e.detail.lang; renderAll(); if(loanEntries.length) renderLoans(); });
 
 function _startBudget(user){
   if(!user || !user.user_metadata?.budget){
@@ -183,11 +249,80 @@ function _startBudget(user){
   sb = window._mexcorSb || sb;
   if(!sb){ try{ sb=supabase.createClient(SURL,SKEY); }catch(e){} }
   loadAll();
+  loadLoans();
 }
 if(window._mexcorUser!==undefined){
   _startBudget(window._mexcorUser);
 } else {
   document.addEventListener('mexcorAuthReady', e=>_startBudget(e.detail.user));
+}
+
+function switchTab(id, btn){
+  document.querySelectorAll('.bp-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-budget').style.display = id==='budget' ? '' : 'none';
+  document.getElementById('tab-loan').style.display = id==='loan' ? '' : 'none';
+}
+
+// ===== 계열사대출 =====
+let loanEntries=[];
+
+async function loadLoans(){
+  if(!sb) return;
+  const {data, error} = await sb.from('budget_loans').select('*').order('loan_date',{ascending:true}).order('created_at',{ascending:true});
+  if(error){ console.error('대출 데이터 로드 실패:', error); return; }
+  loanEntries = data||[];
+  renderLoans();
+  document.getElementById('loanDate').value = new Date().toISOString().slice(0,10);
+}
+
+function renderLoans(){
+  let mxnRunning=0, usdRunning=0;
+  const rows = loanEntries.map(e=>{
+    const amt = parseFloat(e.amount);
+    const delta = e.direction==='MTS_DEPOSIT' ? amt : -amt;
+    if(e.currency==='MXN') mxnRunning += delta; else usdRunning += delta;
+    const balance = e.currency==='MXN' ? mxnRunning : usdRunning;
+    return {...e, balance};
+  });
+
+  document.getElementById('loanBalMXN').textContent = '$'+Math.round(mxnRunning).toLocaleString();
+  document.getElementById('loanBalUSD').textContent = '$'+Math.round(usdRunning).toLocaleString();
+
+  const dirLabel = (d)=> d==='MTS_DEPOSIT' ? (curLang==='es'?'MTS Deposita':'MTS 예치') : (curLang==='es'?'RMT Paga':'RMT 상환');
+  const dirColor = (d)=> d==='MTS_DEPOSIT' ? 'var(--danger-text)' : 'var(--ok-text)';
+
+  document.getElementById('loanBody').innerHTML = rows.slice().reverse().map(r=>`
+    <tr>
+      <td>${r.loan_date}</td>
+      <td>${curLabel(r.currency)}</td>
+      <td style="color:${dirColor(r.direction)};font-weight:600;">${dirLabel(r.direction)}</td>
+      <td class="r">$${fmtMoney(r.amount)}</td>
+      <td class="r">$${fmtMoney(r.balance)}</td>
+      <td style="font-size:11px;color:var(--muted);">${escapeHtml(r.created_by||'')}</td>
+      <td><span class="loan-del" onclick="deleteLoanEntry('${r.id}')">✕</span></td>
+    </tr>`).join('') || `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:16px;">${curLang==='es'?'Sin registros':'기록 없음'}</td></tr>`;
+}
+
+async function addLoanEntry(){
+  const loan_date = document.getElementById('loanDate').value;
+  const currency = document.getElementById('loanCur').value;
+  const direction = document.getElementById('loanDir').value;
+  const amount = parseFloat(document.getElementById('loanAmt').value);
+  if(!loan_date || !amount) return;
+  const {error} = await sb.from('budget_loans').insert({
+    loan_date, currency, direction, amount, created_by: currentUserId()
+  });
+  if(error){ alert((curLang==='es'?'Error: ':'오류: ')+error.message); return; }
+  document.getElementById('loanAmt').value='';
+  await loadLoans();
+}
+
+async function deleteLoanEntry(id){
+  if(!confirm(curLang==='es'?'¿Eliminar este registro?':'이 항목을 삭제할까요?')) return;
+  const {error} = await sb.from('budget_loans').delete().eq('id',id);
+  if(error){ alert(error.message); return; }
+  await loadLoans();
 }
 
 function getFxRate(dateStr){
@@ -511,8 +646,8 @@ function buildWeeksHtml(month, autoOpenCurrent){
       <div class="week-grid${openWeeks.has(w.key)?' open':''}">
         <div class="dhead"></div>
         ${days.map((d,i)=>`<div class="dhead${dayKeys[i]===todayStr?' today':''}">${d.getMonth()+1}/${d.getDate()}<br>${dowLabels[i]}</div>`).join('')}
-        <div class="rowlbl">AP</div>${apRow}
         <div class="rowlbl">AR</div>${arRow}
+        <div class="rowlbl">AP</div>${apRow}
         ${hasAdj?`<div class="rowlbl">${curLang==='es'?'Ajuste':'조정'}</div>${adjRow}`:''}
         <div class="rowlbl">${curLang==='es'?'T.C.':'환율'}</div>${fxRow}
         <div class="rowlbl" style="background:var(--navy);color:#fff;">${curLang==='es'?'Total':'총합'}</div>${balRow}
