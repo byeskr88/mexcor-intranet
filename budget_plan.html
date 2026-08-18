@@ -177,15 +177,21 @@ h1{font-size:20px;font-weight:600;padding:20px 0 4px;}
   <div class="sec-title" data-ko="거래 내역" data-es="Historial">거래 내역</div>
   <div class="tbl-wrap">
     <table>
-      <thead><tr>
-        <th style="cursor:pointer;" onclick="toggleLoanSort()"><span data-ko="날짜" data-es="Fecha">날짜</span> <span id="loanSortIcon">↑</span></th>
-        <th data-ko="통화" data-es="Moneda">통화</th>
-        <th data-ko="구분" data-es="Tipo">구분</th>
-        <th class="r" data-ko="금액" data-es="Monto">금액</th>
-        <th class="r" data-ko="잔액" data-es="Saldo">잔액</th>
-        <th data-ko="입력자" data-es="Por">입력자</th>
-        <th></th>
-      </tr></thead>
+      <thead>
+        <tr>
+          <th rowspan="2" style="cursor:pointer;vertical-align:bottom;" onclick="toggleLoanSort()"><span data-ko="날짜" data-es="Fecha">날짜</span> <span id="loanSortIcon">↑</span></th>
+          <th colspan="2" style="text-align:center;background:var(--mxn-bg,#EAF1FB);">LOAN MXN</th>
+          <th rowspan="2" class="r" style="vertical-align:bottom;" data-ko="잔액" data-es="Saldo">잔액</th>
+          <th colspan="2" style="text-align:center;background:#F3E8FB;">LOAN USD</th>
+          <th rowspan="2" class="r" style="vertical-align:bottom;" data-ko="잔액" data-es="Saldo">잔액</th>
+        </tr>
+        <tr>
+          <th class="r" data-ko="MTS 예치" data-es="MTS Deposita">MTS 예치</th>
+          <th class="r" data-ko="RMT 상환" data-es="RMT Paga">RMT 상환</th>
+          <th class="r" data-ko="MTS 예치" data-es="MTS Deposita">MTS 예치</th>
+          <th class="r" data-ko="RMT 상환" data-es="RMT Paga">RMT 상환</th>
+        </tr>
+      </thead>
       <tbody id="loanBody"></tbody>
     </table>
   </div>
@@ -285,31 +291,40 @@ function toggleLoanSort(){
 }
 
 function renderLoans(){
-  let mxnRunning=0, usdRunning=0;
-  const rows = loanEntries.map(e=>{
+  // 1) loanEntries(개별 거래, 날짜 오름차순)를 날짜별로 묶어서 누적잔액 계산
+  const byDate = {}; // date -> {mxnDep,mxnPay,usdDep,usdPay, entries:[]}
+  loanEntries.forEach(e=>{
+    if(!byDate[e.loan_date]) byDate[e.loan_date] = {mxnDep:0,mxnPay:0,usdDep:0,usdPay:0,entries:[]};
+    const g = byDate[e.loan_date];
     const amt = parseFloat(e.amount);
-    const delta = e.direction==='MTS_DEPOSIT' ? amt : -amt;
-    if(e.currency==='MXN') mxnRunning += delta; else usdRunning += delta;
-    const balance = e.currency==='MXN' ? mxnRunning : usdRunning;
-    return {...e, balance};
+    if(e.currency==='MXN'){ if(e.direction==='MTS_DEPOSIT') g.mxnDep+=amt; else g.mxnPay+=amt; }
+    else { if(e.direction==='MTS_DEPOSIT') g.usdDep+=amt; else g.usdPay+=amt; }
+    g.entries.push(e);
+  });
+  const dateKeys = Object.keys(byDate).sort(); // 오름차순 고정 (잔액 누적 계산용)
+
+  let mxnRunning=0, usdRunning=0;
+  const rows = dateKeys.map(date=>{
+    const g = byDate[date];
+    mxnRunning += g.mxnDep - g.mxnPay;
+    usdRunning += g.usdDep - g.usdPay;
+    return {date, ...g, mxnBalance:mxnRunning, usdBalance:usdRunning};
   });
 
   document.getElementById('loanBalMXN').textContent = '$'+Math.round(mxnRunning).toLocaleString();
   document.getElementById('loanBalUSD').textContent = '$'+Math.round(usdRunning).toLocaleString();
 
-  const dirLabel = (d)=> d==='MTS_DEPOSIT' ? (curLang==='es'?'MTS Deposita':'MTS 예치') : (curLang==='es'?'RMT Paga':'RMT 상환');
-  const dirColor = (d)=> d==='MTS_DEPOSIT' ? 'var(--danger-text)' : 'var(--ok-text)';
-
   const displayRows = loanSortDesc ? rows.slice().reverse() : rows;
+  const dash = v => v ? '$'+fmtMoney(v) : '-';
   document.getElementById('loanBody').innerHTML = displayRows.map(r=>`
     <tr>
-      <td>${r.loan_date}</td>
-      <td>${curLabel(r.currency)}</td>
-      <td style="color:${dirColor(r.direction)};font-weight:600;">${dirLabel(r.direction)}</td>
-      <td class="r">$${fmtMoney(r.amount)}</td>
-      <td class="r">$${fmtMoney(r.balance)}</td>
-      <td style="font-size:11px;color:var(--muted);">${escapeHtml(r.created_by||'')}</td>
-      <td><span class="loan-del" onclick="deleteLoanEntry('${r.id}')">✕</span></td>
+      <td>${r.date}</td>
+      <td class="r" style="color:var(--danger-text);">${dash(r.mxnDep)}</td>
+      <td class="r" style="color:var(--ok-text);">${dash(r.mxnPay)}</td>
+      <td class="r" style="font-weight:600;">$${fmtMoney(r.mxnBalance)}</td>
+      <td class="r" style="color:var(--danger-text);">${dash(r.usdDep)}</td>
+      <td class="r" style="color:var(--ok-text);">${dash(r.usdPay)}</td>
+      <td class="r" style="font-weight:600;">$${fmtMoney(r.usdBalance)}</td>
     </tr>`).join('') || `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:16px;">${curLang==='es'?'Sin registros':'기록 없음'}</td></tr>`;
 }
 
