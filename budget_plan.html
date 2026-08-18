@@ -162,7 +162,7 @@ h1{font-size:20px;font-weight:600;padding:20px 0 4px;}
 
   <div class="quickadd">
     <div class="lbl" data-ko="새 거래 추가" data-es="Agregar transacción">새 거래 추가</div>
-    <div class="row" style="grid-template-columns:120px 80px 150px 1fr 90px;">
+    <div class="row" style="grid-template-columns:120px 80px 150px 1fr 1fr 90px;">
       <input type="date" id="loanDate">
       <select id="loanCur"><option value="MXN">MXN</option><option value="USD">USD</option></select>
       <select id="loanDir">
@@ -170,6 +170,7 @@ h1{font-size:20px;font-weight:600;padding:20px 0 4px;}
         <option value="RMT_PAYMENT" data-ko="RMT 상환 (갚음)" data-es="RMT Paga (devuelve)">RMT 상환 (갚음)</option>
       </select>
       <input type="number" id="loanAmt" placeholder="금액" data-ko-ph="금액" data-es-ph="Monto">
+      <input type="text" id="loanNote" placeholder="메모 (예: 6/27 예치분 상환)" data-ko-ph="메모 (예: 6/27 예치분 상환)" data-es-ph="Nota (ej: pago del depósito del 6/27)">
       <button onclick="addLoanEntry()" data-ko="추가" data-es="Agregar">추가</button>
     </div>
   </div>
@@ -209,11 +210,11 @@ h1{font-size:20px;font-weight:600;padding:20px 0 4px;}
 .tbl-wrap td{padding:8px 10px;border-top:0.5px solid var(--border);white-space:nowrap;}
 .tbl-wrap tr:nth-child(odd) td{background:#fbfaf7;}
 .loan-del{color:var(--muted);cursor:pointer;}
-.grp-mxn-head{text-align:center;background:#DCE9FA;color:var(--mxn);font-weight:700;border-left:3px solid var(--mxn);}
-.grp-usd-head{text-align:center;background:#ECDBF7;color:var(--usd);font-weight:700;border-left:3px solid var(--usd);}
+.grp-mxn-head{text-align:center;background:#DCE9FA;color:var(--mxn);font-weight:700;}
+.grp-usd-head{text-align:center;background:#ECDBF7;color:var(--usd);font-weight:700;}
 .grp-mxn{background:#F3F8FE;}
-.grp-usd{background:#FAF3FD;border-left:3px solid var(--usd);}
-.grp-mxn-last{border-right:3px solid var(--mxn);}
+.grp-usd{background:#FAF3FD;}
+.grp-mxn-last{border-right:3px solid var(--navy);}
 #loanBody tr:nth-child(odd) .grp-mxn{background:#EAF2FC;}
 #loanBody tr:nth-child(odd) .grp-usd{background:#F5E9FA;}
 .loan-del:hover{color:var(--danger-text);}
@@ -299,14 +300,14 @@ function toggleLoanSort(){
 
 function renderLoans(){
   // 1) loanEntries(개별 거래, 날짜 오름차순)를 날짜별로 묶어서 누적잔액 계산
-  const byDate = {}; // date -> {mxnDep,mxnPay,usdDep,usdPay, entries:[]}
+  const byDate = {}; // date -> {mxnDep,mxnPay,usdDep,usdPay, notes:{mxnDep:[],mxnPay:[],usdDep:[],usdPay:[]}}
   loanEntries.forEach(e=>{
-    if(!byDate[e.loan_date]) byDate[e.loan_date] = {mxnDep:0,mxnPay:0,usdDep:0,usdPay:0,entries:[]};
+    if(!byDate[e.loan_date]) byDate[e.loan_date] = {mxnDep:0,mxnPay:0,usdDep:0,usdPay:0,notes:{mxnDep:[],mxnPay:[],usdDep:[],usdPay:[]}};
     const g = byDate[e.loan_date];
     const amt = parseFloat(e.amount);
-    if(e.currency==='MXN'){ if(e.direction==='MTS_DEPOSIT') g.mxnDep+=amt; else g.mxnPay+=amt; }
-    else { if(e.direction==='MTS_DEPOSIT') g.usdDep+=amt; else g.usdPay+=amt; }
-    g.entries.push(e);
+    const cat = e.currency==='MXN' ? (e.direction==='MTS_DEPOSIT'?'mxnDep':'mxnPay') : (e.direction==='MTS_DEPOSIT'?'usdDep':'usdPay');
+    g[cat]+=amt;
+    if(e.note) g.notes[cat].push(e.note);
   });
   const dateKeys = Object.keys(byDate).sort(); // 오름차순 고정 (잔액 누적 계산용)
 
@@ -323,14 +324,15 @@ function renderLoans(){
 
   const displayRows = loanSortDesc ? rows.slice().reverse() : rows;
   const dash = v => v ? '$'+fmtMoney(v) : '-';
+  const noteHtml = notes => notes && notes.length ? `<span style="display:block;font-size:9.5px;font-weight:400;color:var(--muted);white-space:normal;">${notes.map(escapeHtml).join(', ')}</span>` : '';
   document.getElementById('loanBody').innerHTML = displayRows.map(r=>`
     <tr>
       <td>${r.date}</td>
-      <td class="r grp-mxn" style="color:var(--danger-text);">${dash(r.mxnDep)}</td>
-      <td class="r grp-mxn" style="color:var(--ok-text);">${dash(r.mxnPay)}</td>
+      <td class="r grp-mxn" style="color:var(--danger-text);">${dash(r.mxnDep)}${noteHtml(r.notes.mxnDep)}</td>
+      <td class="r grp-mxn" style="color:var(--ok-text);">${dash(r.mxnPay)}${noteHtml(r.notes.mxnPay)}</td>
       <td class="r grp-mxn grp-mxn-last" style="font-weight:600;">$${fmtMoney(r.mxnBalance)}</td>
-      <td class="r grp-usd" style="color:var(--danger-text);">${dash(r.usdDep)}</td>
-      <td class="r grp-usd" style="color:var(--ok-text);">${dash(r.usdPay)}</td>
+      <td class="r grp-usd" style="color:var(--danger-text);">${dash(r.usdDep)}${noteHtml(r.notes.usdDep)}</td>
+      <td class="r grp-usd" style="color:var(--ok-text);">${dash(r.usdPay)}${noteHtml(r.notes.usdPay)}</td>
       <td class="r grp-usd" style="font-weight:600;">$${fmtMoney(r.usdBalance)}</td>
     </tr>`).join('') || `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:16px;">${curLang==='es'?'Sin registros':'기록 없음'}</td></tr>`;
 }
@@ -340,12 +342,14 @@ async function addLoanEntry(){
   const currency = document.getElementById('loanCur').value;
   const direction = document.getElementById('loanDir').value;
   const amount = parseFloat(document.getElementById('loanAmt').value);
+  const note = document.getElementById('loanNote').value.trim();
   if(!loan_date || !amount) return;
-  const {error} = await sb.from('budget_loans').insert({
-    loan_date, currency, direction, amount, created_by: currentUserId()
-  });
+  const payload = {loan_date, currency, direction, amount, created_by: currentUserId()};
+  if(note) payload.note = note;
+  const {error} = await sb.from('budget_loans').insert(payload);
   if(error){ alert((curLang==='es'?'Error: ':'오류: ')+error.message); return; }
   document.getElementById('loanAmt').value='';
+  document.getElementById('loanNote').value='';
   await loadLoans();
 }
 
