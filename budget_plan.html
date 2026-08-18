@@ -210,6 +210,8 @@ h1{font-size:20px;font-weight:600;padding:20px 0 4px;}
 .tbl-wrap td{padding:8px 10px;border-top:0.5px solid var(--border);white-space:nowrap;}
 .tbl-wrap tr:nth-child(odd) td{background:#fbfaf7;}
 .loan-del{color:var(--muted);cursor:pointer;}
+.loan-cell{cursor:pointer;}
+.loan-cell:hover{outline:1.5px solid var(--steel);outline-offset:-1.5px;}
 .grp-mxn-head{text-align:center;background:#DCE9FA;color:var(--mxn);font-weight:700;}
 .grp-usd-head{text-align:center;background:#ECDBF7;color:var(--usd);font-weight:700;}
 .grp-mxn{background:#F3F8FE;}
@@ -229,6 +231,17 @@ h1{font-size:20px;font-weight:600;padding:20px 0 4px;}
     <div class="foot">
       <button onclick="closeAdjust()" data-ko="취소" data-es="Cancelar">취소</button>
       <button class="primary" onclick="confirmAdjust()" data-ko="확정" data-es="Confirmar">확정</button>
+    </div>
+  </div>
+</div>
+
+<!-- 계열사대출 셀 내 개별 거래 수정/삭제 모달 -->
+<div class="modal-bg" id="loanCellModal" onclick="if(event.target===this)closeLoanCellModal()">
+  <div class="modal" style="width:420px;">
+    <h2 id="loanCellTitle">-</h2>
+    <div id="loanCellList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;max-height:340px;overflow-y:auto;"></div>
+    <div class="foot">
+      <button onclick="closeLoanCellModal()" data-ko="닫기" data-es="Cerrar">닫기</button>
     </div>
   </div>
 </div>
@@ -328,11 +341,11 @@ function renderLoans(){
   document.getElementById('loanBody').innerHTML = displayRows.map(r=>`
     <tr>
       <td>${r.date}</td>
-      <td class="r grp-mxn" style="color:var(--danger-text);">${dash(r.mxnDep)}${noteHtml(r.notes.mxnDep)}</td>
-      <td class="r grp-mxn" style="color:var(--ok-text);">${dash(r.mxnPay)}${noteHtml(r.notes.mxnPay)}</td>
+      <td ${r.mxnDep?`class="r grp-mxn loan-cell" onclick="openLoanCellModal('${r.date}','mxnDep')"`:'class="r grp-mxn"'} style="color:var(--danger-text);">${dash(r.mxnDep)}${noteHtml(r.notes.mxnDep)}</td>
+      <td ${r.mxnPay?`class="r grp-mxn loan-cell" onclick="openLoanCellModal('${r.date}','mxnPay')"`:'class="r grp-mxn"'} style="color:var(--ok-text);">${dash(r.mxnPay)}${noteHtml(r.notes.mxnPay)}</td>
       <td class="r grp-mxn grp-mxn-last" style="font-weight:600;">$${fmtMoney(r.mxnBalance)}</td>
-      <td class="r grp-usd" style="color:var(--danger-text);">${dash(r.usdDep)}${noteHtml(r.notes.usdDep)}</td>
-      <td class="r grp-usd" style="color:var(--ok-text);">${dash(r.usdPay)}${noteHtml(r.notes.usdPay)}</td>
+      <td ${r.usdDep?`class="r grp-usd loan-cell" onclick="openLoanCellModal('${r.date}','usdDep')"`:'class="r grp-usd"'} style="color:var(--danger-text);">${dash(r.usdDep)}${noteHtml(r.notes.usdDep)}</td>
+      <td ${r.usdPay?`class="r grp-usd loan-cell" onclick="openLoanCellModal('${r.date}','usdPay')"`:'class="r grp-usd"'} style="color:var(--ok-text);">${dash(r.usdPay)}${noteHtml(r.notes.usdPay)}</td>
       <td class="r grp-usd" style="font-weight:600;">$${fmtMoney(r.usdBalance)}</td>
     </tr>`).join('') || `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:16px;">${curLang==='es'?'Sin registros':'기록 없음'}</td></tr>`;
 }
@@ -358,6 +371,61 @@ async function deleteLoanEntry(id){
   const {error} = await sb.from('budget_loans').delete().eq('id',id);
   if(error){ alert(error.message); return; }
   await loadLoans();
+}
+
+// ===== 셀 클릭 -> 개별 거래 수정/취소(삭제) 모달 =====
+const LOAN_CAT_MAP = {
+  mxnDep:{currency:'MXN',direction:'MTS_DEPOSIT'},
+  mxnPay:{currency:'MXN',direction:'RMT_PAYMENT'},
+  usdDep:{currency:'USD',direction:'MTS_DEPOSIT'},
+  usdPay:{currency:'USD',direction:'RMT_PAYMENT'},
+};
+const LOAN_CAT_LABEL_KO = {mxnDep:'MXN · MTS 예치',mxnPay:'MXN · RMT 상환',usdDep:'USD · MTS 예치',usdPay:'USD · RMT 상환'};
+const LOAN_CAT_LABEL_ES = {mxnDep:'MXN · MTS Deposita',mxnPay:'MXN · RMT Paga',usdDep:'USD · MTS Deposita',usdPay:'USD · RMT Paga'};
+
+function openLoanCellModal(date, cat){
+  const {currency,direction} = LOAN_CAT_MAP[cat];
+  const matched = loanEntries.filter(e=>e.loan_date===date && e.currency===currency && e.direction===direction);
+  document.getElementById('loanCellTitle').textContent = date+' · '+(curLang==='es'?LOAN_CAT_LABEL_ES[cat]:LOAN_CAT_LABEL_KO[cat]);
+  renderLoanCellList(matched);
+  document.getElementById('loanCellModal').style.display='flex';
+}
+function closeLoanCellModal(){
+  document.getElementById('loanCellModal').style.display='none';
+}
+
+function renderLoanCellList(entries){
+  document.getElementById('loanCellList').innerHTML = entries.map(e=>`
+    <div class="lc-row" style="border:0.5px solid var(--border);border-radius:8px;padding:10px;">
+      <div style="display:flex;gap:8px;margin-bottom:6px;">
+        <input type="number" class="lc-amt" value="${e.amount}" style="flex:1;">
+        <button class="lc-save" onclick="saveLoanCellEntry('${e.id}',this)" style="background:var(--navy);color:#fff;border:none;border-radius:6px;padding:0 12px;cursor:pointer;">${curLang==='es'?'Guardar':'저장'}</button>
+        <button class="lc-del" onclick="deleteLoanCellEntry('${e.id}')" style="background:var(--danger-bg);color:var(--danger-text);border:none;border-radius:6px;padding:0 12px;cursor:pointer;">${curLang==='es'?'Cancelar':'취소'}</button>
+      </div>
+      <input type="text" class="lc-note" value="${escapeHtml(e.note||'')}" placeholder="${curLang==='es'?'Nota':'메모'}" style="width:100%;">
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;">${escapeHtml(e.created_by||'')}${e.updated_by?' · '+(curLang==='es'?'editado por ':'수정: ')+escapeHtml(e.updated_by):''}</div>
+    </div>`).join('') || `<div style="text-align:center;color:var(--muted);font-size:12px;padding:20px;">${curLang==='es'?'Sin registros':'기록 없음'}</div>`;
+}
+
+async function saveLoanCellEntry(id, btn){
+  const row = btn.closest('.lc-row');
+  const amount = parseFloat(row.querySelector('.lc-amt').value);
+  const note = row.querySelector('.lc-note').value.trim();
+  if(!amount) return;
+  const {error} = await sb.from('budget_loans').update({
+    amount, note: note||null, updated_by: currentUserId(), updated_at: new Date().toISOString()
+  }).eq('id', id);
+  if(error){ alert((curLang==='es'?'Error: ':'오류: ')+error.message); return; }
+  await loadLoans();
+  closeLoanCellModal();
+}
+
+async function deleteLoanCellEntry(id){
+  if(!confirm(curLang==='es'?'¿Cancelar esta transacción?':'이 거래를 취소(삭제)할까요?')) return;
+  const {error} = await sb.from('budget_loans').delete().eq('id',id);
+  if(error){ alert(error.message); return; }
+  await loadLoans();
+  closeLoanCellModal();
 }
 
 function getFxRate(dateStr){
