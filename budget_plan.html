@@ -341,11 +341,11 @@ function renderLoans(){
   document.getElementById('loanBody').innerHTML = displayRows.map(r=>`
     <tr>
       <td>${r.date}</td>
-      <td ${r.mxnDep?`class="r grp-mxn loan-cell" onclick="openLoanCellModal('${r.date}','mxnDep')"`:'class="r grp-mxn"'} style="color:var(--danger-text);">${dash(r.mxnDep)}${noteHtml(r.notes.mxnDep)}</td>
-      <td ${r.mxnPay?`class="r grp-mxn loan-cell" onclick="openLoanCellModal('${r.date}','mxnPay')"`:'class="r grp-mxn"'} style="color:var(--ok-text);">${dash(r.mxnPay)}${noteHtml(r.notes.mxnPay)}</td>
+      <td class="r grp-mxn loan-cell" onclick="openLoanCellModal('${r.date}','mxnDep')" style="color:var(--danger-text);">${dash(r.mxnDep)}${noteHtml(r.notes.mxnDep)}</td>
+      <td class="r grp-mxn loan-cell" onclick="openLoanCellModal('${r.date}','mxnPay')" style="color:var(--ok-text);">${dash(r.mxnPay)}${noteHtml(r.notes.mxnPay)}</td>
       <td class="r grp-mxn grp-mxn-last" style="font-weight:600;">$${fmtMoney(r.mxnBalance)}</td>
-      <td ${r.usdDep?`class="r grp-usd loan-cell" onclick="openLoanCellModal('${r.date}','usdDep')"`:'class="r grp-usd"'} style="color:var(--danger-text);">${dash(r.usdDep)}${noteHtml(r.notes.usdDep)}</td>
-      <td ${r.usdPay?`class="r grp-usd loan-cell" onclick="openLoanCellModal('${r.date}','usdPay')"`:'class="r grp-usd"'} style="color:var(--ok-text);">${dash(r.usdPay)}${noteHtml(r.notes.usdPay)}</td>
+      <td class="r grp-usd loan-cell" onclick="openLoanCellModal('${r.date}','usdDep')" style="color:var(--danger-text);">${dash(r.usdDep)}${noteHtml(r.notes.usdDep)}</td>
+      <td class="r grp-usd loan-cell" onclick="openLoanCellModal('${r.date}','usdPay')" style="color:var(--ok-text);">${dash(r.usdPay)}${noteHtml(r.notes.usdPay)}</td>
       <td class="r grp-usd" style="font-weight:600;">$${fmtMoney(r.usdBalance)}</td>
     </tr>`).join('') || `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:16px;">${curLang==='es'?'Sin registros':'기록 없음'}</td></tr>`;
 }
@@ -383,7 +383,10 @@ const LOAN_CAT_MAP = {
 const LOAN_CAT_LABEL_KO = {mxnDep:'MXN · MTS 예치',mxnPay:'MXN · RMT 상환',usdDep:'USD · MTS 예치',usdPay:'USD · RMT 상환'};
 const LOAN_CAT_LABEL_ES = {mxnDep:'MXN · MTS Deposita',mxnPay:'MXN · RMT Paga',usdDep:'USD · MTS Deposita',usdPay:'USD · RMT Paga'};
 
+let loanCellCurrent = {date:null, cat:null};
+
 function openLoanCellModal(date, cat){
+  loanCellCurrent = {date, cat};
   const {currency,direction} = LOAN_CAT_MAP[cat];
   const matched = loanEntries.filter(e=>e.loan_date===date && e.currency===currency && e.direction===direction);
   document.getElementById('loanCellTitle').textContent = date+' · '+(curLang==='es'?LOAN_CAT_LABEL_ES[cat]:LOAN_CAT_LABEL_KO[cat]);
@@ -395,16 +398,41 @@ function closeLoanCellModal(){
 }
 
 function renderLoanCellList(entries){
-  document.getElementById('loanCellList').innerHTML = entries.map(e=>`
+  const existingHtml = entries.map(e=>`
     <div class="lc-row" style="border:0.5px solid var(--border);border-radius:8px;padding:10px;">
       <div style="display:flex;gap:8px;margin-bottom:6px;">
         <input type="number" class="lc-amt" value="${e.amount}" style="flex:1;">
         <button class="lc-save" onclick="saveLoanCellEntry('${e.id}',this)" style="background:var(--navy);color:#fff;border:none;border-radius:6px;padding:0 12px;cursor:pointer;">${curLang==='es'?'Guardar':'저장'}</button>
-        <button class="lc-del" onclick="deleteLoanCellEntry('${e.id}')" style="background:var(--danger-bg);color:var(--danger-text);border:none;border-radius:6px;padding:0 12px;cursor:pointer;">${curLang==='es'?'Cancelar':'취소'}</button>
+        <button class="lc-del" onclick="deleteLoanCellEntry('${e.id}')" style="background:var(--danger-bg);color:var(--danger-text);border:none;border-radius:6px;padding:0 12px;cursor:pointer;">${curLang==='es'?'Eliminar':'삭제'}</button>
       </div>
       <input type="text" class="lc-note" value="${escapeHtml(e.note||'')}" placeholder="${curLang==='es'?'Nota':'메모'}" style="width:100%;">
       <div style="font-size:10px;color:var(--muted);margin-top:4px;">${escapeHtml(e.created_by||'')}${e.updated_by?' · '+(curLang==='es'?'editado por ':'수정: ')+escapeHtml(e.updated_by):''}</div>
-    </div>`).join('') || `<div style="text-align:center;color:var(--muted);font-size:12px;padding:20px;">${curLang==='es'?'Sin registros':'기록 없음'}</div>`;
+    </div>`).join('');
+  const emptyHtml = entries.length ? '' : `<div style="text-align:center;color:var(--muted);font-size:12px;padding:12px 0;">${curLang==='es'?'Sin registros todavía':'아직 기록 없음'}</div>`;
+  const addHtml = `
+    <div class="lc-row" style="border:1px dashed var(--steel);border-radius:8px;padding:10px;">
+      <div style="font-size:11px;color:var(--steel);font-weight:600;margin-bottom:6px;">+ ${curLang==='es'?'Agregar transacción nueva':'새 거래 추가'}</div>
+      <div style="display:flex;gap:8px;margin-bottom:6px;">
+        <input type="number" class="lc-new-amt" placeholder="${curLang==='es'?'Monto':'금액'}" style="flex:1;">
+        <button onclick="addLoanCellEntry()" style="background:var(--steel);color:#fff;border:none;border-radius:6px;padding:0 12px;cursor:pointer;">${curLang==='es'?'Agregar':'추가'}</button>
+      </div>
+      <input type="text" class="lc-new-note" placeholder="${curLang==='es'?'Nota (opcional)':'메모 (선택)'}" style="width:100%;">
+    </div>`;
+  document.getElementById('loanCellList').innerHTML = existingHtml + emptyHtml + addHtml;
+}
+
+async function addLoanCellEntry(){
+  const {date, cat} = loanCellCurrent;
+  const {currency, direction} = LOAN_CAT_MAP[cat];
+  const amount = parseFloat(document.querySelector('.lc-new-amt').value);
+  const note = document.querySelector('.lc-new-note').value.trim();
+  if(!amount) return;
+  const payload = {loan_date:date, currency, direction, amount, created_by: currentUserId()};
+  if(note) payload.note = note;
+  const {error} = await sb.from('budget_loans').insert(payload);
+  if(error){ alert((curLang==='es'?'Error: ':'오류: ')+error.message); return; }
+  await loadLoans();
+  openLoanCellModal(date, cat); // 모달 유지하면서 목록만 새로고침
 }
 
 async function saveLoanCellEntry(id, btn){
