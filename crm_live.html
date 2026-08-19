@@ -366,12 +366,12 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
       <div class="dp-section-title" data-ko="단계 · 우선순위" data-es="Etapa · Prioridad">단계 · 우선순위</div>
       <div class="stage-row">
         <select class="stage-select" id="dpStageSelect" onchange="changeStage(this.value)">
-          <option value="active">Active</option>
-          <option value="prospect">Prospect</option>
-          <option value="qualified">Qualified</option>
-          <option value="proposal">Proposal</option>
-          <option value="negotiation">Negotiation</option>
-          <option value="won">Won ✓</option>
+          <option value="prospect" data-ko="잠재고객" data-es="Prospecto">잠재고객</option>
+          <option value="qualified" data-ko="검증됨" data-es="Calificado">검증됨</option>
+          <option value="proposal" data-ko="제안" data-es="Propuesta">제안</option>
+          <option value="negotiation" data-ko="협상중" data-es="Negociación">협상중</option>
+          <option value="active" data-ko="활성" data-es="Activo">활성</option>
+          <option value="won" data-ko="성사 ✓" data-es="Ganado ✓">성사 ✓</option>
           <option value="cancelled" data-ko="취소/드랍 ✗" data-es="Cancelado ✗">취소/드랍 ✗</option>
         </select>
         <select id="dpPriority" onchange="changePriority(this.value)" style="padding:5px 8px;font-size:11px;border:0.5px solid var(--border);border-radius:var(--r);font-family:inherit;background:var(--surface);">
@@ -479,12 +479,13 @@ async function sbWrite(promise){
 }
 
 const STAGES=[
-  {id:'active',label:'Active',col:'col-active',color:'var(--ok)'},
-  {id:'prospect',label:'Prospect',col:'col-prospect',color:'var(--s2)'},
-  {id:'qualified',label:'Qualified',col:'col-qualified',color:'var(--blue)'},
-  {id:'proposal',label:'Proposal',col:'col-proposal',color:'var(--purple)'},
-  {id:'negotiation',label:'Negotiation',col:'col-negotiation',color:'var(--warn)'},
+  {id:'prospect',label:'Prospect',labelKo:'잠재고객',labelEs:'Prospecto',col:'col-prospect',color:'var(--s2)'},
+  {id:'qualified',label:'Qualified',labelKo:'검증됨',labelEs:'Calificado',col:'col-qualified',color:'var(--blue)'},
+  {id:'proposal',label:'Proposal',labelKo:'제안',labelEs:'Propuesta',col:'col-proposal',color:'var(--purple)'},
+  {id:'negotiation',label:'Negotiation',labelKo:'협상중',labelEs:'Negociación',col:'col-negotiation',color:'var(--warn)'},
+  {id:'active',label:'Active',labelKo:'활성',labelEs:'Activo',col:'col-active',color:'var(--ok)'},
 ];
+function stageLabel(st){ return curLang==='es'?st.labelEs:st.labelKo; }
 const CANCEL_STAGE={id:'cancelled',label:'취소/드랍',labelEs:'Cancelado',col:'col-cancelled',color:'var(--danger)'};
 let pendingCancelId=null;
 
@@ -547,7 +548,7 @@ function renderPipeline(){
     const val=cards.reduce((sum,a)=>sum+(a.expected_value||0),0);
     const pct=Math.round(val/maxVal*100);
     return `<div class="pb-col">
-      <div class="pb-label">${s.label}</div>
+      <div class="pb-label">${stageLabel(s)}</div>
       <div class="pb-track"><div class="pb-fill" style="width:${pct}%;background:${s.color};"></div></div>
       <div class="pb-val">$${val.toLocaleString()}</div>
       <div class="pb-cnt">${cards.length}${T().company}</div>
@@ -586,7 +587,7 @@ function renderAll(){
     col.className=`col ${st.col}`;
     col.dataset.stage=st.id;
     col.innerHTML=`<div class="col-head">
-      <span class="col-name">${st.label}</span>
+      <span class="col-name">${stageLabel(st)}</span>
       <div class="col-meta">
         <span class="col-cnt">${cards.length}</span>
         ${stageVal>0?`<span class="col-val">$${(stageVal/1000).toFixed(0)}K</span>`:''}
@@ -727,7 +728,8 @@ function setupDrop(col){
     if(!acc||acc.stage===newStage) return;
     if(newStage==='cancelled'){ openCancelModal(id); return; }
     if(!await sbWrite(sb.from('accounts').update({stage:newStage,updated_at:new Date()}).eq('id',id))) return;
-    showToast(`${acc.name} → ${STAGES.find(s=>s.id===newStage)?.label}`);
+    const _st=STAGES.find(s=>s.id===newStage);
+    showToast(`${acc.name} → ${_st?stageLabel(_st):newStage}`);
     await loadAll();
     if(selectedId===id) openDetail(id);
   };
@@ -852,7 +854,8 @@ async function changeStage(v){
     return;
   }
   if(!await sbWrite(sb.from('accounts').update({stage:v,updated_at:new Date()}).eq('id',selectedId))) return;
-  showToast(`${a.name} → ${STAGES.find(s=>s.id===v)?.label||v}`);
+  const _st2=STAGES.find(s=>s.id===v);
+  showToast(`${a.name} → ${_st2?stageLabel(_st2):v}`);
   await loadAll();
   document.getElementById('dpSub').textContent=(a.industry||'-')+' · '+(a.location||'-');
 }
