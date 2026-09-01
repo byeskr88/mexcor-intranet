@@ -107,6 +107,7 @@ tr:nth-child(odd) td{background:#fbfaf7;}
       <div class="sub" id="weekLabel">불러오는 중...</div>
     </div>
     <div>
+      <select id="weekSelector" onchange="onWeekSelect(this.value)"></select>
       <button class="btn-pdf" onclick="window.print()"><span>⬇</span>PDF 다운로드</button>
     </div>
   </div>
@@ -220,6 +221,23 @@ async function tsvObj(url){
     const obj={}; hdr.forEach((h,i)=>obj[h]=(l[i]||'').trim()); return obj;
   });
 }
+// 제목행이 위에 붙어있는 시트(방습제 시트 등)를 위해 실제 헤더 행을 찾아서 파싱
+function normHeader(h){ return h.trim().replace(/\s+/g,' '); }
+async function tsvObjSmart(url, headerMustInclude){
+  const r=await fetch(url);
+  if(!r.ok) throw new Error('fetch fail '+r.status);
+  const text=await r.text();
+  const rows=text.replace(/\r/g,'').trim().split('\n').map(l=>l.split('\t'));
+  let headerIdx=-1;
+  for(let i=0;i<rows.length;i++){
+    if(rows[i].some(c=>normHeader(c)===headerMustInclude)){ headerIdx=i; break; }
+  }
+  if(headerIdx===-1) return [];
+  const hdr=rows[headerIdx].map(h=>normHeader(h));
+  return rows.slice(headerIdx+1).filter(l=>l.some(v=>v&&v.trim())).map(l=>{
+    const obj={}; hdr.forEach((h,i)=>{ if(h) obj[h]=(l[i]||'').trim(); }); return obj;
+  });
+}
 async function tsvRaw(url){
   const r=await fetch(url);
   if(!r.ok) throw new Error('fetch fail '+r.status);
@@ -321,19 +339,33 @@ async function load(){
   }catch(e){errs.push('매출:'+e.message);}
 
   // ===== MTY/QRO 출고 (이번 주) =====
+  function byUnitType(rows){
+    const drum=rows.filter(r=>(r[7]||'').toUpperCase().includes('DRUM')).reduce((s,r)=>s+toN(r[8]),0);
+    const spool=rows.filter(r=>(r[7]||'').toUpperCase().includes('SPOOL')).reduce((s,r)=>s+toN(r[8]),0);
+    const other=rows.filter(r=>{const u=(r[7]||'').toUpperCase();return !u.includes('DRUM')&&!u.includes('SPOOL');}).reduce((s,r)=>s+toN(r[8]),0);
+    return {drum,spool,other};
+  }
   try{
     const outRows=await tsvRaw(BASE.replace('{G}',GIDS.out_mty));
     const rows=outRows.data.filter(r=>r[3]||r[1]);
     const thisWeek=rows.filter(r=>inWeek(r[5],mon,sat));
-    const totalQty=thisWeek.reduce((s,r)=>s+toN(r[8]),0);
-    document.getElementById('kpiMtyOut').textContent=totalQty>0?totalQty.toLocaleString()+'개':'0건';
+    const {drum,spool,other}=byUnitType(thisWeek);
+    const parts=[];
+    if(drum) parts.push(drum.toLocaleString()+'드럼');
+    if(spool) parts.push(spool.toLocaleString()+'스풀');
+    if(other) parts.push(other.toLocaleString()+'개');
+    document.getElementById('kpiMtyOut').textContent=parts.length?parts.join(' / '):'출고 없음';
   }catch(e){errs.push('MTY출고:'+e.message);}
   try{
     const outRowsQ=await tsvRaw(BASE.replace('{G}',GIDS.out_qro));
     const rowsQ=outRowsQ.data.filter(r=>r[3]||r[1]);
     const thisWeekQ=rowsQ.filter(r=>inWeek(r[5],mon,sat));
-    const totalQtyQ=thisWeekQ.reduce((s,r)=>s+toN(r[8]),0);
-    document.getElementById('kpiQroOut').textContent=totalQtyQ>0?totalQtyQ.toLocaleString()+'개':'0건';
+    const {drum,spool,other}=byUnitType(thisWeekQ);
+    const parts=[];
+    if(drum) parts.push(drum.toLocaleString()+'드럼');
+    if(spool) parts.push(spool.toLocaleString()+'스풀');
+    if(other) parts.push(other.toLocaleString()+'개');
+    document.getElementById('kpiQroOut').textContent=parts.length?parts.join(' / '):'출고 없음';
   }catch(e){errs.push('QRO출고:'+e.message);}
 
   // ===== AR =====
@@ -472,9 +504,9 @@ async function load(){
 
   // ===== 방습제 =====
   try{
-    const summary=await tsvObj(DESICCANT_SUMMARY);
-    const inRows=await tsvObj(DESICCANT_IN);
-    const outRows=await tsvObj(DESICCANT_OUT);
+    const summary=await tsvObjSmart(DESICCANT_SUMMARY,'ITEM');
+    const inRows=await tsvObjSmart(DESICCANT_IN,'ITEM');
+    const outRows=await tsvObjSmart(DESICCANT_OUT,'ITEM');
     const now=new Date();
     const months=[]; for(let i=0;i<3;i++){ const d=new Date(now.getFullYear(),now.getMonth()-i,1); months.push(d.getFullYear()+'-'+(d.getMonth()+1)); }
     const items=summary.filter(r=>r['ITEM']).map(r=>{
@@ -517,6 +549,48 @@ async function load(){
     document.getElementById('statusBox').textContent='✓ 전체 데이터 연동 성공';
   }
   document.getElementById('main').style.display='block';
+
+  // 이번 주 스냅샷 자동 저장 (나중에 주가 지나도 그때 내용을 다시 볼 수 있게)
+  if(sb){
+    try{
+      const snapshotHtml=document.getElementById('main').innerHTML;
+      await sb.from('weekly_report_snapshots').upsert(
+        {week_key:weekKey(), html:snapshotHtml, updated_at:new Date().toISOString()},
+        {onConflict:'week_key'}
+      );
+    }catch(e){ console.error('스냅샷 저장 실패:', e); }
+  }
+  await populateWeekSelector();
+}
+
+async function populateWeekSelector(){
+  const sel=document.getElementById('weekSelector');
+  if(!sb){ sel.innerHTML='<option value="current">이번 주</option>'; return; }
+  const {data}=await sb.from('weekly_report_snapshots').select('week_key').order('week_key',{ascending:false});
+  const curKey=weekKey();
+  const pastKeys=(data||[]).map(r=>r.week_key).filter(k=>k!==curKey);
+  const opts=['<option value="current">이번 주 (실시간)</option>']
+    .concat(pastKeys.map(k=>`<option value="${k}">${k} 주차</option>`));
+  sel.innerHTML=opts.join('');
+  sel.value='current';
+}
+
+async function onWeekSelect(val){
+  if(val==='current'){ load(); return; }
+  if(!sb) return;
+  document.getElementById('statusBox').className='status-bar loading';
+  document.getElementById('statusBox').textContent='저장된 보고서 불러오는 중...';
+  const {data,error}=await sb.from('weekly_report_snapshots').select('*').eq('week_key',val).maybeSingle();
+  if(error||!data){
+    document.getElementById('statusBox').className='status-bar err';
+    document.getElementById('statusBox').textContent='해당 주차 저장 기록을 찾을 수 없어요';
+    return;
+  }
+  document.getElementById('main').innerHTML=data.html;
+  document.getElementById('main').style.display='block';
+  document.getElementById('weekLabel').textContent=`${val} 주차 (저장된 기록 · ${new Date(data.updated_at).toLocaleString('ko-KR')} 기준)`;
+  document.getElementById('statusBox').className='status-bar ok';
+  document.getElementById('statusBox').textContent='✓ 저장된 보고서 (과거 기록, 실시간 데이터 아님)';
 }
 
 // ===== 이번 주 특이사항 / 신규프로젝트 (Supabase 저장, 둘 다 같은 테이블의 section으로 구분) =====
