@@ -770,7 +770,7 @@ function buildWeeksHtml(month, autoOpenCurrent){
     const totalCount = weekItems.filter(e=>e.type!=='ADJUSTMENT').length;
 
     return `<div class="week-block${isCurrentWeek?' current':''}">
-      <div class="week-head" onclick="toggleWeek('${w.key}')">
+      <div class="week-head" onclick="toggleWeek('${w.key}')" ondragover="onWeekHeadDragOver(event,'${w.key}')">
         <span>${fmt(w.start)} — ${fmt(w.end)}${isFutureWeek?(curLang==='es'?' · próxima':' · 예정'):''}${isCurrentWeek?`<span class="curbadge">${curLang==='es'?'ESTA SEMANA':'이번 주'}</span>`:''}</span>
         <span class="meta">${totalCount}${T().cnt}</span>
       </div>
@@ -999,6 +999,28 @@ function onEntryDragStart(ev, id){
 function onEntryDragEnd(ev){
   ev.currentTarget.classList.remove('dragging');
   dragEntryId=null; dragEntryType=null;
+  if(weekHoverTimer){ clearTimeout(weekHoverTimer); weekHoverTimer=null; }
+  weekHoverKey=null;
+}
+
+// 드래그 중 접힌 주 헤더 위에 잠깐 머무르면 자동으로 펼침
+let weekHoverTimer=null, weekHoverKey=null;
+function onWeekHeadDragOver(ev, weekKey){
+  if(!dragEntryId) return; // 드래그 중이 아니면 무시
+  ev.preventDefault();
+  if(openWeeks.has(weekKey)) return; // 이미 펼쳐져 있으면 할 일 없음
+  if(weekHoverKey===weekKey) return; // 이미 타이머 걸려있음
+  if(weekHoverTimer) clearTimeout(weekHoverTimer);
+  weekHoverKey = weekKey;
+  weekHoverTimer = setTimeout(()=>{
+    openWeeks.add(weekKey);
+    document.querySelectorAll('.week-head').forEach(head=>{
+      if(head.getAttribute('onclick')===`toggleWeek('${weekKey}')`){
+        head.nextElementSibling.classList.add('open');
+      }
+    });
+    weekHoverTimer=null; weekHoverKey=null;
+  }, 500);
 }
 function onDayDragOver(ev, cellEl){
   if(cellEl.dataset.type!==dragEntryType) return; // AP는 AP 칸에만, AR은 AR 칸에만
