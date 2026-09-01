@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>주간보고 — 시안</title>
+<style>
+:root{
+  --bg:#f5f4f0;--surface:#fff;--s1:#f1efe8;--s2:#e8e6de;
+  --border:#e2e0d8;--text:#1f1e1c;--muted:#5f5e5a;--hint:#8a8880;
+  --ok:#1D9E75;--ok-bg:#E1F5EE;--ok-text:#085041;
+  --warn:#BA7517;--warn-bg:#FAEEDA;--warn-text:#854F0B;
+  --danger:#A32D2D;--danger-bg:#FCEBEB;--danger-text:#791F1F;
+  --blue:#2a78d6;--blue-bg:#E6F1FB;--blue-text:#0C447C;
+  --purple:#534AB7;--purple-bg:#EEEDFE;--purple-text:#3C3489;
+  --r:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text);padding:24px;}
+.wrap{background:var(--surface);border:0.5px solid var(--border);border-radius:12px;padding:24px;max-width:980px;margin:0 auto;}
+.banner{background:var(--warn-bg);color:var(--warn-text);font-size:12px;padding:8px 16px;border-radius:8px;margin-bottom:20px;text-align:center;}
+
+.head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;padding-bottom:16px;border-bottom:0.5px solid var(--border);}
+.head h1{font-size:19px;font-weight:600;margin-bottom:4px;}
+.head .sub{font-size:12px;color:var(--hint);}
+.head select{padding:6px 10px;border:0.5px solid var(--border);border-radius:var(--r);font-size:12px;background:var(--surface);margin-right:8px;}
+.btn-pdf{background:var(--text);color:#fff;border:none;border-radius:var(--r);padding:9px 16px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit;}
+.btn-pdf:hover{background:#333;}
+
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:24px;}
+.kpi{background:var(--s1);border-radius:var(--r);padding:12px;}
+.kpi .lbl{font-size:10.5px;color:var(--muted);margin-bottom:4px;}
+.kpi .val{font-size:19px;font-weight:600;}
+
+.sec{margin-bottom:22px;}
+.sec-title{font-size:13px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px;padding-bottom:6px;border-bottom:1px solid var(--s2);}
+.sec-badge{font-size:10px;background:var(--blue-bg);color:var(--blue-text);padding:2px 7px;border-radius:10px;font-weight:600;margin-left:auto;}
+
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{text-align:left;padding:6px 8px;background:var(--s1);color:var(--muted);font-weight:600;}
+th.r,td.r{text-align:right;}
+td{padding:7px 8px;border-top:0.5px solid var(--border);}
+
+.list-item{display:flex;justify-content:space-between;padding:7px 0;border-top:0.5px solid var(--border);font-size:12px;}
+.list-item:first-child{border-top:none;}
+.badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;}
+.badge-danger{background:var(--danger-bg);color:var(--danger-text);}
+.badge-warn{background:var(--warn-bg);color:var(--warn-text);}
+.badge-ok{background:var(--ok-bg);color:var(--ok-text);}
+
+.comment-box textarea{width:100%;padding:10px 12px;border:0.5px solid var(--border);border-radius:var(--r);font-size:13px;font-family:inherit;resize:vertical;}
+.comment-box{background:var(--s1);border-radius:var(--r);padding:14px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="banner">⚠ 이 화면은 시안입니다 — 숫자는 예시이고, 실제 데이터 연결 전 레이아웃 확인용이에요</div>
+
+  <div class="head">
+    <div>
+      <h1>주간보고</h1>
+      <div class="sub">2026년 8월 3주차 (8/17 ~ 8/22) · 자동 수집 8/17 오전 9:32</div>
+    </div>
+    <div>
+      <select><option>2026년 8월 3주차</option><option>2026년 8월 2주차</option></select>
+      <button class="btn-pdf">⬇ PDF 다운로드</button>
+    </div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="lbl">YTD 달성률</div><div class="val">64%</div></div>
+    <div class="kpi"><div class="lbl">AR 미수금(USD)</div><div class="val" style="color:var(--danger-text);">$140K</div></div>
+    <div class="kpi"><div class="lbl">재고 재주문</div><div class="val" style="color:var(--warn-text);">4건</div></div>
+    <div class="kpi"><div class="lbl">AVISO 미결</div><div class="val">2건</div></div>
+    <div class="kpi"><div class="lbl">CRM 팔로업 필요</div><div class="val" style="color:var(--warn-text);">2건</div></div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">📊 매출 현황 <span class="sec-badge">매출 탭 자동 연동</span></div>
+    <table>
+      <thead><tr><th>구분</th><th class="r">연간계획</th><th class="r">YTD 실적</th><th class="r">달성률</th><th class="r">MTY</th><th class="r">QRO</th></tr></thead>
+      <tbody>
+        <tr><td>전체</td><td class="r">$8,545,266</td><td class="r">$5,497,913</td><td class="r">97%</td><td class="r">$522,419</td><td class="r">$4,975,494</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">💰 AR 연체 현황 <span class="sec-badge">AR 탭 자동 연동</span></div>
+    <div class="list-item"><span>USD 미수금 · 16건</span><span class="badge badge-danger">$140,460</span></div>
+    <div class="list-item"><span>MXN 미수금 · 3건</span><span class="badge badge-warn">$23,316</span></div>
+    <div class="list-item"><span>60일 초과 연체</span><span class="badge badge-danger">1건 · RECIMTY TECH</span></div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">📦 재고 재주문 필요 <span class="sec-badge">재고 탭 자동 연동</span></div>
+    <div class="list-item"><span>SM 70 1.2mm 300KG (MTY)</span><span class="badge badge-danger">MOH 0.7개월</span></div>
+    <div class="list-item"><span>SMT-5356E 1.2mm 130KG (MTY)</span><span class="badge badge-danger">MOH 1.0개월</span></div>
+    <div class="list-item"><span>SM 70 0.9mm 300KG (MTY)</span><span class="badge badge-danger">MOH 0.2개월</span></div>
+    <div class="list-item"><span>SM-70 S 300KG 1.2mm (MTY)</span><span class="badge badge-warn">MOH 3.6개월</span></div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">📋 AVISO 처리 현황 <span class="sec-badge">AVISO 탭 자동 연동</span></div>
+    <div class="list-item"><span>DAEDONG HEMEX 견적 재발송</span><span class="badge badge-warn">진행중</span></div>
+    <div class="list-item"><span>VOLVO 담당자 연락처 확인 후 보고</span><span class="badge badge-warn">진행중</span></div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">🤝 CRM 파이프라인 <span class="sec-badge">고객관리 탭 자동 연동</span></div>
+    <table>
+      <thead><tr><th>단계</th><th class="r">건수</th><th class="r">금액</th></tr></thead>
+      <tbody>
+        <tr><td>잠재고객</td><td class="r">9</td><td class="r">$242,800</td></tr>
+        <tr><td>협상중</td><td class="r">1</td><td class="r">$30,000</td></tr>
+        <tr><td>활성</td><td class="r">8</td><td class="r">$8,597,618</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">✏️ 코멘트 및 특이사항</div>
+    <div class="comment-box">
+      <textarea rows="4" placeholder="이번 주 특이사항, 다음 주 계획 등을 자유롭게 적어주세요"></textarea>
+    </div>
+  </div>
+</div>
+</body>
+</html>
