@@ -407,10 +407,11 @@ async function load(){
   }
   function invTable(items){
     return `<div class="tbl-wrap"><table>
-      <thead><tr><th>품목</th><th>거래처</th><th class="r">재고</th><th class="r">FORECAST</th><th>상태</th></tr></thead>
+      <thead><tr><th>품목</th><th>거래처</th><th class="r">재고</th><th class="r">FORECAST</th><th>상태</th><th>비고</th></tr></thead>
       <tbody>${items.map(r=>`<tr>
         <td>${r.item}</td><td>${r.client||'-'}</td><td class="r">${r.stock.toLocaleString()}</td>
         <td class="r">${r.fc||'-'}</td><td>${invStatusBadge(r.fc>0?r.stock/r.fc:null)}</td>
+        <td style="color:var(--muted);">${r.note||'-'}</td>
       </tr>`).join('')}</tbody>
     </table></div>`;
   }
@@ -423,7 +424,7 @@ async function load(){
 
   try{
     const mtyInv=await tsvRaw(BASE.replace('{G}',GIDS.inv_mty));
-    const mtyItems=mtyInv.data.filter(r=>r[2]&&r[2].trim()).map(r=>({item:r[2],client:r[4],stock:toN(r[5]),fc:getFC(r[2])}));
+    const mtyItems=mtyInv.data.filter(r=>r[2]&&r[2].trim()).map(r=>({item:r[2],client:r[4],stock:toN(r[5]),fc:getFC(r[2]),note:r[9]}));
     document.getElementById('mtyInvTable').innerHTML=invTable(mtyItems);
     const reorders=mtyItems.filter(r=>r.fc>0&&r.stock/r.fc<3).sort((a,b)=>(a.stock/a.fc)-(b.stock/b.fc));
     if(reorders.length>0){
@@ -434,7 +435,7 @@ async function load(){
 
   try{
     const qroInv=await tsvRaw(BASE.replace('{G}',GIDS.inv_qro));
-    const qroItems=qroInv.data.filter(r=>r[2]&&r[2].trim()).map(r=>({item:r[2],client:r[4],stock:toN(r[5]),fc:getFC(r[2])}));
+    const qroItems=qroInv.data.filter(r=>r[2]&&r[2].trim()).map(r=>({item:r[2],client:r[4],stock:toN(r[5]),fc:getFC(r[2]),note:r[9]}));
     document.getElementById('qroInvTable').innerHTML=invTable(qroItems);
     const reordersQ=qroItems.filter(r=>r.fc>0&&r.stock/r.fc<3).sort((a,b)=>(a.stock/a.fc)-(b.stock/b.fc));
     if(reordersQ.length>0){
@@ -569,8 +570,14 @@ async function populateWeekSelector(){
   const {data}=await sb.from('weekly_report_snapshots').select('week_key').order('week_key',{ascending:false});
   const curKey=weekKey();
   const pastKeys=(data||[]).map(r=>r.week_key).filter(k=>k!==curKey);
+  const fmtWeekLabel=k=>{
+    const mon=new Date(k+'T00:00:00');
+    const sat=new Date(mon); sat.setDate(mon.getDate()+5);
+    const f=d=>(d.getMonth()+1)+'/'+d.getDate();
+    return `${mon.getFullYear()}년 ${mon.getMonth()+1}월 ${Math.ceil(mon.getDate()/7)}주차 (${f(mon)}~${f(sat)})`;
+  };
   const opts=['<option value="current">이번 주 (실시간)</option>']
-    .concat(pastKeys.map(k=>`<option value="${k}">${k} 주차</option>`));
+    .concat(pastKeys.map(k=>`<option value="${k}">${fmtWeekLabel(k)}</option>`));
   sel.innerHTML=opts.join('');
   sel.value='current';
 }
