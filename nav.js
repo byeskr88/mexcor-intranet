@@ -51,8 +51,8 @@ function initNav(){
     {id:'crm',file:'crm_live.html',icon:'🤝',ko:'고객관리',es:'Clientes'},
     {id:'budget',file:'budget_plan.html',icon:'💵',ko:'Budget',es:'Budget',restricted:true},
     {id:'desiccant',file:'desiccant_live.html',icon:'🧪',ko:'신규 프로젝트',es:'Nuevos Proyectos'},
-    {id:'weekly',file:'weekly_report_live.html',icon:'📝',ko:'주간보고',es:'Reporte Semanal'},
   ];
+  const WEEKLY_PAGE = {id:'weekly',file:'weekly_report_live.html',icon:'📝',ko:'주간보고',es:'Reporte Semanal'};
   const _hasBudgetAccess = !!(window._mexcorUser?.user_metadata?.budget);
   const PAGES = ALL_PAGES.filter(p=>!p.restricted||_hasBudgetAccess);
 
@@ -88,6 +88,7 @@ function initNav(){
     .mn-tab:hover { background: #3a4278; color: #fff; }
     .mn-tab.active { background: #3a4278; color: #fff; }
     .mn-status { font-size: 10px; padding: 1px 5px; border-radius: 20px; margin-left: 1px; }
+    .mn-tab-detached { border-left: 0.5px solid #4a5290; border-right: 0.5px solid #4a5290; margin: 0 4px; flex-shrink: 0; }
     .mn-right { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
     .mn-time { font-size: 11px; color: #a8a6c8; }
     .mn-lang-toggle {
@@ -125,6 +126,9 @@ function initNav(){
         <span class="mn-status mn-s-gray" id="nav-st-${p.id}" style="display:none;"></span>
       </a>`).join('')}
     </div>
+    <a class="mn-tab mn-tab-detached${WEEKLY_PAGE.file===curFile?' active':''}" href="${WEEKLY_PAGE.file}" data-id="${WEEKLY_PAGE.id}">
+      <span>${WEEKLY_PAGE.icon}</span><span class="mn-label" data-ko="${WEEKLY_PAGE.ko}" data-es="${WEEKLY_PAGE.es}">${lang==='ko'?WEEKLY_PAGE.ko:WEEKLY_PAGE.es}</span>
+    </a>
     <div class="mn-right">
       <span class="mn-user" id="nav-user"></span>
       <span class="mn-time" id="nav-time"></span>

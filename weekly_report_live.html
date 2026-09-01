@@ -30,6 +30,11 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 .head .sub{font-size:12px;color:var(--hint);}
 .head select{padding:6px 10px;border:0.5px solid var(--border);border-radius:var(--r);font-size:12px;background:var(--surface);margin-right:8px;}
 .btn-pdf{background:var(--text);color:#fff;border:none;border-radius:var(--r);padding:9px 16px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit;}
+.btn-save{background:var(--ok);color:#fff;border:none;border-radius:var(--r);padding:9px 16px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit;margin-right:8px;}
+.btn-save:hover{background:var(--ok-text);}
+.draft-badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:10px;margin-top:6px;}
+.draft-badge.draft{background:var(--warn-bg);color:var(--warn-text);}
+.draft-badge.confirmed{background:var(--ok-bg);color:var(--ok-text);}
 
 .trend-section{margin-bottom:20px;}
 .trend-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
@@ -119,9 +124,11 @@ tr:nth-child(odd) td{background:#fbfaf7;}
     <div>
       <h1>주간보고</h1>
       <div class="sub" id="weekLabel">불러오는 중...</div>
+      <div class="draft-badge" id="draftBadge" style="display:none;"></div>
     </div>
     <div>
       <select id="weekSelector" onchange="onWeekSelect(this.value)"></select>
+      <button class="btn-save" onclick="saveReport()"><span>✓</span>이 주차 저장</button>
       <button class="btn-pdf" onclick="window.print()"><span>⬇</span>PDF 다운로드</button>
     </div>
   </div>
@@ -310,6 +317,49 @@ function inWeek(dateStr, mon, sat){
 }
 
 const urgentCandidates=[];
+let currentViewWeekKey=null;
+let lastMetrics={};
+
+async function updateDraftBadge(){
+  const badge=document.getElementById('draftBadge');
+  if(!sb || !currentViewWeekKey){ badge.style.display='none'; return; }
+  const {data}=await sb.from('weekly_report_snapshots').select('confirmed,created_by,updated_by,updated_at').eq('week_key',currentViewWeekKey).maybeSingle();
+  badge.style.display='inline-block';
+  if(!data || !data.confirmed){
+    badge.className='draft-badge draft';
+    badge.textContent='작성중 · 아직 저장 안 됨';
+  }else{
+    const who=data.updated_by||data.created_by||'';
+    const when=data.updated_at?new Date(data.updated_at).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+    badge.className='draft-badge confirmed';
+    badge.textContent=`✓ 확정됨 · 마지막 저장: ${who} · ${when}`;
+  }
+}
+
+async function saveReport(){
+  if(!sb || !currentViewWeekKey){ alert('저장할 수 없어요 (연결 확인 필요)'); return; }
+  const targetKey=currentViewWeekKey;
+  const html=document.getElementById('main').innerHTML;
+  const who=currentUserId();
+  try{
+    const {data:existing}=await sb.from('weekly_report_snapshots').select('week_key,created_by').eq('week_key',targetKey).maybeSingle();
+    const payload={
+      week_key:targetKey, html, metrics:lastMetrics, confirmed:true, updated_by:who, updated_at:new Date().toISOString()
+    };
+    if(!existing){ payload.created_by=who; payload.created_at=new Date().toISOString(); }
+    const {error}=await sb.from('weekly_report_snapshots').upsert(payload,{onConflict:'week_key'});
+    if(error){ alert('저장 실패: '+error.message); return; }
+    await updateDraftBadge();
+    await populateWeekSelector();
+    await renderTrendCharts();
+    document.getElementById('weekSelector').value=targetKey===weekKey()?'current':targetKey;
+  }catch(e){ alert('저장 실패: '+e.message); }
+}
+
+function currentUserId(){
+  return (window._mexcorUser?.email||'user').split('@')[0];
+}
+
 
 async function load(targetWeekKey){
   const isRecompute=!!targetWeekKey;
@@ -607,16 +657,9 @@ async function load(targetWeekKey){
   }
   document.getElementById('main').style.display='block';
 
-  // 스냅샷 자동 저장 (나중에 주가 지나도 그때 내용을 다시 볼 수 있게 / 다시계산이면 그 주차를 덮어씀)
-  if(sb){
-    try{
-      const snapshotHtml=document.getElementById('main').innerHTML;
-      await sb.from('weekly_report_snapshots').upsert(
-        {week_key:thisWeekKey, html:snapshotHtml, metrics:metrics, updated_at:new Date().toISOString()},
-        {onConflict:'week_key'}
-      );
-    }catch(e){ console.error('스냅샷 저장 실패:', e); }
-  }
+  currentViewWeekKey=thisWeekKey;
+  lastMetrics=metrics;
+  await updateDraftBadge();
   if(!isRecompute){
     await populateWeekSelector();
     await renderTrendCharts();
@@ -656,7 +699,7 @@ async function renderTrendCharts(){
 async function populateWeekSelector(){
   const sel=document.getElementById('weekSelector');
   if(!sb){ sel.innerHTML='<option value="current">이번 주</option>'; return; }
-  const {data}=await sb.from('weekly_report_snapshots').select('week_key').order('week_key',{ascending:false});
+  const {data}=await sb.from('weekly_report_snapshots').select('week_key,confirmed').eq('confirmed',true).order('week_key',{ascending:false});
   const curKey=weekKey();
   const pastKeys=(data||[]).map(r=>r.week_key).filter(k=>k!==curKey);
   const fmtWeekLabel=k=>{
@@ -665,8 +708,9 @@ async function populateWeekSelector(){
     const f=d=>(d.getMonth()+1)+'/'+d.getDate();
     return `${mon.getFullYear()}년 ${mon.getMonth()+1}월 ${Math.ceil(mon.getDate()/7)}주차 (${f(mon)}~${f(sat)})`;
   };
-  const opts=['<option value="current">이번 주 (실시간)</option>']
-    .concat(pastKeys.map(k=>`<option value="${k}">${fmtWeekLabel(k)}</option>`));
+  const curIsConfirmed=(data||[]).some(r=>r.week_key===curKey);
+  const opts=[`<option value="current">이번 주 ${curIsConfirmed?'(확정됨, 수정중)':'(작성중)'}</option>`]
+    .concat(pastKeys.map(k=>`<option value="${k}">${fmtWeekLabel(k)} · 확정됨</option>`));
   sel.innerHTML=opts.join('');
   sel.value='current';
 }
@@ -684,13 +728,15 @@ async function onWeekSelect(val){
   }
   document.getElementById('main').innerHTML=data.html;
   document.getElementById('main').style.display='block';
-  document.getElementById('weekLabel').textContent=`${val} 주차 (저장된 기록 · ${new Date(data.updated_at).toLocaleString('ko-KR')} 기준)`;
-  document.getElementById('statusBox').innerHTML='✓ 저장된 보고서 (과거 기록, 실시간 데이터 아님) — 내용이 틀렸다면 <span class="recompute-link" onclick="recomputeWeek(\''+val+'\')">🔄 이 주차 다시 계산</span>';
+  document.getElementById('weekLabel').textContent=`${val} 주차 (확정된 기록 · ${new Date(data.updated_at).toLocaleString('ko-KR')} 기준)`;
+  document.getElementById('statusBox').innerHTML='✓ 확정된 보고서입니다 — 내용을 고치고 싶으면 <span class="recompute-link" onclick="recomputeWeek(\''+val+'\')">🔄 이 주차 다시 계산</span> 후 다시 저장하세요';
   document.getElementById('statusBox').className='status-bar ok';
+  currentViewWeekKey=val;
+  await updateDraftBadge();
 }
 
 async function recomputeWeek(val){
-  if(!confirm('이 주차를 지금 데이터 기준으로 다시 계산해서 저장을 덮어쓸까요?\n(자동 항목만 새로 계산되고, 직접 작성한 이슈/프로젝트 내용은 그대로 유지돼요)')) return;
+  if(!confirm('이 주차를 지금 데이터 기준으로 다시 계산할까요?\n(자동 항목만 새로 계산되고, 직접 작성한 이슈/프로젝트 내용은 그대로 유지돼요. "이 주차 저장" 버튼을 눌러야 최종 반영돼요)')) return;
   await load(val);
   document.getElementById('weekLabel').textContent=document.getElementById('weekLabel').textContent+' · 방금 다시 계산됨';
 }
