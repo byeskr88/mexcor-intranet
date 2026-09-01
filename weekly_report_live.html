@@ -66,7 +66,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 .kpi.k-in .val{color:var(--ok-text);}
 .kpi.k-rate .val{color:var(--warn-text);}
 
-.chart-box{position:relative;height:160px;margin-top:10px;}
+.chart-box{position:relative;height:190px;margin-top:10px;}
 
 .tbl-wrap{overflow-x:auto;border:0.5px solid var(--border);border-radius:var(--r);}
 table{width:100%;border-collapse:collapse;font-size:11.5px;}
@@ -149,29 +149,45 @@ tr:nth-child(odd) td{background:#fbfaf7;}
     </div>
 
     <div class="sec">
-      <div class="sec-title">📦 재고 현황 <span class="tag tag-auto">자동 · 재고 탭</span></div>
-      <div class="two-col">
-        <div>
-          <div class="subhead">재주문 필요 (MTY)</div>
-          <div id="mtyReorderList"></div>
-        </div>
-        <div>
-          <div class="subhead">이번 주 출고 (MTY)</div>
-          <div id="mtyOutList"></div>
-        </div>
+      <div class="sec-title">📦 재고 현황 — MTY <span class="tag tag-auto">자동 · 재고 탭</span></div>
+      <div id="mtyInvTable"></div>
+    </div>
+    <div class="sec">
+      <div class="sec-title">📦 재고 현황 — QRO <span class="tag tag-auto">자동 · 재고 탭</span></div>
+      <div id="qroInvTable"></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title">🧪 방습제 현황 <span class="tag tag-auto">자동 · 신규프로젝트 탭</span></div>
+      <div class="kpis" style="grid-template-columns:repeat(3,1fr);" id="desiccantKpis">
+        <div class="kpi k-in"><div class="lbl">전체 품목</div><div class="val" id="dscTotal">-</div></div>
+        <div class="kpi k-rate"><div class="lbl">재주문 필요</div><div class="val" id="dscReorder">-</div></div>
+        <div class="kpi k-mty"><div class="lbl">재고 자산가치</div><div class="val" id="dscValue">-</div></div>
+      </div>
+      <div id="desiccantTable"></div>
+    </div>
+
+    <div class="sec">
+      <div class="issue-box">
+        <div class="sec-title">🗂️ 진행 예정 신규 프로젝트 <span class="tag tag-manual">직접 작성</span></div>
+        <div class="issue-rows" id="projectRows"></div>
+        <span class="issue-add" onclick="addProjectRow()">+ 프로젝트 추가</span>
+        <div class="save-note" id="projectSaveNote"></div>
       </div>
     </div>
 
     <div class="sec">
-      <div class="sec-title">🧪 신규 프로젝트 (방습제 등) <span class="tag tag-auto">자동 · 신규프로젝트 탭</span></div>
-      <div id="desiccantList"></div>
-    </div>
-
-    <div class="sec">
       <div class="sec-title">💰 AR 미수금 현황 <span class="tag tag-auto">자동 · AR 탭</span></div>
-      <div class="list-item"><span>USD 미수금</span><span id="arUsd" class="badge badge-danger">-</span></div>
-      <div class="list-item"><span>MXN 미수금</span><span id="arMxn" class="badge badge-warn">-</span></div>
-      <div class="list-item"><span>60일 초과 연체</span><span id="ar60" class="badge badge-danger">-</span></div>
+      <div class="kpis" style="grid-template-columns:repeat(4,1fr);">
+        <div class="kpi k-rate"><div class="lbl">USD 미수금</div><div class="val" id="arUsd">-</div></div>
+        <div class="kpi k-rate"><div class="lbl">MXN 미수금</div><div class="val" id="arMxn">-</div></div>
+        <div class="kpi k-rate"><div class="lbl">전체 미결 건수</div><div class="val" id="arCnt">-</div></div>
+        <div class="kpi k-rate"><div class="lbl">60일 초과 연체</div><div class="val" id="ar60">-</div></div>
+      </div>
+      <div class="subhead">연체 구간별 현황</div>
+      <div id="arBucketList"></div>
+      <div class="subhead">이번 주 입금 내역</div>
+      <div id="arPaidList"></div>
     </div>
   </div>
 </div>
@@ -182,9 +198,10 @@ tr:nth-child(odd) td{background:#fbfaf7;}
 <script>
 const BASE='https://docs.google.com/spreadsheets/d/e/2PACX-1vRfv4TFloZqAVKyJXAoGCjP5xec3MvPGjTagc1btjwQzKXvICTmREywHrT1wNSl_6JN7vA_gsY2w8kB/pub?gid={G}&single=true&output=tsv';
 const GIDS={ar:'1428414690',sales:'609736586',inv_mty:'1055215705',inv_qro:'1072433103',fc_inv:'118513204',
-  out_mty:'1563587550',aviso:'0'};
+  out_mty:'1563587550',out_qro:'1836289398',aviso:'0'};
 const DESICCANT_SUMMARY='https://docs.google.com/spreadsheets/d/e/2PACX-1vRfv4TFloZqAVKyJXAoGCjP5xec3MvPGjTagc1btjwQzKXvICTmREywHrT1wNSl_6JN7vA_gsY2w8kB/pub?gid=417249657&single=true&output=tsv';
 const DESICCANT_OUT='https://docs.google.com/spreadsheets/d/e/2PACX-1vRfv4TFloZqAVKyJXAoGCjP5xec3MvPGjTagc1btjwQzKXvICTmREywHrT1wNSl_6JN7vA_gsY2w8kB/pub?gid=1355104888&single=true&output=tsv';
+const DESICCANT_IN='https://docs.google.com/spreadsheets/d/e/2PACX-1vRfv4TFloZqAVKyJXAoGCjP5xec3MvPGjTagc1btjwQzKXvICTmREywHrT1wNSl_6JN7vA_gsY2w8kB/pub?gid=920808887&single=true&output=tsv';
 const SURL='https://oezergrrqcinclorwvnk.supabase.co';
 const SKEY='sb_publishable_1eqTksIg-IetXykOBHf0rg_19ourTmF';
 let sb=null;
@@ -218,11 +235,28 @@ function weekRange(){
   const sat=new Date(mon); sat.setDate(mon.getDate()+5); sat.setHours(23,59,59,999);
   return {mon,sat};
 }
+function toDateOnlyKey(d){
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function parseSheetDate(dateStr){
+  if(!dateStr) return null;
+  const s=String(dateStr).trim();
+  let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(m) return new Date(parseInt(m[1]),parseInt(m[2])-1,parseInt(m[3]));
+  m=s.match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/);
+  if(m){
+    const now=new Date();
+    const year=m[3]?(m[3].length===2?2000+parseInt(m[3]):parseInt(m[3])):now.getFullYear();
+    return new Date(year, parseInt(m[1])-1, parseInt(m[2]));
+  }
+  const d=new Date(s);
+  return isNaN(d)?null:d;
+}
 function inWeek(dateStr, mon, sat){
-  if(!dateStr) return false;
-  const d=new Date(dateStr);
-  if(isNaN(d)) return false;
-  return d>=mon && d<=sat;
+  const d=parseSheetDate(dateStr);
+  if(!d) return false;
+  const key=toDateOnlyKey(d);
+  return key>=toDateOnlyKey(mon) && key<=toDateOnlyKey(sat);
 }
 
 const urgentCandidates=[];
@@ -252,31 +286,55 @@ async function load(){
     document.getElementById('kpiMonthAct').textContent=fmtMoney(totM[curM-1]||0);
     document.getElementById('kpiYtdRate').textContent=ytdRate+'%';
 
+    const chartPlan=planVals.slice(0,curM), chartAct=totM.slice(0,curM);
+    const barLabelPlugin={
+      id:'barLabels',
+      afterDatasetsDraw(chart){
+        const {ctx}=chart;
+        ctx.save();
+        ctx.font='600 10px -apple-system, sans-serif';
+        ctx.textAlign='center';
+        chart.getDatasetMeta(0).data.forEach((bar,i)=>{
+          ctx.fillStyle='#5f5e5a';
+          ctx.fillText('$'+(chartPlan[i]/1000).toFixed(0)+'K', bar.x, bar.y-6);
+        });
+        chart.getDatasetMeta(1).data.forEach((bar,i)=>{
+          const pct=chartPlan[i]>0?Math.round(chartAct[i]/chartPlan[i]*100):0;
+          ctx.fillStyle=pct>=100?'#085041':'#791F1F';
+          ctx.fillText('$'+(chartAct[i]/1000).toFixed(0)+'K ('+pct+'%)', bar.x, bar.y-6);
+        });
+        ctx.restore();
+      }
+    };
     new Chart(document.getElementById('salesChart'),{
       type:'bar',
       data:{labels:MONTHS.slice(0,curM), datasets:[
-        {label:'목표', data:planVals.slice(0,curM), backgroundColor:'#D3D1C7'},
-        {label:'실적', data:totM.slice(0,curM), backgroundColor:'#2a78d6'}
+        {label:'목표', data:chartPlan, backgroundColor:'#D3D1C7'},
+        {label:'실적', data:chartAct, backgroundColor:'#2a78d6'}
       ]},
+      plugins:[barLabelPlugin],
       options:{responsive:true,maintainAspectRatio:false,
+        layout:{padding:{top:22}},
         plugins:{legend:{display:true,position:'top',labels:{boxWidth:10,font:{size:10}}}},
         scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:9},callback:v=>'$'+(v/1000).toFixed(0)+'K'}}}}
     });
   }catch(e){errs.push('매출:'+e.message);}
 
-  // ===== MTY 출고 (이번 주) - 매출탭 GID 별도, out_mty 사용 =====
+  // ===== MTY/QRO 출고 (이번 주) =====
   try{
     const outRows=await tsvRaw(BASE.replace('{G}',GIDS.out_mty));
     const rows=outRows.data.filter(r=>r[3]||r[1]);
     const thisWeek=rows.filter(r=>inWeek(r[5],mon,sat));
     const totalQty=thisWeek.reduce((s,r)=>s+toN(r[8]),0);
     document.getElementById('kpiMtyOut').textContent=totalQty>0?totalQty.toLocaleString()+'개':'0건';
-    document.getElementById('mtyOutList').innerHTML=thisWeek.length?thisWeek.map(r=>
-      `<div class="list-item"><span>${r[6]||''} → ${r[3]||''}</span><span class="badge badge-ok">${r[8]||''}</span></div>`
-    ).join(''):'<div class="empty">이번 주 출고 기록 없음</div>';
   }catch(e){errs.push('MTY출고:'+e.message);}
-
-  document.getElementById('kpiQroOut').textContent='-';
+  try{
+    const outRowsQ=await tsvRaw(BASE.replace('{G}',GIDS.out_qro));
+    const rowsQ=outRowsQ.data.filter(r=>r[3]||r[1]);
+    const thisWeekQ=rowsQ.filter(r=>inWeek(r[5],mon,sat));
+    const totalQtyQ=thisWeekQ.reduce((s,r)=>s+toN(r[8]),0);
+    document.getElementById('kpiQroOut').textContent=totalQtyQ>0?totalQtyQ.toLocaleString()+'개':'0건';
+  }catch(e){errs.push('QRO출고:'+e.message);}
 
   // ===== AR =====
   try{
@@ -288,28 +346,70 @@ async function load(){
     const over60=pend.filter(r=>r['BUCKET']==='60일초과');
     document.getElementById('arUsd').textContent=fmtMoney(usd);
     document.getElementById('arMxn').textContent=mxn>0?fmtMoney(mxn):'-';
+    document.getElementById('arCnt').textContent=pend.length+'건';
     document.getElementById('ar60').textContent=over60.length+'건';
     if(usd>100000) urgentCandidates.push({sev:3, text:`AR USD 미수금 ${fmtMoney(usd)} — 주의 필요`});
     if(over60.length>0) urgentCandidates.push({sev:2, text:`AR 60일 초과 연체 ${over60.length}건 발생`});
+
+    const buckets=['미만기','30일이내','30~60일','60일초과'];
+    document.getElementById('arBucketList').innerHTML=buckets.map(b=>{
+      const items=pend.filter(r=>r['BUCKET']===b);
+      const bUsd=items.filter(r=>r['CURRENCY']==='USD').reduce((s,r)=>s+toN(r['TOTAL']),0);
+      const cls=b==='60일초과'?'badge-danger':b==='30~60일'?'badge-warn':'badge-ok';
+      return `<div class="list-item"><span>${b}</span><span class="badge ${cls}">${items.length}건 · $${fmtMoney(bUsd)}</span></div>`;
+    }).join('');
+
+    const paidThisWeek=validRows.filter(r=>(r['PAYMENT_STATUS']||'').toUpperCase()==='PAGADO' && inWeek(r['ACTUAL_PAYMENT_DATE']||r['ACTUAL PAYMENT DATE'],mon,sat));
+    document.getElementById('arPaidList').innerHTML=paidThisWeek.length?`<div class="tbl-wrap"><table>
+      <thead><tr><th>거래처</th><th>통화</th><th class="r">금액</th><th>입금일</th></tr></thead>
+      <tbody>${paidThisWeek.map(r=>`<tr><td>${r['CLIENTE']||'-'}</td><td>${r['CURRENCY']||'-'}</td><td class="r">${fmtMoney(toN(r['TOTAL']))}</td><td>${r['ACTUAL_PAYMENT_DATE']||r['ACTUAL PAYMENT DATE']||'-'}</td></tr>`).join('')}</tbody>
+    </table></div>`:'<div class="empty">이번 주 입금 기록 없음</div>';
   }catch(e){errs.push('AR:'+e.message);}
 
-  // ===== 재고 (MTY 재주문) =====
+  // ===== 재고 (MTY + QRO 전체) =====
+  function invStatusBadge(moh){
+    if(moh===null) return '<span class="badge badge-ok">정상</span>';
+    if(moh<3) return `<span class="badge badge-danger">재주문 ${moh.toFixed(1)}</span>`;
+    if(moh<6) return `<span class="badge badge-warn">주의 ${moh.toFixed(1)}</span>`;
+    return `<span class="badge badge-ok">정상 ${moh.toFixed(1)}</span>`;
+  }
+  function invTable(items){
+    return `<div class="tbl-wrap"><table>
+      <thead><tr><th>품목</th><th>거래처</th><th class="r">재고</th><th class="r">FORECAST</th><th>상태</th></tr></thead>
+      <tbody>${items.map(r=>`<tr>
+        <td>${r.item}</td><td>${r.client||'-'}</td><td class="r">${r.stock.toLocaleString()}</td>
+        <td class="r">${r.fc||'-'}</td><td>${invStatusBadge(r.fc>0?r.stock/r.fc:null)}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+  }
+  let fcMap={};
   try{
     const fcData=await tsvRaw(BASE.replace('{G}',GIDS.fc_inv));
-    const fcMap={};
     fcData.data.forEach(r=>{if(r[1])fcMap[r[1].toLowerCase().replace(/\s+/g,'')]=toN(r[3]);});
-    const getFC=item=>fcMap[(item||'').toLowerCase().replace(/\s+/g,'')]||0;
+  }catch(e){errs.push('FORECAST:'+e.message);}
+  const getFC=item=>fcMap[(item||'').toLowerCase().replace(/\s+/g,'')]||0;
+
+  try{
     const mtyInv=await tsvRaw(BASE.replace('{G}',GIDS.inv_mty));
-    const mtyItems=mtyInv.data.filter(r=>r[2]&&r[2].trim()).map(r=>({item:r[2],stock:toN(r[5]),fc:getFC(r[2])}));
+    const mtyItems=mtyInv.data.filter(r=>r[2]&&r[2].trim()).map(r=>({item:r[2],client:r[4],stock:toN(r[5]),fc:getFC(r[2])}));
+    document.getElementById('mtyInvTable').innerHTML=invTable(mtyItems);
     const reorders=mtyItems.filter(r=>r.fc>0&&r.stock/r.fc<3).sort((a,b)=>(a.stock/a.fc)-(b.stock/b.fc));
-    document.getElementById('mtyReorderList').innerHTML=reorders.length?reorders.map(r=>
-      `<div class="list-item"><span>${r.item}</span><span class="badge badge-danger">MOH ${(r.stock/r.fc).toFixed(1)}</span></div>`
-    ).join(''):'<div class="empty">✓ 재주문 필요 품목 없음</div>';
     if(reorders.length>0){
       const worst=reorders[0];
       urgentCandidates.push({sev:5, text:`${worst.item} (MTY) 재고 ${(worst.stock/worst.fc).toFixed(1)}개월분 — 긴급 재주문 필요`});
     }
-  }catch(e){errs.push('재고:'+e.message);}
+  }catch(e){errs.push('MTY재고:'+e.message);}
+
+  try{
+    const qroInv=await tsvRaw(BASE.replace('{G}',GIDS.inv_qro));
+    const qroItems=qroInv.data.filter(r=>r[2]&&r[2].trim()).map(r=>({item:r[2],client:r[4],stock:toN(r[5]),fc:getFC(r[2])}));
+    document.getElementById('qroInvTable').innerHTML=invTable(qroItems);
+    const reordersQ=qroItems.filter(r=>r.fc>0&&r.stock/r.fc<3).sort((a,b)=>(a.stock/a.fc)-(b.stock/b.fc));
+    if(reordersQ.length>0){
+      const worstQ=reordersQ[0];
+      urgentCandidates.push({sev:4, text:`${worstQ.item} (QRO) 재고 ${(worstQ.stock/worstQ.fc).toFixed(1)}개월분 — 재주문 필요`});
+    }
+  }catch(e){errs.push('QRO재고:'+e.message);}
 
   // ===== AVISO =====
   try{
@@ -319,14 +419,26 @@ async function load(){
     rows.forEach(r=>{
       const p=r['PEDIDO'];
       if(!p||p==='PEDIDO') return;
-      if(!map[p]) map[p]={pedido:p,estatus:r['ESTATUS']};
+      if(!map[p]) map[p]={
+        pedido:p, estatus:r['ESTATUS'], fecha:r['FECHA_SOLICITUD'],
+        dias:r['DIAS_DICTAMINACION'], descarga:r['DESCARGA_TERMINAL'],
+        diasTerm:r['DIAS_TERMINAL'], remark:r['REMARK']
+      };
     });
     const groups=Object.values(map);
     const pend=groups.filter(g=>{const s=(g.estatus||'').toUpperCase();return s==='PROCESO'||s==='PENDING'||s==='PENDIENTE';});
     document.getElementById('avisoSummary').innerHTML=`전체 ${groups.length}건 중 <span class="badge ${pend.length>0?'badge-warn':'badge-ok'}">${pend.length}건 미결</span>`;
-    document.getElementById('avisoList').innerHTML=pend.length?pend.map(g=>
-      `<div class="list-item"><span>${g.pedido}</span><span class="badge badge-warn">${g.estatus}</span></div>`
-    ).join(''):'';
+    document.getElementById('avisoList').innerHTML=pend.length?`<div class="tbl-wrap"><table>
+      <thead><tr><th>계약번호</th><th>상태</th><th>신청일</th><th class="r">심사일수</th><th>하차터미널</th><th>비고</th></tr></thead>
+      <tbody>${pend.map(g=>`<tr>
+        <td>${g.pedido}</td>
+        <td><span class="badge badge-warn">${g.estatus||'-'}</span></td>
+        <td>${g.fecha||'-'}</td>
+        <td class="r">${g.dias||'-'}</td>
+        <td>${g.descarga||'-'}</td>
+        <td>${g.remark||'-'}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>`:'';
     if(pend.length>3) urgentCandidates.push({sev:1, text:`AVISO 미결 ${pend.length}건 — 확인 필요`});
   }catch(e){errs.push('AVISO:'+e.message);}
 
@@ -358,17 +470,36 @@ async function load(){
     }
   }catch(e){errs.push('CRM:'+e.message);}
 
-  // ===== 신규프로젝트(방습제) =====
+  // ===== 방습제 =====
   try{
     const summary=await tsvObj(DESICCANT_SUMMARY);
+    const inRows=await tsvObj(DESICCANT_IN);
     const outRows=await tsvObj(DESICCANT_OUT);
     const now=new Date();
-    const curKey=now.getFullYear()+'-'+(now.getMonth()+1);
-    const thisWeekOut=outRows.filter(r=>inWeek(r['DELIVERY DATE'],mon,sat));
-    document.getElementById('desiccantList').innerHTML=thisWeekOut.length?thisWeekOut.map(r=>
-      `<div class="list-item"><span>${(r['ITEM']||'').trim()} → ${(r['CLIENTE']||'').trim()}</span><span class="badge badge-ok">${(r['UNIT QTY']||'').trim()}</span></div>`
-    ).join(''):'<div class="empty">이번 주 판매 기록 없음</div>';
-  }catch(e){errs.push('신규프로젝트:'+e.message);}
+    const months=[]; for(let i=0;i<3;i++){ const d=new Date(now.getFullYear(),now.getMonth()-i,1); months.push(d.getFullYear()+'-'+(d.getMonth()+1)); }
+    const items=summary.filter(r=>r['ITEM']).map(r=>{
+      const name=r['ITEM'].trim();
+      const stockIn=inRows.filter(x=>(x['ITEM']||'').trim()===name).reduce((s,x)=>s+toN(x['UNIT ARRIVED']||x['UNIT QTY']),0);
+      const stockOut=outRows.filter(x=>(x['ITEM']||'').trim()===name).reduce((s,x)=>s+toN(x['UNIT QTY']),0);
+      const stock=stockIn-stockOut;
+      const forecast=toN(r['월 FORECAST']||r['FORECAST/월']||r['FORECAST']||r['REORDER POINT']);
+      const moh=forecast>0?stock/forecast:null;
+      const price=toN((r['PRICE']||'').split(/USD|MXN/)[0]);
+      return {name, price:r['PRICE']||'-', stock, forecast, moh, value:stock*price, clientes:r['CLIENTES']||'-'};
+    });
+    document.getElementById('dscTotal').textContent=items.length;
+    const reorders=items.filter(it=>it.moh!==null&&it.moh<3);
+    document.getElementById('dscReorder').textContent=reorders.length;
+    document.getElementById('dscValue').textContent=fmtMoney(items.reduce((s,it)=>s+it.value,0));
+    document.getElementById('desiccantTable').innerHTML=`<div class="tbl-wrap"><table>
+      <thead><tr><th>품목</th><th>단가</th><th class="r">재고</th><th class="r">월FORECAST</th><th>상태</th><th>거래처</th></tr></thead>
+      <tbody>${items.map(it=>`<tr>
+        <td>${it.name}</td><td>${it.price}</td><td class="r">${it.stock.toLocaleString()}</td>
+        <td class="r">${it.forecast||'-'}</td><td>${invStatusBadge(it.moh)}</td><td>${it.clientes}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+    if(reorders.length>0) urgentCandidates.push({sev:3, text:`방습제 재주문 필요 ${reorders.length}건`});
+  }catch(e){errs.push('방습제:'+e.message);}
 
   // ===== 가장 시급 배너 =====
   if(urgentCandidates.length>0){
@@ -388,56 +519,73 @@ async function load(){
   document.getElementById('main').style.display='block';
 }
 
-// ===== 이번 주 특이사항 (Supabase 저장) =====
+// ===== 이번 주 특이사항 / 신규프로젝트 (Supabase 저장, 둘 다 같은 테이블의 section으로 구분) =====
 function weekKey(){
   const {mon}=weekRange();
   return mon.toISOString().slice(0,10);
 }
-let issues=[];
+let issues=[], projects=[];
 async function loadIssues(){
   if(!sb) return;
-  const {data} = await sb.from('weekly_report_issues').select('*').eq('week_key',weekKey()).order('created_at',{ascending:true});
+  const {data} = await sb.from('weekly_report_issues').select('*').eq('week_key',weekKey()).eq('section','issue').order('created_at',{ascending:true});
   issues=data||[];
-  renderIssues();
+  renderNoteRows('issue', issues, 'issueRows', 'issueSaveNote');
 }
-function renderIssues(){
-  const el=document.getElementById('issueRows');
-  el.innerHTML=issues.map(it=>`
+async function loadProjects(){
+  if(!sb) return;
+  const {data} = await sb.from('weekly_report_issues').select('*').eq('week_key',weekKey()).eq('section','project').order('created_at',{ascending:true});
+  projects=data||[];
+  renderNoteRows('project', projects, 'projectRows', 'projectSaveNote');
+}
+function renderNoteRows(section, list, containerId, noteId){
+  const el=document.getElementById(containerId);
+  el.innerHTML=list.map(it=>`
     <div class="issue-row" data-id="${it.id}">
       <span class="bullet">•</span>
-      <input type="text" value="${(it.content||'').replace(/"/g,'&quot;')}" onchange="saveIssue('${it.id}',this.value)">
-      <span class="del" onclick="deleteIssue('${it.id}')">✕</span>
+      <input type="text" value="${(it.content||'').replace(/"/g,'&quot;')}" onchange="saveNoteRow('${section}','${it.id}',this.value)">
+      <span class="del" onclick="deleteNoteRow('${section}','${it.id}')">✕</span>
     </div>`).join('');
-  if(issues.length===0){
-    el.innerHTML='<div class="empty" style="text-align:left;">아직 작성된 이슈가 없어요. + 항목 추가를 눌러주세요.</div>';
+  if(list.length===0){
+    el.innerHTML='<div class="empty" style="text-align:left;">아직 작성된 내용이 없어요. + 항목 추가를 눌러주세요.</div>';
   }
 }
 async function addIssueRow(){
   if(!sb) return;
-  const {data,error}=await sb.from('weekly_report_issues').insert({week_key:weekKey(),content:''}).select();
+  const {data,error}=await sb.from('weekly_report_issues').insert({week_key:weekKey(),content:'',section:'issue'}).select();
   if(error){ alert(error.message); return; }
   issues.push(data[0]);
-  renderIssues();
-  const rows=document.querySelectorAll('.issue-row input');
+  renderNoteRows('issue', issues, 'issueRows', 'issueSaveNote');
+  const rows=document.querySelectorAll('#issueRows input');
   if(rows.length) rows[rows.length-1].focus();
 }
-async function saveIssue(id,val){
+async function addProjectRow(){
+  if(!sb) return;
+  const {data,error}=await sb.from('weekly_report_issues').insert({week_key:weekKey(),content:'',section:'project'}).select();
+  if(error){ alert(error.message); return; }
+  projects.push(data[0]);
+  renderNoteRows('project', projects, 'projectRows', 'projectSaveNote');
+  const rows=document.querySelectorAll('#projectRows input');
+  if(rows.length) rows[rows.length-1].focus();
+}
+async function saveNoteRow(section,id,val){
   if(!sb) return;
   const {error}=await sb.from('weekly_report_issues').update({content:val}).eq('id',id);
-  const note=document.getElementById('issueSaveNote');
+  const noteId=section==='issue'?'issueSaveNote':'projectSaveNote';
+  const note=document.getElementById(noteId);
   note.textContent=error?'저장 실패: '+error.message:'저장됨 · '+new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
   setTimeout(()=>note.textContent='',2000);
 }
-async function deleteIssue(id){
+async function deleteNoteRow(section,id){
   if(!sb) return;
   await sb.from('weekly_report_issues').delete().eq('id',id);
-  issues=issues.filter(i=>i.id!==id);
-  renderIssues();
+  if(section==='issue'){ issues=issues.filter(i=>i.id!==id); renderNoteRows('issue', issues, 'issueRows', 'issueSaveNote'); }
+  else{ projects=projects.filter(i=>i.id!==id); renderNoteRows('project', projects, 'projectRows', 'projectSaveNote'); }
 }
 
 function _start(){
   load();
   loadIssues();
+  loadProjects();
 }
 if(window._mexcorUser!==undefined){ _start(); }
 else { document.addEventListener('mexcorAuthReady', _start); }
