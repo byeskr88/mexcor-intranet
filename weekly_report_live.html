@@ -30,6 +30,13 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 .head select{padding:6px 10px;border:0.5px solid var(--border);border-radius:var(--r);font-size:12px;background:var(--surface);margin-right:8px;}
 .btn-pdf{background:var(--text);color:#fff;border:none;border-radius:var(--r);padding:9px 16px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit;}
 
+.trend-section{margin-bottom:20px;}
+.trend-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.trend-card{background:var(--s1);border-radius:12px;padding:12px 14px;transition:transform .15s ease;}
+.trend-card:hover{transform:translateY(-1px);}
+.trend-good{font-size:10px;font-weight:700;color:var(--ok-text);}
+.trend-bad{font-size:10px;font-weight:700;color:var(--danger-text);}
+.trend-lbl{font-size:10.5px;color:var(--muted);font-weight:600;margin-bottom:2px;}
 .urgent-banner{background:var(--danger-bg);border-left:3px solid var(--danger);border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:16px;}
 .urgent-banner .tag{font-size:10px;font-weight:700;color:var(--danger-text);text-transform:uppercase;letter-spacing:.03em;}
 .urgent-banner .txt{font-size:13px;font-weight:600;color:var(--danger-text);margin-top:2px;}
@@ -95,8 +102,14 @@ tr:nth-child(odd) td{background:#fbfaf7;}
 @media print{
   body{background:#fff;padding:0;}
   .wrap{border:none;padding:0;max-width:100%;}
-  .btn-pdf,.head select,.issue-row .del,.issue-add,.status-bar{display:none!important;}
+  .btn-pdf,.head select,.issue-row .del,.issue-add,.status-bar,.trend-section{display:none!important;}
+  .sec{break-inside:avoid;page-break-inside:avoid;}
+  .tbl-wrap{break-inside:avoid;page-break-inside:avoid;}
+  tr{break-inside:avoid;}
+  .kpi:hover,.trend-card:hover{transform:none;}
 }
+.kpi{transition:transform .15s ease;}
+.kpi:hover{transform:translateY(-1px);}
 </style>
 </head>
 <body>
@@ -115,6 +128,24 @@ tr:nth-child(odd) td{background:#fbfaf7;}
   <div class="status-bar loading" id="statusBox">데이터 불러오는 중...</div>
 
   <div id="main" style="display:none;">
+    <div class="trend-section" id="trendSection" style="display:none;">
+      <div class="sec-title" style="border-bottom:none;margin-bottom:8px;">📈 최근 추이 <span class="tag tag-auto">자동 · 저장된 스냅샷 기반</span></div>
+      <div class="trend-grid">
+        <div class="trend-card">
+          <div class="trend-lbl">YTD 달성률</div>
+          <div class="chart-box" style="height:70px;"><canvas id="trendYtd"></canvas></div>
+        </div>
+        <div class="trend-card">
+          <div class="trend-lbl">AR USD 미수금</div>
+          <div class="chart-box" style="height:70px;"><canvas id="trendAr"></canvas></div>
+        </div>
+        <div class="trend-card">
+          <div class="trend-lbl">재고 재주문 건수 (MTY+QRO)</div>
+          <div class="chart-box" style="height:70px;"><canvas id="trendReorder"></canvas></div>
+        </div>
+      </div>
+    </div>
+
     <div class="urgent-banner" id="urgentBanner" style="display:none;">
       <div class="tag">가장 시급 · 자동 감지</div>
       <div class="txt" id="urgentText"></div>
@@ -285,7 +316,24 @@ async function load(){
   document.getElementById('weekLabel').textContent=`${mon.getFullYear()}년 ${mon.getMonth()+1}월 ${Math.ceil(mon.getDate()/7)}주차 (${fmt(mon)} ~ ${fmt(sat)})`;
 
   const errs=[];
-
+  const metrics={};
+  let prevMetrics={};
+  if(sb){
+    try{
+      const {data}=await sb.from('weekly_report_snapshots').select('metrics').lt('week_key',weekKey()).order('week_key',{ascending:false}).limit(1).maybeSingle();
+      prevMetrics=data?.metrics||{};
+    }catch(e){ /* 이전 주 기록 없으면 그냥 무시 */ }
+  }
+  function trendBadge(cur, prev, higherIsBetter=true){
+    if(prev===undefined||prev===null||prev===0) return '';
+    const diff=cur-prev;
+    if(diff===0) return '';
+    const pct=Math.round(diff/Math.abs(prev)*100);
+    const good=(diff>0)===higherIsBetter;
+    const arrow=diff>0?'▲':'▼';
+    const cls=good?'trend-good':'trend-bad';
+    return ` <span class="${cls}">${arrow}전주대비${Math.abs(pct)}%</span>`;
+  }
   // ===== 매출 =====
   try{
     const sRows=await tsvObj(BASE.replace('{G}',GIDS.sales));
@@ -302,7 +350,9 @@ async function load(){
     const ytdPlan=planVals.slice(0,curM).reduce((s,v)=>s+v,0);
     const ytdRate=ytdPlan>0?Math.round(ytdAct/ytdPlan*100):0;
     document.getElementById('kpiMonthAct').textContent=fmtMoney(totM[curM-1]||0);
-    document.getElementById('kpiYtdRate').textContent=ytdRate+'%';
+    document.getElementById('kpiYtdRate').innerHTML=ytdRate+'%'+trendBadge(ytdRate, prevMetrics.ytdRate, true);
+    metrics.ytdRate=ytdRate;
+    metrics.monthAct=totM[curM-1]||0;
 
     const chartPlan=planVals.slice(0,curM), chartAct=totM.slice(0,curM);
     const barLabelPlugin={
@@ -376,10 +426,11 @@ async function load(){
     const usd=pend.filter(r=>r['CURRENCY']==='USD').reduce((s,r)=>s+toN(r['TOTAL']),0);
     const mxn=pend.filter(r=>r['CURRENCY']==='MXN').reduce((s,r)=>s+toN(r['TOTAL']),0);
     const over60=pend.filter(r=>r['BUCKET']==='60일초과');
-    document.getElementById('arUsd').textContent=fmtMoney(usd);
+    document.getElementById('arUsd').innerHTML=fmtMoney(usd)+trendBadge(usd, prevMetrics.arUsd, false);
     document.getElementById('arMxn').textContent=mxn>0?fmtMoney(mxn):'-';
     document.getElementById('arCnt').textContent=pend.length+'건';
     document.getElementById('ar60').textContent=over60.length+'건';
+    metrics.arUsd=usd; metrics.arMxn=mxn; metrics.arCnt=pend.length; metrics.ar60=over60.length;
     if(usd>100000) urgentCandidates.push({sev:3, text:`AR USD 미수금 ${fmtMoney(usd)} — 주의 필요`});
     if(over60.length>0) urgentCandidates.push({sev:2, text:`AR 60일 초과 연체 ${over60.length}건 발생`});
 
@@ -427,6 +478,7 @@ async function load(){
     const mtyItems=mtyInv.data.filter(r=>r[2]&&r[2].trim()).map(r=>({item:r[2],client:r[4],stock:toN(r[5]),fc:getFC(r[2]),note:r[9]}));
     document.getElementById('mtyInvTable').innerHTML=invTable(mtyItems);
     const reorders=mtyItems.filter(r=>r.fc>0&&r.stock/r.fc<3).sort((a,b)=>(a.stock/a.fc)-(b.stock/b.fc));
+    metrics.reorderMty=reorders.length;
     if(reorders.length>0){
       const worst=reorders[0];
       urgentCandidates.push({sev:5, text:`${worst.item} (MTY) 재고 ${(worst.stock/worst.fc).toFixed(1)}개월분 — 긴급 재주문 필요`});
@@ -438,6 +490,7 @@ async function load(){
     const qroItems=qroInv.data.filter(r=>r[2]&&r[2].trim()).map(r=>({item:r[2],client:r[4],stock:toN(r[5]),fc:getFC(r[2]),note:r[9]}));
     document.getElementById('qroInvTable').innerHTML=invTable(qroItems);
     const reordersQ=qroItems.filter(r=>r.fc>0&&r.stock/r.fc<3).sort((a,b)=>(a.stock/a.fc)-(b.stock/b.fc));
+    metrics.reorderQro=reordersQ.length;
     if(reordersQ.length>0){
       const worstQ=reordersQ[0];
       urgentCandidates.push({sev:4, text:`${worstQ.item} (QRO) 재고 ${(worstQ.stock/worstQ.fc).toFixed(1)}개월분 — 재주문 필요`});
@@ -556,12 +609,43 @@ async function load(){
     try{
       const snapshotHtml=document.getElementById('main').innerHTML;
       await sb.from('weekly_report_snapshots').upsert(
-        {week_key:weekKey(), html:snapshotHtml, updated_at:new Date().toISOString()},
+        {week_key:weekKey(), html:snapshotHtml, metrics:metrics, updated_at:new Date().toISOString()},
         {onConflict:'week_key'}
       );
     }catch(e){ console.error('스냅샷 저장 실패:', e); }
   }
   await populateWeekSelector();
+  await renderTrendCharts();
+}
+
+let trendCharts=[];
+async function renderTrendCharts(){
+  if(!sb) return;
+  const {data}=await sb.from('weekly_report_snapshots').select('week_key,metrics').order('week_key',{ascending:true});
+  const rows=(data||[]).filter(r=>r.metrics && Object.keys(r.metrics).length>0).slice(-6);
+  if(rows.length<2){ document.getElementById('trendSection').style.display='none'; return; }
+  document.getElementById('trendSection').style.display='block';
+  const labels=rows.map(r=>{
+    const d=new Date(r.week_key+'T00:00:00');
+    return (d.getMonth()+1)+'/'+d.getDate();
+  });
+  trendCharts.forEach(c=>c.destroy());
+  trendCharts=[];
+  function sparkline(canvasId, values, color){
+    const ctx=document.getElementById(canvasId);
+    if(!ctx) return;
+    const c=new Chart(ctx,{
+      type:'line',
+      data:{labels, datasets:[{data:values, borderColor:color, backgroundColor:color+'22', borderWidth:2, pointRadius:3, fill:true, tension:.3}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false}, tooltip:{enabled:true}},
+        scales:{x:{ticks:{font:{size:9}}}, y:{ticks:{font:{size:9}}}}}
+    });
+    trendCharts.push(c);
+  }
+  sparkline('trendYtd', rows.map(r=>r.metrics.ytdRate||0), '#2a78d6');
+  sparkline('trendAr', rows.map(r=>r.metrics.arUsd||0), '#A32D2D');
+  sparkline('trendReorder', rows.map(r=>(r.metrics.reorderMty||0)+(r.metrics.reorderQro||0)), '#BA7517');
 }
 
 async function populateWeekSelector(){
