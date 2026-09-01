@@ -51,6 +51,7 @@ function initNav(){
     {id:'crm',file:'crm_live.html',icon:'🤝',ko:'고객관리',es:'Clientes'},
     {id:'budget',file:'budget_plan.html',icon:'💵',ko:'Budget',es:'Budget',restricted:true},
     {id:'desiccant',file:'desiccant_live.html',icon:'🧪',ko:'신규 프로젝트',es:'Nuevos Proyectos'},
+    {id:'weekly',file:'weekly_report_live.html',icon:'📝',ko:'주간보고',es:'Reporte Semanal'},
   ];
   const _hasBudgetAccess = !!(window._mexcorUser?.user_metadata?.budget);
   const PAGES = ALL_PAGES.filter(p=>!p.restricted||_hasBudgetAccess);
