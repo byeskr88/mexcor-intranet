@@ -144,7 +144,6 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 /* 컬럼 단계 색상 */
 .col-active .col-name{color:var(--ok-text);}
 .col-prospect .col-name{color:var(--muted);}
-.col-qualified .col-name{color:var(--blue-text);}
 .col-proposal .col-name{color:var(--purple-text);}
 .col-negotiation .col-name{color:var(--warn-text);}
 .col-empty{text-align:center;padding:16px 8px;font-size:11px;color:var(--hint);}
@@ -417,11 +416,9 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
       <div class="stage-row">
         <select class="stage-select" id="dpStageSelect" onchange="changeStage(this.value)">
           <option value="prospect" data-ko="잠재고객" data-es="Prospecto">잠재고객</option>
-          <option value="qualified" data-ko="검증됨" data-es="Calificado">검증됨</option>
           <option value="proposal" data-ko="제안" data-es="Propuesta">제안</option>
           <option value="negotiation" data-ko="협상중" data-es="Negociación">협상중</option>
-          <option value="active" data-ko="활성" data-es="Activo">활성</option>
-          <option value="won" data-ko="성사 ✓" data-es="Ganado ✓">성사 ✓</option>
+          <option value="active" data-ko="거래중" data-es="En trato">거래중</option>
           <option value="cancelled" data-ko="취소/드랍 ✗" data-es="Cancelado ✗">취소/드랍 ✗</option>
         </select>
         <select id="dpPriority" onchange="changePriority(this.value)" style="padding:5px 8px;font-size:11px;border:0.5px solid var(--border);border-radius:var(--r);font-family:inherit;background:var(--surface);">
@@ -482,7 +479,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
     </div>
     <div class="form-grid">
       <div class="form-row"><label data-ko="단계" data-es="Etapa">단계</label>
-        <select id="nStage"><option value="prospect">Prospect</option><option value="qualified">Qualified</option><option value="proposal">Proposal</option><option value="active">Active</option></select>
+        <select id="nStage"><option value="prospect">Prospect</option><option value="proposal">Proposal</option><option value="active">Active</option></select>
       </div>
       <div class="form-row"><label data-ko="우선순위" data-es="Prioridad">우선순위</label>
         <select id="nPriority"><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select>
@@ -530,10 +527,9 @@ async function sbWrite(promise){
 
 const STAGES=[
   {id:'prospect',label:'Prospect',labelKo:'잠재고객',labelEs:'Prospecto',col:'col-prospect',color:'var(--s2)'},
-  {id:'qualified',label:'Qualified',labelKo:'검증됨',labelEs:'Calificado',col:'col-qualified',color:'var(--blue)'},
   {id:'proposal',label:'Proposal',labelKo:'제안',labelEs:'Propuesta',col:'col-proposal',color:'var(--purple)'},
   {id:'negotiation',label:'Negotiation',labelKo:'협상중',labelEs:'Negociación',col:'col-negotiation',color:'var(--warn)'},
-  {id:'active',label:'Active',labelKo:'활성',labelEs:'Activo',col:'col-active',color:'var(--ok)'},
+  {id:'active',label:'Active',labelKo:'거래중',labelEs:'En trato',col:'col-active',color:'var(--ok)'},
 ];
 function stageLabel(st){ return curLang==='es'?st.labelEs:st.labelKo; }
 const CANCEL_STAGE={id:'cancelled',label:'취소/드랍',labelEs:'Cancelado',col:'col-cancelled',color:'var(--danger)'};
@@ -796,7 +792,7 @@ function renderCrmList(){
 function updateStats(){
   document.getElementById('statTotal').textContent=accounts.length;
   document.getElementById('statActive').textContent=accounts.filter(a=>a.stage==='active').length;
-  document.getElementById('statPipe').textContent=accounts.filter(a=>['prospect','qualified','proposal','negotiation'].includes(a.stage)).length;
+  document.getElementById('statPipe').textContent=accounts.filter(a=>['prospect','proposal','negotiation'].includes(a.stage)).length;
   const fu=accounts.filter(a=>{const d=lastContactDays(a.id);return a.stage!=='won'&&a.stage!=='cancelled'&&(d===null||d>30);}).length;
   document.getElementById('statFollowup').textContent=fu;
   window._mexcorSetStatus?.('crm', fu>0?'warn':'ok',
