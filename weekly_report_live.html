@@ -186,6 +186,16 @@ tr:nth-child(odd) td{background:#fbfaf7;}
         <div class="kpi k-rate"><div class="lbl">YTD 달성률</div><div class="val" id="kpiYtdRate">-</div></div>
       </div>
       <div class="chart-box"><canvas id="salesChart"></canvas></div>
+      <div class="two-col" style="margin-top:14px;">
+        <div>
+          <div class="subhead">MTY 출고 상세 (이번 주)</div>
+          <div id="mtyOutDetail"></div>
+        </div>
+        <div>
+          <div class="subhead">QRO 출고 상세 (이번 주)</div>
+          <div id="qroOutDetail"></div>
+        </div>
+      </div>
     </div>
 
     <div class="sec">
@@ -459,6 +469,13 @@ async function load(targetWeekKey){
     const other=rows.filter(r=>{const u=(r[7]||'').toUpperCase();return !u.includes('DRUM')&&!u.includes('SPOOL');}).reduce((s,r)=>s+toN(r[8]),0);
     return {drum,spool,other};
   }
+  function outDetailTable(rows){
+    if(!rows.length) return '<div class="empty">이번 주 출고 없음</div>';
+    return `<div class="tbl-wrap"><table>
+      <thead><tr><th>날짜</th><th>거래처</th><th>품목</th><th>단위</th><th class="r">수량</th></tr></thead>
+      <tbody>${rows.map(r=>`<tr><td>${r[5]||'-'}</td><td>${r[3]||'-'}</td><td>${r[6]||'-'}</td><td>${r[7]||'-'}</td><td class="r">${r[8]||'-'}</td></tr>`).join('')}</tbody>
+    </table></div>`;
+  }
   try{
     const outRows=await tsvRaw(BASE.replace('{G}',GIDS.out_mty));
     const rows=outRows.data.filter(r=>r[3]||r[1]);
@@ -469,6 +486,7 @@ async function load(targetWeekKey){
     if(spool) parts.push(spool.toLocaleString()+'스풀');
     if(other) parts.push(other.toLocaleString()+'개');
     document.getElementById('kpiMtyOut').textContent=parts.length?parts.join(' / '):'출고 없음';
+    document.getElementById('mtyOutDetail').innerHTML=outDetailTable(thisWeek);
   }catch(e){errs.push('MTY출고:'+e.message);}
   try{
     const outRowsQ=await tsvRaw(BASE.replace('{G}',GIDS.out_qro));
@@ -480,6 +498,7 @@ async function load(targetWeekKey){
     if(spool) parts.push(spool.toLocaleString()+'스풀');
     if(other) parts.push(other.toLocaleString()+'개');
     document.getElementById('kpiQroOut').textContent=parts.length?parts.join(' / '):'출고 없음';
+    document.getElementById('qroOutDetail').innerHTML=outDetailTable(thisWeekQ);
   }catch(e){errs.push('QRO출고:'+e.message);}
 
   // ===== AR =====
