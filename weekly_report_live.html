@@ -204,7 +204,10 @@ tr:nth-child(odd) td{background:#fbfaf7;}
 
     <div class="sec">
       <div class="sec-title">🤝 영업활동 & 컨택 로그 <span class="tag tag-auto">자동 · CRM (이번 주)</span></div>
-      <div id="crmContactList"></div>
+      <div class="subhead">기존 거래처</div>
+      <div id="crmContactExisting"></div>
+      <div class="subhead">신규 영업</div>
+      <div id="crmContactNew"></div>
     </div>
 
     <div class="sec">
@@ -622,7 +625,7 @@ async function load(targetWeekKey){
       const {data:logs}=await sb.from('contact_logs').select('*').order('created_at',{ascending:false});
       const accMap={}; (accs||[]).forEach(a=>accMap[a.id]=a);
       const thisWeekLogs=(logs||[]).filter(l=>inWeek(l.created_at,mon,sat));
-      document.getElementById('crmContactList').innerHTML=thisWeekLogs.length?thisWeekLogs.map(l=>{
+      const contactItemHtml=l=>{
         const acc=accMap[l.account_id];
         const d=new Date(l.created_at);
         return `<div class="contact-item">
@@ -630,7 +633,14 @@ async function load(targetWeekKey){
           <div class="ci-content">${l.content}</div>
           ${acc&&acc.next_action?`<div class="ci-next">📌 다음 액션: ${acc.next_action}</div>`:''}
         </div>`;
-      }).join(''):'<div class="empty">이번 주 컨택 기록 없음</div>';
+      };
+      const existingLogs=thisWeekLogs.filter(l=>accMap[l.account_id]?.stage==='active');
+      const newBizLogs=thisWeekLogs.filter(l=>{
+        const st=accMap[l.account_id]?.stage;
+        return st && st!=='active' && st!=='cancelled';
+      });
+      document.getElementById('crmContactExisting').innerHTML=existingLogs.length?existingLogs.map(contactItemHtml).join(''):'<div class="empty">이번 주 기록 없음</div>';
+      document.getElementById('crmContactNew').innerHTML=newBizLogs.length?newBizLogs.map(contactItemHtml).join(''):'<div class="empty">이번 주 기록 없음</div>';
 
       const followup=(accs||[]).filter(a=>{
         if(a.stage==='won'||a.stage==='cancelled') return false;
