@@ -125,7 +125,7 @@ tr:nth-child(odd) td{background:#fbfaf7;}
 .contact-item .ci-next{margin-top:4px;font-size:11px;color:var(--blue-text);}
 
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-.subhead{font-size:11px;font-weight:600;color:var(--muted);margin:12px 0 6px;}
+.subhead{font-size:13px;font-weight:700;color:var(--text);margin:16px 0 8px;padding-left:8px;border-left:3px solid var(--blue);}
 
 @media print{
   body{background:#fff;padding:0;}
@@ -274,6 +274,8 @@ tr:nth-child(odd) td{background:#fbfaf7;}
       </div>
       <div class="subhead">연체 구간별 현황</div>
       <div id="arBucketList"></div>
+      <div class="subhead">60일 초과 연체 상세</div>
+      <div id="arOver60Detail"></div>
       <div class="subhead">이번 주 입금 내역</div>
       <div id="arPaidList"></div>
     </div>
@@ -546,7 +548,19 @@ async function load(targetWeekKey){
     const pend=validRows.filter(r=>(r['PAYMENT_STATUS']||'').toUpperCase()==='PENDIENTE');
     const usd=pend.filter(r=>r['CURRENCY']==='USD').reduce((s,r)=>s+toN(r['TOTAL']),0);
     const mxn=pend.filter(r=>r['CURRENCY']==='MXN').reduce((s,r)=>s+toN(r['TOTAL']),0);
-    const over60=pend.filter(r=>r['BUCKET']==='60일초과');
+
+    // BUCKET 텍스트가 비어있거나 못 알아보는 값이면 OVERDUE_DAYS 숫자로 직접 계산 (신규 행 등 누락 방지)
+    const KNOWN_BUCKETS=['미만기','30일이내','30~60일','60일초과'];
+    function effBucket(r){
+      if(KNOWN_BUCKETS.includes(r['BUCKET'])) return r['BUCKET'];
+      const d=parseInt(r['OVERDUE_DAYS']);
+      if(isNaN(d)||d<=0) return '미만기';
+      if(d<=30) return '30일이내';
+      if(d<=60) return '30~60일';
+      return '60일초과';
+    }
+    pend.forEach(r=>r._bucket=effBucket(r));
+    const over60=pend.filter(r=>r._bucket==='60일초과');
     document.getElementById('arUsd').innerHTML=fmtMoney(usd)+trendBadge(usd, prevMetrics.arUsd, false);
     document.getElementById('arMxn').textContent=mxn>0?fmtMoney(mxn):'-';
     document.getElementById('arCnt').textContent=pend.length+'건';
@@ -555,13 +569,17 @@ async function load(targetWeekKey){
     if(usd>100000) urgentCandidates.push({sev:3, text:`AR USD 미수금 ${fmtMoney(usd)} — 주의 필요`});
     if(over60.length>0) urgentCandidates.push({sev:2, text:`AR 60일 초과 연체 ${over60.length}건 발생`});
 
-    const buckets=['미만기','30일이내','30~60일','60일초과'];
-    document.getElementById('arBucketList').innerHTML=buckets.map(b=>{
-      const items=pend.filter(r=>r['BUCKET']===b);
+    document.getElementById('arBucketList').innerHTML=KNOWN_BUCKETS.map(b=>{
+      const items=pend.filter(r=>r._bucket===b);
       const bUsd=items.filter(r=>r['CURRENCY']==='USD').reduce((s,r)=>s+toN(r['TOTAL']),0);
       const cls=b==='60일초과'?'badge-danger':b==='30~60일'?'badge-warn':'badge-ok';
       return `<div class="list-item"><span>${b}</span><span class="badge ${cls}">${items.length}건 · $${fmtMoney(bUsd)}</span></div>`;
     }).join('');
+
+    document.getElementById('arOver60Detail').innerHTML=over60.length?`<div class="tbl-wrap"><table>
+      <thead><tr><th>거래처</th><th>인보이스</th><th>통화</th><th class="r">금액</th><th>결제만기일</th><th class="r">연체일수</th></tr></thead>
+      <tbody>${over60.map(r=>`<tr><td>${r['CLIENTE']||'-'}</td><td>${r['FACTURA_NO']||'-'}</td><td>${r['CURRENCY']||'-'}</td><td class="r">${fmtMoney(toN(r['TOTAL']))}</td><td>${r['PAYMENT_PLAN_DATE']||'-'}</td><td class="r">${r['OVERDUE_DAYS']||'-'}</td></tr>`).join('')}</tbody>
+    </table></div>`:'<div class="empty">60일 초과 연체 없음</div>';
 
     const paidThisWeek=validRows.filter(r=>(r['PAYMENT_STATUS']||'').toUpperCase()==='PAGADO' && inWeek(r['ACTUAL_PAYMENT_DATE']||r['ACTUAL PAYMENT DATE'],mon,sat));
     document.getElementById('arPaidList').innerHTML=paidThisWeek.length?`<div class="tbl-wrap"><table>
