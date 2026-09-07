@@ -31,6 +31,15 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 .head select{padding:6px 10px;border:0.5px solid var(--border);border-radius:var(--r);font-size:12px;background:var(--surface);margin-right:8px;}
 .btn-pdf{background:var(--text);color:#fff;border:none;border-radius:var(--r);padding:9px 16px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit;}
 .btn-nav{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--r);padding:8px 12px;font-size:13px;cursor:pointer;font-family:inherit;color:var(--text);}
+.btn-nav-label{min-width:100px;}
+.btn-nav-label:hover{background:var(--s1);}
+.archive-panel{background:var(--surface);border:0.5px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:20px;}
+.archive-head{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:600;margin-bottom:10px;}
+.archive-close{font-size:12px;color:var(--muted);cursor:pointer;font-weight:400;}
+.archive-month{font-size:12px;font-weight:600;color:var(--muted);margin:10px 0 4px;}
+.archive-item{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-radius:8px;cursor:pointer;font-size:12.5px;}
+.archive-item:hover{background:var(--s1);}
+.archive-item .aw-badge{font-size:10px;padding:2px 7px;border-radius:10px;background:var(--ok-bg);color:var(--ok-text);}
 .btn-nav:hover{background:var(--s1);}
 .btn-save{background:var(--ok);color:#fff;border:none;border-radius:var(--r);padding:9px 16px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit;margin-right:8px;}
 .btn-save:hover{background:var(--ok-text);}
@@ -121,7 +130,7 @@ tr:nth-child(odd) td{background:#fbfaf7;}
 @media print{
   body{background:#fff;padding:0;}
   .wrap{border:none;padding:0;max-width:100%;}
-  .btn-pdf,.head select,.issue-row .del,.issue-add,.status-bar,.trend-section{display:none!important;}
+  .btn-pdf,.head select,.btn-nav,.archive-panel,.issue-row .del,.issue-add,.status-bar,.trend-section{display:none!important;}
   .sec{break-inside:avoid;page-break-inside:avoid;}
   .tbl-wrap{break-inside:avoid;page-break-inside:avoid;}
   tr{break-inside:avoid;}
@@ -141,11 +150,19 @@ tr:nth-child(odd) td{background:#fbfaf7;}
     </div>
     <div>
       <button class="btn-nav" onclick="navWeek(-1)" title="이전 주">◀</button>
-      <select id="weekSelector" onchange="onWeekSelect(this.value)"></select>
+      <button class="btn-nav btn-nav-label" onclick="toggleArchive()" id="weekNavLabel">주차 선택</button>
       <button class="btn-nav" onclick="navWeek(1)" title="다음 주">▶</button>
       <button class="btn-save" onclick="saveReport()"><span>✓</span>이 주차 저장</button>
       <button class="btn-pdf" onclick="window.print()"><span>⬇</span>PDF 다운로드</button>
     </div>
+  </div>
+
+  <div id="archivePanel" class="archive-panel" style="display:none;">
+    <div class="archive-head">
+      <span>📁 지난 보고서 목록</span>
+      <span class="archive-close" onclick="toggleArchive()">닫기 ✕</span>
+    </div>
+    <div id="archiveList"></div>
   </div>
 
   <div class="status-bar loading" id="statusBox">데이터 불러오는 중...</div>
@@ -382,7 +399,6 @@ async function saveReport(){
     await updateDraftBadge();
     await populateWeekSelector();
     await renderTrendCharts();
-    document.getElementById('weekSelector').value=targetKey;
   }catch(e){ alert('저장 실패: '+e.message); }
 }
 
@@ -457,7 +473,8 @@ async function load(targetWeekKey){
         ctx.restore();
       }
     };
-    new Chart(document.getElementById('salesChart'),{
+    if(window.salesChartInst) window.salesChartInst.destroy();
+    window.salesChartInst=new Chart(document.getElementById('salesChart'),{
       type:'bar',
       data:{labels:MONTHS.slice(0,curM), datasets:[
         {label:'목표', data:chartPlan, backgroundColor:'#D3D1C7'},
@@ -748,22 +765,48 @@ async function renderTrendCharts(){
   sparkline('trendReorder', rows.map(r=>(r.metrics.reorderMty||0)+(r.metrics.reorderQro||0)), '#BA7517');
 }
 
+function fmtWeekLabel(k, short){
+  const mon=new Date(k+'T00:00:00');
+  const sat=new Date(mon); sat.setDate(mon.getDate()+5);
+  const f=d=>(d.getMonth()+1)+'/'+d.getDate();
+  if(short) return `${mon.getMonth()+1}월 ${Math.ceil(mon.getDate()/7)}주차`;
+  return `${mon.getFullYear()}년 ${mon.getMonth()+1}월 ${Math.ceil(mon.getDate()/7)}주차 (${f(mon)}~${f(sat)})`;
+}
+
 async function populateWeekSelector(){
-  const sel=document.getElementById('weekSelector');
-  if(!sb){ sel.innerHTML=''; return; }
+  if(currentViewWeekKey){
+    document.getElementById('weekNavLabel').textContent=fmtWeekLabel(currentViewWeekKey, true);
+  }
+  if(!sb) return;
   const {data}=await sb.from('weekly_report_snapshots').select('week_key,confirmed').eq('confirmed',true).order('week_key',{ascending:false});
   const confirmedKeys=(data||[]).map(r=>r.week_key);
-  const fmtWeekLabel=k=>{
-    const mon=new Date(k+'T00:00:00');
-    const sat=new Date(mon); sat.setDate(mon.getDate()+5);
-    const f=d=>(d.getMonth()+1)+'/'+d.getDate();
-    return `${mon.getFullYear()}년 ${mon.getMonth()+1}월 ${Math.ceil(mon.getDate()/7)}주차 (${f(mon)}~${f(sat)})`;
-  };
   const allKeys=new Set(confirmedKeys);
   if(currentViewWeekKey) allKeys.add(currentViewWeekKey);
   const sorted=[...allKeys].sort().reverse();
-  sel.innerHTML=sorted.map(k=>`<option value="${k}">${fmtWeekLabel(k)}${confirmedKeys.includes(k)?' · 확정됨':' · 작성중'}</option>`).join('');
-  sel.value=currentViewWeekKey;
+  const groups={};
+  sorted.forEach(k=>{
+    const mon=new Date(k+'T00:00:00');
+    const gk=mon.getFullYear()+'년 '+(mon.getMonth()+1)+'월';
+    if(!groups[gk]) groups[gk]=[];
+    groups[gk].push(k);
+  });
+  const archiveList=document.getElementById('archiveList');
+  archiveList.innerHTML=Object.entries(groups).map(([gk,keys])=>`
+    <div class="archive-month">${gk}</div>
+    ${keys.map(k=>`<div class="archive-item" onclick="jumpToWeek('${k}')">
+      <span>${fmtWeekLabel(k)}${k===currentViewWeekKey?' (현재 보는 중)':''}</span>
+      <span class="aw-badge">${confirmedKeys.includes(k)?'확정됨':'작성중'}</span>
+    </div>`).join('')}
+  `).join('') || '<div class="empty">저장된 보고서가 없어요</div>';
+}
+
+function toggleArchive(){
+  const panel=document.getElementById('archivePanel');
+  panel.style.display=panel.style.display==='none'?'block':'none';
+}
+function jumpToWeek(val){
+  toggleArchive();
+  load(val);
 }
 
 async function onWeekSelect(val){
