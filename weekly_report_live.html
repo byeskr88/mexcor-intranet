@@ -200,9 +200,10 @@ tr:nth-child(odd) td{background:#fbfaf7;}
 
     <div class="sec">
       <div class="sec-title">📊 이번 주 매출실적 <span class="tag tag-auto">자동 · 매출 탭</span></div>
-      <div class="kpis">
+      <div class="kpis" style="grid-template-columns:repeat(5,1fr);">
         <div class="kpi k-mty"><div class="lbl">MTY 출고 (이번 주)</div><div class="val" id="kpiMtyOut">-</div></div>
         <div class="kpi k-qro"><div class="lbl">QRO 출고 (이번 주)</div><div class="val" id="kpiQroOut">-</div></div>
+        <div class="kpi k-in"><div class="lbl">이번 주 실적</div><div class="val" id="kpiWeekAct">-</div></div>
         <div class="kpi k-in"><div class="lbl">이번 달 누적 실적</div><div class="val" id="kpiMonthAct">-</div></div>
         <div class="kpi k-rate"><div class="lbl">YTD 달성률</div><div class="val" id="kpiYtdRate">-</div></div>
       </div>
@@ -448,10 +449,21 @@ async function load(targetWeekKey){
     const ytdAct=totM.reduce((s,v)=>s+v,0);
     const ytdPlan=planVals.slice(0,curM).reduce((s,v)=>s+v,0);
     const ytdRate=ytdPlan>0?Math.round(ytdAct/ytdPlan*100):0;
-    document.getElementById('kpiMonthAct').textContent=fmtMoney(totM[curM-1]||0);
+    const monthActVal=totM[curM-1]||0;
+    document.getElementById('kpiMonthAct').textContent=fmtMoney(monthActVal);
     document.getElementById('kpiYtdRate').innerHTML=ytdRate+'%'+trendBadge(ytdRate, prevMetrics.ytdRate, true);
     metrics.ytdRate=ytdRate;
-    metrics.monthAct=totM[curM-1]||0;
+    metrics.monthAct=monthActVal;
+    metrics.monthKey=mon.getFullYear()+'-'+(mon.getMonth()+1);
+
+    // 이번 주 실적 = 이번 주 누적 - 지난 주 누적 (같은 달일 때만 비교, 월이 바뀌면 이번 달 누적 그대로가 이번 주 실적)
+    let weekAct;
+    if(prevMetrics.monthKey===metrics.monthKey && prevMetrics.monthAct!==undefined){
+      weekAct=monthActVal-prevMetrics.monthAct;
+    }else{
+      weekAct=monthActVal;
+    }
+    document.getElementById('kpiWeekAct').textContent=fmtMoney(weekAct);
 
     const chartPlan=planVals.slice(0,curM), chartAct=totM.slice(0,curM);
     const barLabelPlugin={
