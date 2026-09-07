@@ -30,6 +30,8 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 .head .sub{font-size:12px;color:var(--hint);}
 .head select{padding:6px 10px;border:0.5px solid var(--border);border-radius:var(--r);font-size:12px;background:var(--surface);margin-right:8px;}
 .btn-pdf{background:var(--text);color:#fff;border:none;border-radius:var(--r);padding:9px 16px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit;}
+.btn-nav{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--r);padding:8px 12px;font-size:13px;cursor:pointer;font-family:inherit;color:var(--text);}
+.btn-nav:hover{background:var(--s1);}
 .btn-save{background:var(--ok);color:#fff;border:none;border-radius:var(--r);padding:9px 16px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit;margin-right:8px;}
 .btn-save:hover{background:var(--ok-text);}
 .draft-badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:10px;margin-top:6px;}
@@ -138,7 +140,9 @@ tr:nth-child(odd) td{background:#fbfaf7;}
       <div class="draft-badge" id="draftBadge" style="display:none;"></div>
     </div>
     <div>
+      <button class="btn-nav" onclick="navWeek(-1)" title="이전 주">◀</button>
       <select id="weekSelector" onchange="onWeekSelect(this.value)"></select>
+      <button class="btn-nav" onclick="navWeek(1)" title="다음 주">▶</button>
       <button class="btn-save" onclick="saveReport()"><span>✓</span>이 주차 저장</button>
       <button class="btn-pdf" onclick="window.print()"><span>⬇</span>PDF 다운로드</button>
     </div>
@@ -373,7 +377,7 @@ async function saveReport(){
     await updateDraftBadge();
     await populateWeekSelector();
     await renderTrendCharts();
-    document.getElementById('weekSelector').value=targetKey===weekKey()?'current':targetKey;
+    document.getElementById('weekSelector').value=targetKey;
   }catch(e){ alert('저장 실패: '+e.message); }
 }
 
@@ -689,11 +693,11 @@ async function load(targetWeekKey){
 
   currentViewWeekKey=thisWeekKey;
   lastMetrics=metrics;
+  await loadIssues(thisWeekKey);
+  await loadProjects(thisWeekKey);
   await updateDraftBadge();
-  if(!isRecompute){
-    await populateWeekSelector();
-    await renderTrendCharts();
-  }
+  await populateWeekSelector();
+  await renderTrendCharts();
 }
 
 let trendCharts=[];
@@ -728,47 +732,33 @@ async function renderTrendCharts(){
 
 async function populateWeekSelector(){
   const sel=document.getElementById('weekSelector');
-  if(!sb){ sel.innerHTML='<option value="current">이번 주</option>'; return; }
+  if(!sb){ sel.innerHTML=''; return; }
   const {data}=await sb.from('weekly_report_snapshots').select('week_key,confirmed').eq('confirmed',true).order('week_key',{ascending:false});
-  const curKey=weekKey();
-  const pastKeys=(data||[]).map(r=>r.week_key).filter(k=>k!==curKey);
+  const confirmedKeys=(data||[]).map(r=>r.week_key);
   const fmtWeekLabel=k=>{
     const mon=new Date(k+'T00:00:00');
     const sat=new Date(mon); sat.setDate(mon.getDate()+5);
     const f=d=>(d.getMonth()+1)+'/'+d.getDate();
     return `${mon.getFullYear()}년 ${mon.getMonth()+1}월 ${Math.ceil(mon.getDate()/7)}주차 (${f(mon)}~${f(sat)})`;
   };
-  const curIsConfirmed=(data||[]).some(r=>r.week_key===curKey);
-  const opts=[`<option value="current">이번 주 ${curIsConfirmed?'(확정됨, 수정중)':'(작성중)'}</option>`]
-    .concat(pastKeys.map(k=>`<option value="${k}">${fmtWeekLabel(k)} · 확정됨</option>`));
-  sel.innerHTML=opts.join('');
-  sel.value='current';
+  const allKeys=new Set(confirmedKeys);
+  if(currentViewWeekKey) allKeys.add(currentViewWeekKey);
+  const sorted=[...allKeys].sort().reverse();
+  sel.innerHTML=sorted.map(k=>`<option value="${k}">${fmtWeekLabel(k)}${confirmedKeys.includes(k)?' · 확정됨':' · 작성중'}</option>`).join('');
+  sel.value=currentViewWeekKey;
 }
 
 async function onWeekSelect(val){
-  if(val==='current'){ load(); return; }
-  if(!sb) return;
-  document.getElementById('statusBox').className='status-bar loading';
-  document.getElementById('statusBox').textContent='저장된 보고서 불러오는 중...';
-  const {data,error}=await sb.from('weekly_report_snapshots').select('*').eq('week_key',val).maybeSingle();
-  if(error||!data){
-    document.getElementById('statusBox').className='status-bar err';
-    document.getElementById('statusBox').textContent='해당 주차 저장 기록을 찾을 수 없어요';
-    return;
-  }
-  document.getElementById('main').innerHTML=data.html;
-  document.getElementById('main').style.display='block';
-  document.getElementById('weekLabel').textContent=`${val} 주차 (확정된 기록 · ${new Date(data.updated_at).toLocaleString('ko-KR')} 기준)`;
-  document.getElementById('statusBox').innerHTML='✓ 확정된 보고서입니다 — 내용을 고치고 싶으면 <span class="recompute-link" onclick="recomputeWeek(\''+val+'\')">🔄 이 주차 다시 계산</span> 후 다시 저장하세요';
-  document.getElementById('statusBox').className='status-bar ok';
-  currentViewWeekKey=val;
-  await updateDraftBadge();
+  if(!val) return;
+  await load(val);
 }
 
-async function recomputeWeek(val){
-  if(!confirm('이 주차를 지금 데이터 기준으로 다시 계산할까요?\n(자동 항목만 새로 계산되고, 직접 작성한 이슈/프로젝트 내용은 그대로 유지돼요. "이 주차 저장" 버튼을 눌러야 최종 반영돼요)')) return;
-  await load(val);
-  document.getElementById('weekLabel').textContent=document.getElementById('weekLabel').textContent+' · 방금 다시 계산됨';
+function navWeek(dir){
+  const base=currentViewWeekKey||weekKey();
+  const d=new Date(base+'T00:00:00');
+  d.setDate(d.getDate()+dir*7);
+  const newKey=d.toISOString().slice(0,10);
+  load(newKey);
 }
 
 // ===== 이번 주 특이사항 / 신규프로젝트 (카드형, Supabase 저장) =====
@@ -779,15 +769,15 @@ function weekKey(refDateStr){
 const STATUS_OPTS=['진행중','협의중','완료','보류'];
 const STATUS_COLOR={'진행중':'badge-warn','협의중':'badge-info','완료':'badge-ok','보류':'badge-danger'};
 let issues=[], projects=[];
-async function loadIssues(){
+async function loadIssues(wk){
   if(!sb) return;
-  const {data} = await sb.from('weekly_report_issues').select('*').eq('week_key',weekKey()).eq('section','issue').order('created_at',{ascending:true});
+  const {data} = await sb.from('weekly_report_issues').select('*').eq('week_key',wk||currentViewWeekKey||weekKey()).eq('section','issue').order('created_at',{ascending:true});
   issues=data||[];
   renderCards('issue', issues, 'issueRows');
 }
-async function loadProjects(){
+async function loadProjects(wk){
   if(!sb) return;
-  const {data} = await sb.from('weekly_report_issues').select('*').eq('week_key',weekKey()).eq('section','project').order('created_at',{ascending:true});
+  const {data} = await sb.from('weekly_report_issues').select('*').eq('week_key',wk||currentViewWeekKey||weekKey()).eq('section','project').order('created_at',{ascending:true});
   projects=data||[];
   renderCards('project', projects, 'projectRows');
 }
@@ -861,7 +851,7 @@ async function deleteCard(section, id){
 }
 async function addIssueRow(){
   if(!sb) return;
-  const {data,error}=await sb.from('weekly_report_issues').insert({week_key:weekKey(),title:'',content:'',status:'진행중',section:'issue',created_by:currentUserId()}).select();
+  const {data,error}=await sb.from('weekly_report_issues').insert({week_key:currentViewWeekKey||weekKey(),title:'',content:'',status:'진행중',section:'issue',created_by:currentUserId()}).select();
   if(error){ alert(error.message); return; }
   issues.push(data[0]);
   renderCards('issue', issues, 'issueRows');
@@ -869,7 +859,7 @@ async function addIssueRow(){
 }
 async function addProjectRow(){
   if(!sb) return;
-  const {data,error}=await sb.from('weekly_report_issues').insert({week_key:weekKey(),title:'',content:'',status:'진행중',section:'project',created_by:currentUserId()}).select();
+  const {data,error}=await sb.from('weekly_report_issues').insert({week_key:currentViewWeekKey||weekKey(),title:'',content:'',status:'진행중',section:'project',created_by:currentUserId()}).select();
   if(error){ alert(error.message); return; }
   projects.push(data[0]);
   renderCards('project', projects, 'projectRows');
@@ -877,9 +867,12 @@ async function addProjectRow(){
 }
 
 function _start(){
-  load();
-  loadIssues();
-  loadProjects();
+  // 기본으로 "막 끝난 지난주"부터 보여줌 (월요일에 지난주 보고서 쓰는 실제 업무 흐름에 맞춤)
+  const now=new Date();
+  const day=now.getDay()===0?7:now.getDay();
+  const thisMon=new Date(now); thisMon.setDate(now.getDate()-day+1);
+  const lastMon=new Date(thisMon); lastMon.setDate(thisMon.getDate()-7);
+  load(lastMon.toISOString().slice(0,10));
 }
 if(window._mexcorUser!==undefined){ _start(); }
 else { document.addEventListener('mexcorAuthReady', _start); }
