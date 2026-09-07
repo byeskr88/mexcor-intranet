@@ -233,6 +233,8 @@ tr:nth-child(odd) td{background:#fbfaf7;}
         <div class="kpi k-mty"><div class="lbl">재고 자산가치</div><div class="val" id="dscValue">-</div></div>
       </div>
       <div id="desiccantTable"></div>
+      <div class="subhead">이번 주 판매 내역</div>
+      <div id="desiccantSalesList"></div>
     </div>
 
     <div class="sec">
@@ -682,6 +684,12 @@ async function load(targetWeekKey){
       </tr>`).join('')}</tbody>
     </table></div>`;
     if(reorders.length>0) urgentCandidates.push({sev:3, text:`방습제 재주문 필요 ${reorders.length}건`});
+
+    const thisWeekSales=outRows.filter(r=>inWeek(r['DELIVERY DATE'],mon,sat));
+    document.getElementById('desiccantSalesList').innerHTML=thisWeekSales.length?`<div class="tbl-wrap"><table>
+      <thead><tr><th>날짜</th><th>품목</th><th>거래처</th><th class="r">수량</th></tr></thead>
+      <tbody>${thisWeekSales.map(r=>`<tr><td>${r['DELIVERY DATE']||'-'}</td><td>${(r['ITEM']||'').trim()}</td><td>${(r['CLIENTE']||'').trim()}</td><td class="r">${(r['UNIT QTY']||'').trim()}</td></tr>`).join('')}</tbody>
+    </table></div>`:'<div class="empty">이번 주 판매 없음</div>';
   }catch(e){errs.push('방습제:'+e.message);}
 
   // ===== 가장 시급 배너 =====
