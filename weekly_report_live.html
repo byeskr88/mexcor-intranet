@@ -208,7 +208,8 @@ tr:nth-child(odd) td{background:#fbfaf7;}
     </div>
 
     <div class="issue-box">
-      <div class="sec-title">✏️ 금주 주요 이슈 / 특이사항 <span class="tag tag-manual">직접 작성</span></div>
+      <div class="sec-title">✏️ 금주 주요 이슈 / 특이사항 <span class="tag tag-manual">직접 작성</span><button class="cmt-btn" id="cmtBtn-issue_note" onclick="toggleCommentPanel('issue_note')">💬 <span id="cmtCnt-issue_note"></span></button></div>
+      <div class="cmt-panel" id="cmtPanel-issue_note"></div>
       <div class="issue-rows" id="issueRows"></div>
       <span class="issue-add" onclick="addIssueRow()">+ 항목 추가</span>
       <div class="save-note" id="issueSaveNote"></div>
@@ -279,7 +280,8 @@ tr:nth-child(odd) td{background:#fbfaf7;}
 
     <div class="sec">
       <div class="issue-box">
-        <div class="sec-title">🗂️ 진행 예정 신규 프로젝트 <span class="tag tag-manual">직접 작성</span></div>
+        <div class="sec-title">🗂️ 진행 예정 신규 프로젝트 <span class="tag tag-manual">직접 작성</span><button class="cmt-btn" id="cmtBtn-project_note" onclick="toggleCommentPanel('project_note')">💬 <span id="cmtCnt-project_note"></span></button></div>
+        <div class="cmt-panel" id="cmtPanel-project_note"></div>
         <div class="issue-rows" id="projectRows"></div>
         <span class="issue-add" onclick="addProjectRow()">+ 프로젝트 추가</span>
         <div class="save-note" id="projectSaveNote"></div>
@@ -982,7 +984,7 @@ async function addProjectRow(){
 }
 
 // ===== 섹션별 코멘트 =====
-const CMT_SECTIONS=['sales','crm','aviso','inv_mty','inv_qro','desiccant','ar'];
+const CMT_SECTIONS=['issue_note','sales','crm','aviso','inv_mty','inv_qro','desiccant','project_note','ar'];
 let comments=[];
 let openCmtSection=null;
 
