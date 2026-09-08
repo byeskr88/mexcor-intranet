@@ -60,6 +60,22 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 
 .sec{margin-bottom:24px;}
 .sec-title{font-size:13px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px;padding-bottom:6px;border-bottom:1px solid var(--s2);}
+.cmt-btn{margin-left:auto;display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:var(--muted);background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:2px 9px;cursor:pointer;}
+.cmt-btn:hover{background:var(--s2);}
+.cmt-btn.has-open{background:var(--warn-bg);color:var(--warn-text);border-color:transparent;}
+.cmt-panel{display:none;background:var(--s1);border:1px solid var(--s2);border-radius:8px;padding:10px 12px;margin:-2px 0 12px;}
+.cmt-panel.open{display:block;}
+.cmt-item{padding:7px 0;border-bottom:1px dashed var(--border);}
+.cmt-item:last-child{border-bottom:none;}
+.cmt-item.resolved .cmt-text{color:var(--muted);text-decoration:line-through;}
+.cmt-top{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.cmt-text{font-size:12.5px;line-height:1.5;flex:1;}
+.cmt-meta{font-size:10px;color:var(--hint);margin-top:2px;}
+.cmt-actions{display:flex;gap:6px;flex-shrink:0;}
+.cmt-actions span{font-size:10px;color:var(--muted);cursor:pointer;text-decoration:underline;}
+.cmt-add-row{display:flex;gap:6px;margin-top:8px;}
+.cmt-add-row input{flex:1;font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;}
+.cmt-add-row button{font-size:12px;padding:6px 10px;border:none;border-radius:6px;background:#1f1e1c;color:#fff;cursor:pointer;}
 .tag{font-size:9.5px;padding:2px 7px;border-radius:10px;font-weight:600;margin-left:auto;white-space:nowrap;}
 .tag-auto{background:var(--blue-bg);color:var(--blue-text);}
 .tag-manual{background:var(--purple-bg);color:var(--purple-text);}
@@ -199,7 +215,8 @@ tr:nth-child(odd) td{background:#fbfaf7;}
     </div>
 
     <div class="sec">
-      <div class="sec-title">📊 이번 주 매출실적 <span class="tag tag-auto">자동 · 매출 탭</span></div>
+      <div class="sec-title">📊 이번 주 매출실적 <span class="tag tag-auto">자동 · 매출 탭</span><button class="cmt-btn" id="cmtBtn-sales" onclick="toggleCommentPanel('sales')">💬 <span id="cmtCnt-sales"></span></button></div>
+      <div class="cmt-panel" id="cmtPanel-sales"></div>
       <div class="kpis" style="grid-template-columns:repeat(5,1fr);">
         <div class="kpi k-mty"><div class="lbl">MTY 출고 (이번 주)</div><div class="val" id="kpiMtyOut">-</div></div>
         <div class="kpi k-qro"><div class="lbl">QRO 출고 (이번 주)</div><div class="val" id="kpiQroOut">-</div></div>
@@ -221,7 +238,8 @@ tr:nth-child(odd) td{background:#fbfaf7;}
     </div>
 
     <div class="sec">
-      <div class="sec-title">🤝 영업활동 & 컨택 로그 <span class="tag tag-auto">자동 · CRM (이번 주)</span></div>
+      <div class="sec-title">🤝 영업활동 & 컨택 로그 <span class="tag tag-auto">자동 · CRM (이번 주)</span><button class="cmt-btn" id="cmtBtn-crm" onclick="toggleCommentPanel('crm')">💬 <span id="cmtCnt-crm"></span></button></div>
+      <div class="cmt-panel" id="cmtPanel-crm"></div>
       <div class="subhead">기존 거래처</div>
       <div id="crmContactExisting"></div>
       <div class="subhead">신규 영업</div>
@@ -229,22 +247,26 @@ tr:nth-child(odd) td{background:#fbfaf7;}
     </div>
 
     <div class="sec">
-      <div class="sec-title">📋 AVISO 현황 <span class="tag tag-auto">자동 · AVISO 탭</span></div>
+      <div class="sec-title">📋 AVISO 현황 <span class="tag tag-auto">자동 · AVISO 탭</span><button class="cmt-btn" id="cmtBtn-aviso" onclick="toggleCommentPanel('aviso')">💬 <span id="cmtCnt-aviso"></span></button></div>
+      <div class="cmt-panel" id="cmtPanel-aviso"></div>
       <div class="list-item"><span id="avisoSummary">-</span></div>
       <div id="avisoList"></div>
     </div>
 
     <div class="sec">
-      <div class="sec-title">📦 재고 현황 — MTY <span class="tag tag-auto">자동 · 재고 탭</span></div>
+      <div class="sec-title">📦 재고 현황 — MTY <span class="tag tag-auto">자동 · 재고 탭</span><button class="cmt-btn" id="cmtBtn-inv_mty" onclick="toggleCommentPanel('inv_mty')">💬 <span id="cmtCnt-inv_mty"></span></button></div>
+      <div class="cmt-panel" id="cmtPanel-inv_mty"></div>
       <div id="mtyInvTable"></div>
     </div>
     <div class="sec">
-      <div class="sec-title">📦 재고 현황 — QRO <span class="tag tag-auto">자동 · 재고 탭</span></div>
+      <div class="sec-title">📦 재고 현황 — QRO <span class="tag tag-auto">자동 · 재고 탭</span><button class="cmt-btn" id="cmtBtn-inv_qro" onclick="toggleCommentPanel('inv_qro')">💬 <span id="cmtCnt-inv_qro"></span></button></div>
+      <div class="cmt-panel" id="cmtPanel-inv_qro"></div>
       <div id="qroInvTable"></div>
     </div>
 
     <div class="sec">
-      <div class="sec-title">🧪 방습제 현황 <span class="tag tag-auto">자동 · 신규프로젝트 탭</span></div>
+      <div class="sec-title">🧪 방습제 현황 <span class="tag tag-auto">자동 · 신규프로젝트 탭</span><button class="cmt-btn" id="cmtBtn-desiccant" onclick="toggleCommentPanel('desiccant')">💬 <span id="cmtCnt-desiccant"></span></button></div>
+      <div class="cmt-panel" id="cmtPanel-desiccant"></div>
       <div class="kpis" style="grid-template-columns:repeat(3,1fr);" id="desiccantKpis">
         <div class="kpi k-in"><div class="lbl">전체 품목</div><div class="val" id="dscTotal">-</div></div>
         <div class="kpi k-rate"><div class="lbl">재주문 필요</div><div class="val" id="dscReorder">-</div></div>
@@ -265,7 +287,8 @@ tr:nth-child(odd) td{background:#fbfaf7;}
     </div>
 
     <div class="sec">
-      <div class="sec-title">💰 AR 미수금 현황 <span class="tag tag-auto">자동 · AR 탭</span></div>
+      <div class="sec-title">💰 AR 미수금 현황 <span class="tag tag-auto">자동 · AR 탭</span><button class="cmt-btn" id="cmtBtn-ar" onclick="toggleCommentPanel('ar')">💬 <span id="cmtCnt-ar"></span></button></div>
+      <div class="cmt-panel" id="cmtPanel-ar"></div>
       <div class="kpis" style="grid-template-columns:repeat(4,1fr);">
         <div class="kpi k-rate"><div class="lbl">USD 미수금</div><div class="val" id="arUsd">-</div></div>
         <div class="kpi k-rate"><div class="lbl">MXN 미수금</div><div class="val" id="arMxn">-</div></div>
@@ -760,6 +783,7 @@ async function load(targetWeekKey){
   lastMetrics=metrics;
   await loadIssues(thisWeekKey);
   await loadProjects(thisWeekKey);
+  await loadComments(thisWeekKey);
   await updateDraftBadge();
   await populateWeekSelector();
   await renderTrendCharts();
@@ -955,6 +979,109 @@ async function addProjectRow(){
   projects.push(data[0]);
   renderCards('project', projects, 'projectRows');
   expandCard('project', data[0].id);
+}
+
+// ===== 섹션별 코멘트 =====
+const CMT_SECTIONS=['sales','crm','aviso','inv_mty','inv_qro','desiccant','ar'];
+let comments=[];
+let openCmtSection=null;
+
+async function loadComments(wk){
+  if(!sb) return;
+  const {data,error}=await sb.from('weekly_report_comments').select('*').eq('week_key',wk||currentViewWeekKey||weekKey()).order('created_at',{ascending:true});
+  if(error){ console.error('코멘트 로드 실패:',error.message); comments=[]; }
+  else comments=data||[];
+  renderCommentBadges();
+  if(openCmtSection) renderCommentPanel(openCmtSection);
+}
+
+function renderCommentBadges(){
+  CMT_SECTIONS.forEach(sec=>{
+    const list=comments.filter(c=>c.section===sec);
+    const open=list.filter(c=>!c.resolved).length;
+    const btn=document.getElementById('cmtBtn-'+sec);
+    const cnt=document.getElementById('cmtCnt-'+sec);
+    if(!btn||!cnt) return;
+    cnt.textContent=list.length>0?list.length:'';
+    btn.classList.toggle('has-open', open>0);
+  });
+}
+
+function toggleCommentPanel(sec){
+  const panel=document.getElementById('cmtPanel-'+sec);
+  if(!panel) return;
+  if(openCmtSection===sec){
+    panel.classList.remove('open');
+    openCmtSection=null;
+    return;
+  }
+  if(openCmtSection){
+    const prev=document.getElementById('cmtPanel-'+openCmtSection);
+    if(prev) prev.classList.remove('open');
+  }
+  openCmtSection=sec;
+  panel.classList.add('open');
+  renderCommentPanel(sec);
+}
+
+function escapeHtmlCmt(s){
+  const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML;
+}
+
+function renderCommentPanel(sec){
+  const panel=document.getElementById('cmtPanel-'+sec);
+  if(!panel) return;
+  const list=comments.filter(c=>c.section===sec);
+  const itemsHtml=list.length===0
+    ? `<div class="empty" style="padding:4px 0;">아직 코멘트가 없어요.</div>`
+    : list.map(c=>{
+        const when=c.created_at?new Date(c.created_at):null;
+        const whenStr=when?(when.getMonth()+1)+'/'+when.getDate():'';
+        return `<div class="cmt-item ${c.resolved?'resolved':''}">
+          <div class="cmt-top">
+            <span class="cmt-text">${escapeHtmlCmt(c.comment_text)}</span>
+            <span class="cmt-actions">
+              <span onclick="toggleResolveComment('${c.id}')">${c.resolved?'재오픈':'해결'}</span>
+              <span onclick="deleteComment('${c.id}')">삭제</span>
+            </span>
+          </div>
+          <div class="cmt-meta">${c.author||''}${c.author&&whenStr?' · ':''}${whenStr}</div>
+        </div>`;
+      }).join('');
+  panel.innerHTML=`${itemsHtml}
+    <div class="cmt-add-row">
+      <input type="text" id="cmtInput-${sec}" placeholder="코멘트 입력 후 등록" onkeydown="if(event.key==='Enter')addComment('${sec}')">
+      <button onclick="addComment('${sec}')">등록</button>
+    </div>`;
+}
+
+async function addComment(sec){
+  if(!sb) return;
+  const input=document.getElementById('cmtInput-'+sec);
+  const text=(input.value||'').trim();
+  if(!text){ input.focus(); return; }
+  const {error}=await sb.from('weekly_report_comments').insert({
+    week_key:currentViewWeekKey||weekKey(), section:sec, comment_text:text, author:currentUserId(), resolved:false
+  });
+  if(error){ alert('코멘트 등록 실패: '+error.message); return; }
+  input.value='';
+  await loadComments(currentViewWeekKey);
+}
+
+async function toggleResolveComment(id){
+  if(!sb) return;
+  const c=comments.find(x=>x.id===id);
+  if(!c) return;
+  const {error}=await sb.from('weekly_report_comments').update({resolved:!c.resolved}).eq('id',id);
+  if(error){ alert('처리 실패: '+error.message); return; }
+  await loadComments(currentViewWeekKey);
+}
+
+async function deleteComment(id){
+  if(!sb) return;
+  if(!confirm('이 코멘트를 삭제할까요?')) return;
+  await sb.from('weekly_report_comments').delete().eq('id',id);
+  await loadComments(currentViewWeekKey);
 }
 
 function _start(){
