@@ -411,6 +411,18 @@ async function updateDraftBadge(){
   }
 }
 
+async function autoSaveMetricsDraft(wk, m){
+  if(!sb) return;
+  try{
+    const {data:existing}=await sb.from('weekly_report_snapshots').select('week_key,confirmed').eq('week_key',wk).maybeSingle();
+    if(existing && existing.confirmed) return; // 이미 확정된 주차는 자동 갱신하지 않음
+    const who=currentUserId();
+    const payload={week_key:wk, metrics:m, confirmed:false, updated_by:who, updated_at:new Date().toISOString()};
+    if(!existing){ payload.html=''; payload.created_by=who; payload.created_at=new Date().toISOString(); }
+    await sb.from('weekly_report_snapshots').upsert(payload,{onConflict:'week_key'});
+  }catch(e){ console.error('메트릭 자동 저장 실패:',e.message); }
+}
+
 async function saveReport(){
   if(!sb || !currentViewWeekKey){ alert('저장할 수 없어요 (연결 확인 필요)'); return; }
   const targetKey=currentViewWeekKey;
@@ -491,6 +503,7 @@ async function load(targetWeekKey){
       weekAct=monthActVal;
     }
     document.getElementById('kpiWeekAct').textContent=fmtMoney(weekAct);
+    metrics.weekAct=weekAct;
 
     const chartPlan=planVals.slice(0,curM), chartAct=totM.slice(0,curM);
     const barLabelPlugin={
@@ -783,6 +796,7 @@ async function load(targetWeekKey){
 
   currentViewWeekKey=thisWeekKey;
   lastMetrics=metrics;
+  await autoSaveMetricsDraft(thisWeekKey, metrics);
   await loadIssues(thisWeekKey);
   await loadProjects(thisWeekKey);
   await loadComments(thisWeekKey);
@@ -888,15 +902,41 @@ const STATUS_COLOR={'진행중':'badge-warn','협의중':'badge-info','완료':'
 let issues=[], projects=[];
 async function loadIssues(wk){
   if(!sb) return;
-  const {data} = await sb.from('weekly_report_issues').select('*').eq('week_key',wk||currentViewWeekKey||weekKey()).eq('section','issue').order('created_at',{ascending:true});
+  const targetWk=wk||currentViewWeekKey||weekKey();
+  let {data} = await sb.from('weekly_report_issues').select('*').eq('week_key',targetWk).eq('section','issue').order('created_at',{ascending:true});
+  if((!data||data.length===0)){
+    data = await carryOverFromPrevWeek(targetWk, 'issue');
+  }
   issues=data||[];
   renderCards('issue', issues, 'issueRows');
 }
 async function loadProjects(wk){
   if(!sb) return;
-  const {data} = await sb.from('weekly_report_issues').select('*').eq('week_key',wk||currentViewWeekKey||weekKey()).eq('section','project').order('created_at',{ascending:true});
+  const targetWk=wk||currentViewWeekKey||weekKey();
+  let {data} = await sb.from('weekly_report_issues').select('*').eq('week_key',targetWk).eq('section','project').order('created_at',{ascending:true});
+  if((!data||data.length===0)){
+    data = await carryOverFromPrevWeek(targetWk, 'project');
+  }
   projects=data||[];
   renderCards('project', projects, 'projectRows');
+}
+
+async function carryOverFromPrevWeek(targetWk, section){
+  // 현재 주차에 아직 기록이 없으면 지난 주 내용을 그대로 가져와 이번 주에 복사 (없어도 되는 건 직접 삭제)
+  try{
+    const prevWk=new Date(targetWk+'T00:00:00'); prevWk.setDate(prevWk.getDate()-7);
+    const prevKey=prevWk.toISOString().slice(0,10);
+    const {data:prevData}=await sb.from('weekly_report_issues').select('*').eq('week_key',prevKey).eq('section',section).order('created_at',{ascending:true});
+    if(!prevData||prevData.length===0) return [];
+    const who=currentUserId();
+    const inserts=prevData.map(p=>({
+      week_key:targetWk, section, title:p.title, status:p.status, content:p.content,
+      created_by:who, created_at:new Date().toISOString()
+    }));
+    const {data:inserted,error}=await sb.from('weekly_report_issues').insert(inserts).select('*');
+    if(error){ console.error('이월 실패:',error.message); return []; }
+    return inserted||[];
+  }catch(e){ console.error('이월 실패:',e.message); return []; }
 }
 
 function noteCardHtml(section, it){
@@ -1087,12 +1127,11 @@ async function deleteComment(id){
 }
 
 function _start(){
-  // 기본으로 "막 끝난 지난주"부터 보여줌 (월요일에 지난주 보고서 쓰는 실제 업무 흐름에 맞춤)
+  // 기본으로 "이번 주"를 보여줌
   const now=new Date();
   const day=now.getDay()===0?7:now.getDay();
   const thisMon=new Date(now); thisMon.setDate(now.getDate()-day+1);
-  const lastMon=new Date(thisMon); lastMon.setDate(thisMon.getDate()-7);
-  load(lastMon.toISOString().slice(0,10));
+  load(thisMon.toISOString().slice(0,10));
 }
 if(window._mexcorUser!==undefined){ _start(); }
 else { document.addEventListener('mexcorAuthReady', _start); }
