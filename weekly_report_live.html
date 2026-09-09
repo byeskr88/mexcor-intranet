@@ -493,7 +493,7 @@ async function load(targetWeekKey){
     document.getElementById('kpiYtdRate').innerHTML=ytdRate+'%'+trendBadge(ytdRate, prevMetrics.ytdRate, true);
     metrics.ytdRate=ytdRate;
     metrics.monthAct=monthActVal;
-    metrics.monthKey=mon.getFullYear()+'-'+(mon.getMonth()+1);
+    metrics.monthKey=mon.getFullYear()+'-'+curM;
 
     // 이번 주 실적 = 이번 주 누적 - 지난 주 누적 (같은 달일 때만 비교, 월이 바뀌면 이번 달 누적 그대로가 이번 주 실적)
     let weekAct;
