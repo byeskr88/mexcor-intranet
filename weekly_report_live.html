@@ -291,11 +291,12 @@ tr:nth-child(odd) td{background:#fbfaf7;}
     <div class="sec">
       <div class="sec-title">💰 AR 미수금 현황 <span class="tag tag-auto">자동 · AR 탭</span><button class="cmt-btn" id="cmtBtn-ar" onclick="toggleCommentPanel('ar')">💬 <span id="cmtCnt-ar"></span></button></div>
       <div class="cmt-panel" id="cmtPanel-ar"></div>
-      <div class="kpis" style="grid-template-columns:repeat(4,1fr);">
+      <div class="kpis" style="grid-template-columns:repeat(5,1fr);">
         <div class="kpi k-rate"><div class="lbl">USD 미수금</div><div class="val" id="arUsd">-</div></div>
         <div class="kpi k-rate"><div class="lbl">MXN 미수금</div><div class="val" id="arMxn">-</div></div>
         <div class="kpi k-rate"><div class="lbl">전체 미결 건수</div><div class="val" id="arCnt">-</div></div>
         <div class="kpi k-rate"><div class="lbl">60일 초과 연체</div><div class="val" id="ar60">-</div></div>
+        <div class="kpi k-rate"><div class="lbl">이번 주 입금액</div><div class="val" id="arPaidWeek">-</div></div>
       </div>
       <div class="subhead">연체 구간별 현황</div>
       <div id="arBucketList"></div>
@@ -620,6 +621,13 @@ async function load(targetWeekKey){
     </table></div>`:'<div class="empty">60일 초과 연체 없음</div>';
 
     const paidThisWeek=validRows.filter(r=>(r['PAYMENT_STATUS']||'').toUpperCase()==='PAGADO' && inWeek(r['ACTUAL_PAYMENT_DATE']||r['ACTUAL PAYMENT DATE'],mon,sat));
+    const paidUsd=paidThisWeek.filter(r=>r['CURRENCY']==='USD').reduce((s,r)=>s+toN(r['TOTAL']),0);
+    const paidMxn=paidThisWeek.filter(r=>r['CURRENCY']==='MXN').reduce((s,r)=>s+toN(r['TOTAL']),0);
+    const paidParts=[];
+    if(paidUsd) paidParts.push(fmtMoney(paidUsd)+' USD');
+    if(paidMxn) paidParts.push(fmtMoney(paidMxn)+' MXN');
+    document.getElementById('arPaidWeek').textContent=paidParts.length?paidParts.join(' / '):'-';
+    metrics.arPaidWeekUsd=paidUsd; metrics.arPaidWeekMxn=paidMxn;
     document.getElementById('arPaidList').innerHTML=paidThisWeek.length?`<div class="tbl-wrap"><table>
       <thead><tr><th>거래처</th><th>통화</th><th class="r">금액</th><th>입금일</th></tr></thead>
       <tbody>${paidThisWeek.map(r=>`<tr><td>${r['CLIENTE']||'-'}</td><td>${r['CURRENCY']||'-'}</td><td class="r">${fmtMoney(toN(r['TOTAL']))}</td><td>${r['ACTUAL_PAYMENT_DATE']||r['ACTUAL PAYMENT DATE']||'-'}</td></tr>`).join('')}</tbody>
