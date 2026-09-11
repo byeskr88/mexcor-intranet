@@ -120,6 +120,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 .chart-box{position:relative;height:190px;margin-top:10px;}
 
 .tbl-wrap{overflow-x:auto;border:0.5px solid var(--border);border-radius:var(--r);}
+.inv-group-row td{background:var(--s2);font-weight:700;font-size:11.5px;padding:5px 10px;color:var(--muted);}
 table{width:100%;border-collapse:collapse;font-size:11.5px;}
 th{text-align:left;padding:6px 7px;background:var(--s1);color:var(--muted);font-weight:600;white-space:nowrap;}
 th.r,td.r{text-align:right;}
@@ -642,13 +643,26 @@ async function load(targetWeekKey){
     return `<span class="badge badge-ok">정상 ${moh.toFixed(1)}</span>`;
   }
   function invTable(items){
-    return `<div class="tbl-wrap"><table>
-      <thead><tr><th>품목</th><th>거래처</th><th class="r">재고</th><th class="r">FORECAST</th><th>상태</th><th>비고</th></tr></thead>
-      <tbody>${items.map(r=>`<tr>
-        <td>${r.item}</td><td>${r.client||'-'}</td><td class="r">${r.stock.toLocaleString()}</td>
+    const groups={};
+    items.forEach(r=>{
+      const c=r.client||'미지정';
+      (groups[c]=groups[c]||[]).push(r);
+    });
+    const riskRatio=r=>r.fc>0 ? r.stock/r.fc : Infinity;
+    const clientNames=Object.keys(groups).sort((a,b)=>a.localeCompare(b,'ko'));
+    let rows='';
+    clientNames.forEach(c=>{
+      const list=groups[c].slice().sort((a,b)=>riskRatio(a)-riskRatio(b));
+      rows+=`<tr class="inv-group-row"><td colspan="5">${c}</td></tr>`;
+      rows+=list.map(r=>`<tr>
+        <td>${r.item}</td><td class="r">${r.stock.toLocaleString()}</td>
         <td class="r">${r.fc||'-'}</td><td>${invStatusBadge(r.fc>0?r.stock/r.fc:null)}</td>
         <td style="color:var(--muted);">${r.note||'-'}</td>
-      </tr>`).join('')}</tbody>
+      </tr>`).join('');
+    });
+    return `<div class="tbl-wrap"><table>
+      <thead><tr><th>품목</th><th class="r">재고</th><th class="r">FORECAST</th><th>상태</th><th>비고</th></tr></thead>
+      <tbody>${rows}</tbody>
     </table></div>`;
   }
   let fcMap={};

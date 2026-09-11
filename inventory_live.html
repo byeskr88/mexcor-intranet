@@ -66,6 +66,7 @@ h1{font-size:17px;font-weight:500;margin-bottom:3px;}
 
 /* 재고 테이블 */
 .tbl-wrap{border:0.5px solid var(--border);border-radius:var(--r);overflow:hidden;overflow-x:auto;margin-bottom:16px;}
+.inv-group-row td{background:var(--s2,#f3f4f6);font-weight:700;font-size:11.5px;padding:5px 10px;color:var(--muted);}
 table{width:100%;border-collapse:collapse;font-size:12px;min-width:640px;}
 th{text-align:left;font-size:11px;color:var(--muted);font-weight:500;padding:9px 10px;background:var(--s1);border-bottom:0.5px solid var(--border);white-space:nowrap;}
 th.r{text-align:right;}
@@ -155,7 +156,7 @@ tr:last-child td{border-bottom:none;}
         </div>
         <div class="tbl-wrap"><table>
           <thead><tr>
-            <th>NO</th><th>ORIGIN</th><th>ITEM</th><th>TYPE</th><th>CLIENT</th>
+            <th>NO</th><th>ORIGIN</th><th>ITEM</th><th>TYPE</th>
             <th class="r" data-ko="재고" data-es="Stock">재고</th><th class="r" data-ko="발주수량" data-es="Cant. Pedida">발주수량</th><th class="r">FORECAST/월</th>
             <th class="r" style="min-width:120px;">MOH</th><th data-ko="상태" data-es="Estado">상태</th><th data-ko="비고" data-es="Nota">비고</th>
           </tr></thead>
@@ -215,7 +216,7 @@ tr:last-child td{border-bottom:none;}
         <div class="sec-title" data-ko="재고 현황" data-es="Estado de Inventario">재고 현황</div>
         <div class="tbl-wrap"><table>
           <thead><tr>
-            <th>ORIGIN</th><th>ITEM</th><th>TYPE</th><th>CLIENT</th>
+            <th>ORIGIN</th><th>ITEM</th><th>TYPE</th>
             <th class="r" data-ko="재고" data-es="Stock">재고</th><th class="r" data-ko="발주수량" data-es="Cant. Pedida">발주수량</th><th class="r">FORECAST/월</th>
             <th class="r" style="min-width:120px;">MOH</th><th data-ko="상태" data-es="Estado">상태</th><th data-ko="비고" data-es="Nota">비고</th>
           </tr></thead>
@@ -436,15 +437,22 @@ async function load(){
         if(q&&!r.item.toLowerCase().includes(q)&&!r.client.toLowerCase().includes(q)) return false;
         return true;
       });
-      document.getElementById('mtyInvBody').innerHTML=rows.map(r=>{
-        const moh=getMOH(r.stock,r.fc);
-        const m=moh?parseFloat(moh):99;
-        const [status,badge]=getStatus(moh);
-        const bw=moh?Math.min(m/12*100,100):0;
-        const bc=getBarColor(m);
-        return `<tr class="${getRowCls(moh)}">
+      const riskOf=r=>{ const moh=getMOH(r.stock,r.fc); return moh?parseFloat(moh):99; };
+      const groups={};
+      rows.forEach(r=>{ const c=r.client||'미지정'; (groups[c]=groups[c]||[]).push(r); });
+      const clientNames=Object.keys(groups).sort((a,b)=>a.localeCompare(b,'ko'));
+      let bodyHtml='';
+      clientNames.forEach(c=>{
+        const list=groups[c].slice().sort((a,b)=>riskOf(a)-riskOf(b));
+        bodyHtml+=`<tr class="inv-group-row"><td colspan="10">${c}</td></tr>`;
+        bodyHtml+=list.map(r=>{
+          const moh=getMOH(r.stock,r.fc);
+          const m=moh?parseFloat(moh):99;
+          const [status,badge]=getStatus(moh);
+          const bw=moh?Math.min(m/12*100,100):0;
+          const bc=getBarColor(m);
+          return `<tr class="${getRowCls(moh)}">
           <td>${r.no}</td><td>${r.origin}</td><td style="font-weight:500;">${r.item}</td><td>${r.type}</td>
-          <td style="font-size:11px;color:var(--muted);">${r.client}</td>
           <td class="r">${r.stock}</td>
           <td class="r">${r.open||'-'}</td>
           <td class="r" style="font-weight:${r.fc?'500':'400'};color:${r.fc?'var(--blue)':'var(--muted)'};">${r.fc||'-'}</td>
@@ -455,7 +463,9 @@ async function load(){
           <td><span class="badge ${badge}">${status}</span></td>
           <td style="font-size:11px;color:var(--muted);">${r.note||'-'}</td>
         </tr>`;
-      }).join('');
+        }).join('');
+      });
+      document.getElementById('mtyInvBody').innerHTML=bodyHtml;
     };
     window.setTypeFilter=function(loc,type,btn){
       if(loc==='mty') mtyTypeFilter=type;
@@ -544,15 +554,23 @@ async function load(){
       </div>`;
     }).join('');
 
-    document.getElementById('qroInvBody').innerHTML=G.qroInv.map(r=>{
-      const moh=getMOH(r.stock,r.fc);
-      const m=moh?parseFloat(moh):99;
-      const [status,badge]=getStatus(moh);
-      const bw=moh?Math.min(m/12*100,100):0;
-      const bc=getBarColor(m);
-      return `<tr class="${getRowCls(moh)}">
+    {
+      const riskOfQ=r=>{ const moh=getMOH(r.stock,r.fc); return moh?parseFloat(moh):99; };
+      const groupsQ={};
+      G.qroInv.forEach(r=>{ const c=r.client||'미지정'; (groupsQ[c]=groupsQ[c]||[]).push(r); });
+      const clientNamesQ=Object.keys(groupsQ).sort((a,b)=>a.localeCompare(b,'ko'));
+      let bodyHtmlQ='';
+      clientNamesQ.forEach(c=>{
+        const list=groupsQ[c].slice().sort((a,b)=>riskOfQ(a)-riskOfQ(b));
+        bodyHtmlQ+=`<tr class="inv-group-row"><td colspan="9">${c}</td></tr>`;
+        bodyHtmlQ+=list.map(r=>{
+          const moh=getMOH(r.stock,r.fc);
+          const m=moh?parseFloat(moh):99;
+          const [status,badge]=getStatus(moh);
+          const bw=moh?Math.min(m/12*100,100):0;
+          const bc=getBarColor(m);
+          return `<tr class="${getRowCls(moh)}">
         <td>${r.origin}</td><td style="font-weight:500;">${r.item}</td><td>${r.type}</td>
-        <td style="font-size:11px;color:var(--muted);">${r.client}</td>
         <td class="r">${r.stock}</td><td class="r">${r.open||'-'}</td>
         <td class="r" style="font-weight:${r.fc?'500':'400'};color:${r.fc?'var(--blue)':'var(--muted)'};">${r.fc||'-'}</td>
         <td class="r"><div class="moh-cell">
@@ -562,7 +580,10 @@ async function load(){
         <td><span class="badge ${badge}">${status}</span></td>
         <td style="font-size:11px;color:var(--muted);">${r.note||'-'}</td>
       </tr>`;
-    }).join('');
+        }).join('');
+      });
+      document.getElementById('qroInvBody').innerHTML=bodyHtmlQ;
+    }
 
     // ===== QRO 납품실적 =====
     const qroPerfKeys=Object.keys(fcRaw).filter(k=>k.startsWith('QRO|'));
