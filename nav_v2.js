@@ -4,6 +4,9 @@ document.documentElement.style.visibility = 'hidden';
 const SB_URL='https://oezergrrqcinclorwvnk.supabase.co';
 const SB_KEY='sb_publishable_1eqTksIg-IetXykOBHf0rg_19ourTmF';
 
+const MEXCOR_USER_NAMES={ceo1:'Mr Jang',pres:'Mr Oh',dire:'Mr Yoo',subd:'Jorge',asst:'Nastassja',auxm:'Brenda',acct:'Chris'};
+window.mexcorDisplayName=function(id){ return MEXCOR_USER_NAMES[id] || id; };
+
 function _mexcorLoadSDK(){
   return new Promise((resolve,reject)=>{
     if(window.supabase){ resolve(); return; }
@@ -147,7 +150,7 @@ function initNav(){
     const role = u.user_metadata?.role || 'view';
     const roleLabel = role==='edit' ? (lang==='ko'?'수정가능':'Editor') : (lang==='ko'?'조회전용':'Solo lectura');
     const displayId = (u.email||'').split('@')[0];
-    document.getElementById('nav-user').innerHTML = `${displayId} <span class="mn-user-role">${roleLabel}</span>`;
+    document.getElementById('nav-user').innerHTML = `${window.mexcorDisplayName(displayId)} <span class="mn-user-role">${roleLabel}</span>`;
   }
   window._navLogout = async function(){
     if(!confirm(window._mexcorLang==='es'?'¿Cerrar sesión?':'로그아웃 하시겠어요?')) return;

@@ -405,7 +405,7 @@ async function updateDraftBadge(){
     badge.className='draft-badge draft';
     badge.textContent='작성중 · 아직 저장 안 됨';
   }else{
-    const who=data.updated_by||data.created_by||'';
+    const who=window.mexcorDisplayName(data.updated_by||data.created_by||'');
     const when=data.updated_at?new Date(data.updated_at).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
     badge.className='draft-badge confirmed';
     badge.textContent=`✓ 확정됨 · 마지막 저장: ${who} · ${when}`;
@@ -952,7 +952,7 @@ async function carryOverFromPrevWeek(targetWk, section){
 
 function noteCardHtml(section, it){
   const statusCls=STATUS_COLOR[it.status]||'badge-warn';
-  const who=it.updated_by||it.created_by||'';
+  const who=window.mexcorDisplayName(it.updated_by||it.created_by||'');
   const when=it.updated_at?new Date(it.updated_at):(it.created_at?new Date(it.created_at):null);
   const whenStr=when?(when.getMonth()+1)+'/'+when.getDate():'';
   return `<div class="note-card" data-id="${it.id}" onclick="if(!event.target.closest('.note-edit-area'))expandCard('${section}','${it.id}')">
@@ -1098,7 +1098,7 @@ function renderCommentPanel(sec){
               <span onclick="deleteComment('${c.id}')">삭제</span>
             </span>
           </div>
-          <div class="cmt-meta">${c.author||''}${c.author&&whenStr?' · ':''}${whenStr}</div>
+          <div class="cmt-meta">${c.author?window.mexcorDisplayName(c.author):''}${c.author&&whenStr?' · ':''}${whenStr}</div>
         </div>`;
       }).join('');
   panel.innerHTML=`${itemsHtml}

@@ -406,7 +406,7 @@ function renderLoanCellList(entries){
         <button class="lc-del" onclick="deleteLoanCellEntry('${e.id}')" style="background:var(--danger-bg);color:var(--danger-text);border:none;border-radius:6px;padding:0 12px;cursor:pointer;">${curLang==='es'?'Eliminar':'삭제'}</button>
       </div>
       <input type="text" class="lc-note" value="${escapeHtml(e.note||'')}" placeholder="${curLang==='es'?'Nota':'메모'}" style="width:100%;">
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;">${escapeHtml(e.created_by||'')}${e.updated_by?' · '+(curLang==='es'?'editado por ':'수정: ')+escapeHtml(e.updated_by)+(e.updated_at?' ('+e.updated_at.slice(0,10)+')':''):''}</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;">${escapeHtml(window.mexcorDisplayName(e.created_by||''))}${e.updated_by?' · '+(curLang==='es'?'editado por ':'수정: ')+escapeHtml(window.mexcorDisplayName(e.updated_by))+(e.updated_at?' ('+e.updated_at.slice(0,10)+')':''):''}</div>
     </div>`).join('');
   const emptyHtml = entries.length ? '' : `<div style="text-align:center;color:var(--muted);font-size:12px;padding:12px 0;">${curLang==='es'?'Sin registros todavía':'아직 기록 없음'}</div>`;
   const addHtml = `
@@ -746,7 +746,7 @@ function buildWeeksHtml(month, autoOpenCurrent){
     const hasAdj = adjItems.length>0;
     const adjRow = dayKeys.map(dk=>{
       const items = adjItems.filter(e=>e.entry_date===dk);
-      const cards = items.map(e=>`<div class="entry adj">${curLang==='es'?'Ajuste':'잔고 수동 수정'}<span class="amt">=$${fmtMoney(e.amount)} ${curLabel(e.currency)}</span><span class="who">${escapeHtml(e.created_by||'')} · ${e.note?escapeHtml(e.note)+' · ':''}${dk.slice(5).replace('-','/')}</span></div>`).join('');
+      const cards = items.map(e=>`<div class="entry adj">${curLang==='es'?'Ajuste':'잔고 수동 수정'}<span class="amt">=$${fmtMoney(e.amount)} ${curLabel(e.currency)}</span><span class="who">${escapeHtml(window.mexcorDisplayName(e.created_by||''))} · ${e.note?escapeHtml(e.note)+' · ':''}${dk.slice(5).replace('-','/')}</span></div>`).join('');
       const pastCls = dk<todayStr?' past':'';
       return `<div class="daycell${pastCls}">${cards}</div>`;
     }).join('');
@@ -791,8 +791,8 @@ function renderEntryCard(e, cls, dk){
   const wasEdited = e.updated_at && e.updated_by;
   const editedDate = wasEdited ? e.updated_at.slice(5,10).replace('-','/') : '';
   const whoLine = wasEdited
-    ? `${escapeHtml(e.created_by||'')} · ${dk.slice(5).replace('-','/')}<br><i class="edited">${curLang==='es'?'editado por':'수정:'} ${escapeHtml(e.updated_by)} (${editedDate})</i>`
-    : `${escapeHtml(e.created_by||'')} · ${dk.slice(5).replace('-','/')}`;
+    ? `${escapeHtml(window.mexcorDisplayName(e.created_by||''))} · ${dk.slice(5).replace('-','/')}<br><i class="edited">${curLang==='es'?'editado por':'수정:'} ${escapeHtml(window.mexcorDisplayName(e.updated_by))} (${editedDate})</i>`
+    : `${escapeHtml(window.mexcorDisplayName(e.created_by||''))} · ${dk.slice(5).replace('-','/')}`;
   const invoiceTag = e.invoice_no ? `<span class="inv-tag">#${escapeHtml(e.invoice_no)}</span>` : '';
   return `<div class="entry ${cls}" id="entry-${e.id}" draggable="true"
     ondragstart="onEntryDragStart(event,'${e.id}')" ondragend="onEntryDragEnd(event)">
