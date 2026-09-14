@@ -120,7 +120,6 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 .chart-box{position:relative;height:190px;margin-top:10px;}
 
 .tbl-wrap{overflow-x:auto;border:0.5px solid var(--border);border-radius:var(--r);}
-.inv-group-row td{background:var(--s2);font-weight:700;font-size:11.5px;padding:5px 10px;color:var(--muted);}
 table{width:100%;border-collapse:collapse;font-size:11.5px;}
 th{text-align:left;padding:6px 7px;background:var(--s1);color:var(--muted);font-weight:600;white-space:nowrap;}
 th.r,td.r{text-align:right;}
@@ -258,11 +257,21 @@ tr:nth-child(odd) td{background:#fbfaf7;}
     <div class="sec">
       <div class="sec-title">📦 재고 현황 — MTY <span class="tag tag-auto">자동 · 재고 탭</span><button class="cmt-btn" id="cmtBtn-inv_mty" onclick="toggleCommentPanel('inv_mty')">💬 <span id="cmtCnt-inv_mty"></span></button></div>
       <div class="cmt-panel" id="cmtPanel-inv_mty"></div>
+      <div style="margin-bottom:8px;">
+        <select id="mtyClientFilter" onchange="renderInvFiltered('mty')" style="font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;">
+          <option value="ALL">전체 거래처</option>
+        </select>
+      </div>
       <div id="mtyInvTable"></div>
     </div>
     <div class="sec">
       <div class="sec-title">📦 재고 현황 — QRO <span class="tag tag-auto">자동 · 재고 탭</span><button class="cmt-btn" id="cmtBtn-inv_qro" onclick="toggleCommentPanel('inv_qro')">💬 <span id="cmtCnt-inv_qro"></span></button></div>
       <div class="cmt-panel" id="cmtPanel-inv_qro"></div>
+      <div style="margin-bottom:8px;">
+        <select id="qroClientFilter" onchange="renderInvFiltered('qro')" style="font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;">
+          <option value="ALL">전체 거래처</option>
+        </select>
+      </div>
       <div id="qroInvTable"></div>
     </div>
 
@@ -643,28 +652,31 @@ async function load(targetWeekKey){
     return `<span class="badge badge-ok">정상 ${moh.toFixed(1)}</span>`;
   }
   function invTable(items){
-    const groups={};
-    items.forEach(r=>{
-      const c=r.client||'미지정';
-      (groups[c]=groups[c]||[]).push(r);
-    });
-    const riskRatio=r=>r.fc>0 ? r.stock/r.fc : Infinity;
-    const clientNames=Object.keys(groups).sort((a,b)=>a.localeCompare(b,'ko'));
-    let rows='';
-    clientNames.forEach(c=>{
-      const list=groups[c].slice().sort((a,b)=>riskRatio(a)-riskRatio(b));
-      rows+=`<tr class="inv-group-row"><td colspan="5">${c}</td></tr>`;
-      rows+=list.map(r=>`<tr>
-        <td>${r.item}</td><td class="r">${r.stock.toLocaleString()}</td>
+    return `<div class="tbl-wrap"><table>
+      <thead><tr><th>품목</th><th>거래처</th><th class="r">재고</th><th class="r">FORECAST</th><th>상태</th><th>비고</th></tr></thead>
+      <tbody>${items.map(r=>`<tr>
+        <td>${r.item}</td><td>${r.client||'-'}</td><td class="r">${r.stock.toLocaleString()}</td>
         <td class="r">${r.fc||'-'}</td><td>${invStatusBadge(r.fc>0?r.stock/r.fc:null)}</td>
         <td style="color:var(--muted);">${r.note||'-'}</td>
-      </tr>`).join('');
-    });
-    return `<div class="tbl-wrap"><table>
-      <thead><tr><th>품목</th><th class="r">재고</th><th class="r">FORECAST</th><th>상태</th><th>비고</th></tr></thead>
-      <tbody>${rows}</tbody>
+      </tr>`).join('')}</tbody>
     </table></div>`;
   }
+  function populateClientFilter(loc, items){
+    const sel=document.getElementById(loc+'ClientFilter');
+    if(!sel) return;
+    const cur=sel.value||'ALL';
+    const clients=[...new Set(items.map(r=>r.client||'미지정'))].sort((a,b)=>a.localeCompare(b,'ko'));
+    sel.innerHTML='<option value="ALL">전체 거래처</option>'+clients.map(c=>`<option value="${c}">${c}</option>`).join('');
+    if(clients.includes(cur)) sel.value=cur;
+  }
+  window.renderInvFiltered=function(loc){
+    const items = loc==='mty' ? window._mtyInvItems : window._qroInvItems;
+    if(!items) return;
+    const sel=document.getElementById(loc+'ClientFilter');
+    const val=sel?sel.value:'ALL';
+    const filtered = val==='ALL' ? items : items.filter(r=>(r.client||'미지정')===val);
+    document.getElementById(loc+'InvTable').innerHTML=invTable(filtered);
+  };
   let fcMap={};
   try{
     const fcData=await tsvRaw(BASE.replace('{G}',GIDS.fc_inv));
@@ -675,7 +687,9 @@ async function load(targetWeekKey){
   try{
     const mtyInv=await tsvRaw(BASE.replace('{G}',GIDS.inv_mty));
     const mtyItems=mtyInv.data.filter(r=>r[2]&&r[2].trim()).map(r=>({item:r[2],client:r[4],stock:toN(r[5]),fc:getFC(r[2]),note:r[9]}));
-    document.getElementById('mtyInvTable').innerHTML=invTable(mtyItems);
+    window._mtyInvItems=mtyItems;
+    populateClientFilter('mty', mtyItems);
+    renderInvFiltered('mty');
     const reorders=mtyItems.filter(r=>r.fc>0&&r.stock/r.fc<3).sort((a,b)=>(a.stock/a.fc)-(b.stock/b.fc));
     metrics.reorderMty=reorders.length;
     if(reorders.length>0){
@@ -687,7 +701,9 @@ async function load(targetWeekKey){
   try{
     const qroInv=await tsvRaw(BASE.replace('{G}',GIDS.inv_qro));
     const qroItems=qroInv.data.filter(r=>r[2]&&r[2].trim()).map(r=>({item:r[2],client:r[4],stock:toN(r[5]),fc:getFC(r[2]),note:r[9]}));
-    document.getElementById('qroInvTable').innerHTML=invTable(qroItems);
+    window._qroInvItems=qroItems;
+    populateClientFilter('qro', qroItems);
+    renderInvFiltered('qro');
     const reordersQ=qroItems.filter(r=>r.fc>0&&r.stock/r.fc<3).sort((a,b)=>(a.stock/a.fc)-(b.stock/b.fc));
     metrics.reorderQro=reordersQ.length;
     if(reordersQ.length>0){

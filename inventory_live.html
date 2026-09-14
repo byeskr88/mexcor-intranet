@@ -66,7 +66,6 @@ h1{font-size:17px;font-weight:500;margin-bottom:3px;}
 
 /* 재고 테이블 */
 .tbl-wrap{border:0.5px solid var(--border);border-radius:var(--r);overflow:hidden;overflow-x:auto;margin-bottom:16px;}
-.inv-group-row td{background:var(--s2,#f3f4f6);font-weight:700;font-size:11.5px;padding:5px 10px;color:var(--muted);}
 table{width:100%;border-collapse:collapse;font-size:12px;min-width:640px;}
 th{text-align:left;font-size:11px;color:var(--muted);font-weight:500;padding:9px 10px;background:var(--s1);border-bottom:0.5px solid var(--border);white-space:nowrap;}
 th.r{text-align:right;}
@@ -147,6 +146,9 @@ tr:last-child td{border-bottom:none;}
         <div class="sec-title" data-ko="재고 현황" data-es="Estado de Inventario">재고 현황</div>
         <div class="search-bar">
           <input type="text" id="mtySearch" placeholder="품목명 검색..." oninput="renderMtyInv()" data-ko-ph="품목명 검색..." data-es-ph="Buscar artículo...">
+          <select id="mtyClientFilter" onchange="renderMtyInv()" style="font-size:12px;padding:6px 8px;border:1px solid var(--border,#ddd);border-radius:6px;">
+            <option value="ALL">전체 거래처</option>
+          </select>
           <div class="type-filters">
             <button class="type-btn active" onclick="setTypeFilter('mty','ALL',this)" data-ko="전체" data-es="Todos">전체</button>
             <button class="type-btn" onclick="setTypeFilter('mty','DRUM',this)">DRUM</button>
@@ -156,7 +158,7 @@ tr:last-child td{border-bottom:none;}
         </div>
         <div class="tbl-wrap"><table>
           <thead><tr>
-            <th>NO</th><th>ORIGIN</th><th>ITEM</th><th>TYPE</th>
+            <th>NO</th><th>ORIGIN</th><th>ITEM</th><th>TYPE</th><th>CLIENT</th>
             <th class="r" data-ko="재고" data-es="Stock">재고</th><th class="r" data-ko="발주수량" data-es="Cant. Pedida">발주수량</th><th class="r">FORECAST/월</th>
             <th class="r" style="min-width:120px;">MOH</th><th data-ko="상태" data-es="Estado">상태</th><th data-ko="비고" data-es="Nota">비고</th>
           </tr></thead>
@@ -214,9 +216,14 @@ tr:last-child td{border-bottom:none;}
         <div class="cards" id="qroCards"></div>
         <div class="alerts" id="qroAlerts"></div>
         <div class="sec-title" data-ko="재고 현황" data-es="Estado de Inventario">재고 현황</div>
+        <div style="margin-bottom:10px;">
+          <select id="qroClientFilter" onchange="renderQroInv()" style="font-size:12px;padding:6px 8px;border:1px solid var(--border,#ddd);border-radius:6px;">
+            <option value="ALL">전체 거래처</option>
+          </select>
+        </div>
         <div class="tbl-wrap"><table>
           <thead><tr>
-            <th>ORIGIN</th><th>ITEM</th><th>TYPE</th>
+            <th>ORIGIN</th><th>ITEM</th><th>TYPE</th><th>CLIENT</th>
             <th class="r" data-ko="재고" data-es="Stock">재고</th><th class="r" data-ko="발주수량" data-es="Cant. Pedida">발주수량</th><th class="r">FORECAST/월</th>
             <th class="r" style="min-width:120px;">MOH</th><th data-ko="상태" data-es="Estado">상태</th><th data-ko="비고" data-es="Nota">비고</th>
           </tr></thead>
@@ -432,27 +439,22 @@ async function load(){
     window.renderMtyInv=function(){
       const q=(document.getElementById('mtySearch').value||'').toLowerCase();
       const tf=mtyTypeFilter;
+      const cf=(document.getElementById('mtyClientFilter')||{}).value||'ALL';
       const rows=G.mtyInv.filter(r=>{
         if(tf!=='ALL'&&r.type!==tf) return false;
+        if(cf!=='ALL'&&(r.client||'미지정')!==cf) return false;
         if(q&&!r.item.toLowerCase().includes(q)&&!r.client.toLowerCase().includes(q)) return false;
         return true;
       });
-      const riskOf=r=>{ const moh=getMOH(r.stock,r.fc); return moh?parseFloat(moh):99; };
-      const groups={};
-      rows.forEach(r=>{ const c=r.client||'미지정'; (groups[c]=groups[c]||[]).push(r); });
-      const clientNames=Object.keys(groups).sort((a,b)=>a.localeCompare(b,'ko'));
-      let bodyHtml='';
-      clientNames.forEach(c=>{
-        const list=groups[c].slice().sort((a,b)=>riskOf(a)-riskOf(b));
-        bodyHtml+=`<tr class="inv-group-row"><td colspan="10">${c}</td></tr>`;
-        bodyHtml+=list.map(r=>{
-          const moh=getMOH(r.stock,r.fc);
-          const m=moh?parseFloat(moh):99;
-          const [status,badge]=getStatus(moh);
-          const bw=moh?Math.min(m/12*100,100):0;
-          const bc=getBarColor(m);
-          return `<tr class="${getRowCls(moh)}">
+      document.getElementById('mtyInvBody').innerHTML=rows.map(r=>{
+        const moh=getMOH(r.stock,r.fc);
+        const m=moh?parseFloat(moh):99;
+        const [status,badge]=getStatus(moh);
+        const bw=moh?Math.min(m/12*100,100):0;
+        const bc=getBarColor(m);
+        return `<tr class="${getRowCls(moh)}">
           <td>${r.no}</td><td>${r.origin}</td><td style="font-weight:500;">${r.item}</td><td>${r.type}</td>
+          <td style="font-size:11px;color:var(--muted);">${r.client}</td>
           <td class="r">${r.stock}</td>
           <td class="r">${r.open||'-'}</td>
           <td class="r" style="font-weight:${r.fc?'500':'400'};color:${r.fc?'var(--blue)':'var(--muted)'};">${r.fc||'-'}</td>
@@ -463,9 +465,7 @@ async function load(){
           <td><span class="badge ${badge}">${status}</span></td>
           <td style="font-size:11px;color:var(--muted);">${r.note||'-'}</td>
         </tr>`;
-        }).join('');
-      });
-      document.getElementById('mtyInvBody').innerHTML=bodyHtml;
+      }).join('');
     };
     window.setTypeFilter=function(loc,type,btn){
       if(loc==='mty') mtyTypeFilter=type;
@@ -474,6 +474,8 @@ async function load(){
       btn.classList.add('active');
       renderMtyInv();
     };
+    const mtyClientsAll=[...new Set(G.mtyInv.map(r=>r.client||'미지정'))].sort((a,b)=>a.localeCompare(b,'ko'));
+    document.getElementById('mtyClientFilter').innerHTML='<option value="ALL">전체 거래처</option>'+mtyClientsAll.map(c=>`<option value="${c}">${c}</option>`).join('');
     renderMtyInv();
 
     // ===== MTY 납품실적 =====
@@ -554,23 +556,18 @@ async function load(){
       </div>`;
     }).join('');
 
-    {
-      const riskOfQ=r=>{ const moh=getMOH(r.stock,r.fc); return moh?parseFloat(moh):99; };
-      const groupsQ={};
-      G.qroInv.forEach(r=>{ const c=r.client||'미지정'; (groupsQ[c]=groupsQ[c]||[]).push(r); });
-      const clientNamesQ=Object.keys(groupsQ).sort((a,b)=>a.localeCompare(b,'ko'));
-      let bodyHtmlQ='';
-      clientNamesQ.forEach(c=>{
-        const list=groupsQ[c].slice().sort((a,b)=>riskOfQ(a)-riskOfQ(b));
-        bodyHtmlQ+=`<tr class="inv-group-row"><td colspan="9">${c}</td></tr>`;
-        bodyHtmlQ+=list.map(r=>{
-          const moh=getMOH(r.stock,r.fc);
-          const m=moh?parseFloat(moh):99;
-          const [status,badge]=getStatus(moh);
-          const bw=moh?Math.min(m/12*100,100):0;
-          const bc=getBarColor(m);
-          return `<tr class="${getRowCls(moh)}">
+    window.renderQroInv=function(){
+      const cf=(document.getElementById('qroClientFilter')||{}).value||'ALL';
+      const rowsQ=G.qroInv.filter(r=>cf==='ALL'||(r.client||'미지정')===cf);
+      document.getElementById('qroInvBody').innerHTML=rowsQ.map(r=>{
+        const moh=getMOH(r.stock,r.fc);
+        const m=moh?parseFloat(moh):99;
+        const [status,badge]=getStatus(moh);
+        const bw=moh?Math.min(m/12*100,100):0;
+        const bc=getBarColor(m);
+        return `<tr class="${getRowCls(moh)}">
         <td>${r.origin}</td><td style="font-weight:500;">${r.item}</td><td>${r.type}</td>
+        <td style="font-size:11px;color:var(--muted);">${r.client}</td>
         <td class="r">${r.stock}</td><td class="r">${r.open||'-'}</td>
         <td class="r" style="font-weight:${r.fc?'500':'400'};color:${r.fc?'var(--blue)':'var(--muted)'};">${r.fc||'-'}</td>
         <td class="r"><div class="moh-cell">
@@ -580,9 +577,12 @@ async function load(){
         <td><span class="badge ${badge}">${status}</span></td>
         <td style="font-size:11px;color:var(--muted);">${r.note||'-'}</td>
       </tr>`;
-        }).join('');
-      });
-      document.getElementById('qroInvBody').innerHTML=bodyHtmlQ;
+      }).join('');
+    };
+    {
+      const qroClientsAll=[...new Set(G.qroInv.map(r=>r.client||'미지정'))].sort((a,b)=>a.localeCompare(b,'ko'));
+      document.getElementById('qroClientFilter').innerHTML='<option value="ALL">전체 거래처</option>'+qroClientsAll.map(c=>`<option value="${c}">${c}</option>`).join('');
+      renderQroInv();
     }
 
     // ===== QRO 납품실적 =====
