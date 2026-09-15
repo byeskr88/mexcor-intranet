@@ -198,7 +198,7 @@ tr:last-child td{border-bottom:none;}
         </div>
         <div id="mty-io-in" style="display:none;">
           <div class="tbl-wrap"><table>
-            <thead><tr><th>NO</th><th data-ko="월" data-es="Mes">월</th><th data-ko="계약번호" data-es="No. Contrato">계약번호</th><th>INCOTERMS</th><th>FCL/LCL</th><th>ETD 부산</th><th>ETA 입고</th><th data-ko="품목" data-es="Artículo">품목</th><th data-ko="단위" data-es="Unidad">단위</th><th class="r" data-ko="수량" data-es="Cantidad">수량</th><th data-ko="상태" data-es="Estado">상태</th></tr></thead>
+            <thead><tr><th>NO</th><th data-ko="월" data-es="Mes">월</th><th data-ko="계약번호" data-es="No. Contrato">계약번호</th><th>INCOTERMS</th><th>FCL/LCL</th><th>ETD 부산</th><th>ETA 입고</th><th data-ko="ETW(실제 도착)" data-es="ETW (Real)">ETW(실제 도착)</th><th data-ko="품목" data-es="Artículo">품목</th><th data-ko="단위" data-es="Unidad">단위</th><th class="r" data-ko="수량" data-es="Cantidad">수량</th><th data-ko="상태" data-es="Estado">상태</th></tr></thead>
             <tbody id="mtyInBody"></tbody>
           </table></div>
         </div>
@@ -261,7 +261,7 @@ tr:last-child td{border-bottom:none;}
         </div>
         <div id="qro-io-in" style="display:none;">
           <div class="tbl-wrap"><table>
-            <thead><tr><th>NO</th><th data-ko="월" data-es="Mes">월</th><th data-ko="계약번호" data-es="No. Contrato">계약번호</th><th>INCOTERMS</th><th>FCL/LCL</th><th>ETD 부산</th><th>ETA 입고</th><th data-ko="품목" data-es="Artículo">품목</th><th data-ko="단위" data-es="Unidad">단위</th><th class="r" data-ko="수량" data-es="Cantidad">수량</th><th data-ko="상태" data-es="Estado">상태</th></tr></thead>
+            <thead><tr><th>NO</th><th data-ko="월" data-es="Mes">월</th><th data-ko="계약번호" data-es="No. Contrato">계약번호</th><th>INCOTERMS</th><th>FCL/LCL</th><th>ETD 부산</th><th>ETA 입고</th><th data-ko="ETW(실제 도착)" data-es="ETW (Real)">ETW(실제 도착)</th><th data-ko="품목" data-es="Artículo">품목</th><th data-ko="단위" data-es="Unidad">단위</th><th class="r" data-ko="수량" data-es="Cantidad">수량</th><th data-ko="상태" data-es="Estado">상태</th></tr></thead>
             <tbody id="qroInBody"></tbody>
           </table></div>
         </div>
@@ -387,8 +387,8 @@ async function load(){
     // 품목명으로 아직 안 들어온(상태!=COMPLETE) 입고 예정 건 찾기
     function pendingArrivals(itemName, inboundRows){
       return inboundRows
-        .filter(r=>r[9]&&r[9].trim()===itemName.trim()&&r[8]!=='COMPLETE')
-        .map(r=>({eta:r[7],qty:r[11]}))
+        .filter(r=>r[10]&&r[10].trim()===itemName.trim()&&r[9]!=='COMPLETE')
+        .map(r=>({eta:r[7],etw:r[8],qty:r[12]}))
         .filter(x=>x.eta);
     }
     function getStatus(moh){
@@ -423,7 +423,7 @@ async function load(){
       const incoming=pendingArrivals(r.item, inM.data);
       const hasIncoming=incoming.length>0;
       const incomingHtml=hasIncoming
-        ?`<div class="a-incoming-list">🚚 ${curLang==='es'?'Llegando: ':'입고 예정: '}${incoming.map(x=>`${x.eta}${x.qty?' ('+x.qty+')':''}`).join(', ')}</div>`
+        ?`<div class="a-incoming-list">🚚 ${curLang==='es'?'Llegando: ':'입고 예정: '}${incoming.map(x=>`${x.eta}${x.etw?' → '+x.etw:''}${x.qty?' ('+x.qty+')':''}`).join(', ')}</div>`
         :'';
       const noteHtml=r.note?`<div class="a-incoming-list" style="color:var(--muted);">📝 ${r.note}</div>`:'';
       return `<div class="alert${hasIncoming?' incoming':''}">
@@ -544,7 +544,7 @@ async function load(){
       const incoming=pendingArrivals(r.item, inQ.data);
       const hasIncoming=incoming.length>0;
       const incomingHtml=hasIncoming
-        ?`<div class="a-incoming-list">🚚 ${curLang==='es'?'Llegando: ':'입고 예정: '}${incoming.map(x=>`${x.eta}${x.qty?' ('+x.qty+')':''}`).join(', ')}</div>`
+        ?`<div class="a-incoming-list">🚚 ${curLang==='es'?'Llegando: ':'입고 예정: '}${incoming.map(x=>`${x.eta}${x.etw?' → '+x.etw:''}${x.qty?' ('+x.qty+')':''}`).join(', ')}</div>`
         :'';
       const noteHtml=r.note?`<div class="a-incoming-list" style="color:var(--muted);">📝 ${r.note}</div>`:'';
       return `<div class="alert${hasIncoming?' incoming':''}">
@@ -640,11 +640,12 @@ async function load(){
     }
     function renderInTbl(data,id){
       document.getElementById(id).innerHTML=data.filter(r=>r[1]||r[3]).map(r=>{
-        const sb=r[8]==='COMPLETE'?'badge-ok':'badge-gray';
+        const sb=r[9]==='COMPLETE'?'badge-ok':'badge-gray';
         return `<tr><td>${r[0]||'-'}</td><td>${r[2]}월</td><td style="font-size:11px;">${r[3]}</td>
           <td>${r[4]}</td><td>${r[5]}</td><td>${r[6]}</td><td>${r[7]}</td>
-          <td>${r[9]}</td><td>${r[10]}</td><td class="r">${r[11]}</td>
-          <td><span class="badge ${sb}">${r[8]}</span></td></tr>`;
+          <td style="color:${r[8]?'var(--ok-text,#085041)':'var(--muted)'};">${r[8]||'-'}</td>
+          <td>${r[10]}</td><td>${r[11]}</td><td class="r">${r[12]}</td>
+          <td><span class="badge ${sb}">${r[9]}</span></td></tr>`;
       }).join('');
     }
 
