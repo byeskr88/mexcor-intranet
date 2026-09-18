@@ -619,6 +619,13 @@ function navMonth(delta){
   loadMonth(monthKeyOf(base));
 }
 
+function invStatusBadge(moh){
+  if(moh===null||moh===undefined||isNaN(moh)) return '<span class="badge badge-ok">정상</span>';
+  if(moh<3) return `<span class="badge badge-danger">재주문 ${moh.toFixed(1)}</span>`;
+  if(moh<6) return `<span class="badge badge-warn">주의 ${moh.toFixed(1)}</span>`;
+  return `<span class="badge badge-ok">정상 ${moh.toFixed(1)}</span>`;
+}
+
 async function loadMonth(monthKeyStr, forceRecompute){
   const [y,m]=monthKeyStr.split('-').map(Number);
   document.getElementById('monthNavLabel').textContent=`${y}년 ${m}월`;
@@ -636,6 +643,9 @@ async function loadMonth(monthKeyStr, forceRecompute){
   }
   currentViewMonthKey=monthKeyStr;
   document.getElementById('mMonthlyNoteWho').textContent='';
+  document.getElementById('statusBox').className='status-bar loading';
+  document.getElementById('statusBox').textContent='데이터 불러오는 중...';
+  document.getElementById('statusBox').style.display='';
 
   const errs=[];
   const urgentM=[];
@@ -811,6 +821,9 @@ async function loadMonth(monthKeyStr, forceRecompute){
     document.getElementById('statusBox').className='status-bar err';
     document.getElementById('statusBox').textContent='⚠ 일부 데이터 연동 실패: '+errs.join(' / ');
     document.getElementById('statusBox').style.display='';
+  }else{
+    document.getElementById('statusBox').className='status-bar ok';
+    document.getElementById('statusBox').textContent='✓ 전체 데이터 연동 성공';
   }
 }
 
@@ -1013,12 +1026,6 @@ async function load(targetWeekKey, forceRecompute){
   }catch(e){errs.push('AR:'+e.message);}
 
   // ===== 재고 (MTY + QRO 전체) =====
-  function invStatusBadge(moh){
-    if(moh===null) return '<span class="badge badge-ok">정상</span>';
-    if(moh<3) return `<span class="badge badge-danger">재주문 ${moh.toFixed(1)}</span>`;
-    if(moh<6) return `<span class="badge badge-warn">주의 ${moh.toFixed(1)}</span>`;
-    return `<span class="badge badge-ok">정상 ${moh.toFixed(1)}</span>`;
-  }
   function invTable(items){
     return `<div class="tbl-wrap"><table>
       <thead><tr><th>품목</th><th>거래처</th><th class="r">재고</th><th class="r">FORECAST</th><th>상태</th><th>비고</th></tr></thead>
