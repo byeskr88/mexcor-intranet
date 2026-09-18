@@ -708,9 +708,10 @@ async function loadMonth(monthKeyStr, forceRecompute){
     const sKeys=Object.keys(rows[0]||{});
     const MONTHS=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
     const monthKeys=MONTHS.map(mo=>sKeys.find(k=>k.trim()===mo)||mo);
-    const totM=MONTHS.map((_,mi)=>rows.reduce((s,r)=>s+toN(r[monthKeys[mi]]||0),0));
-    const planRow=rows.find(r=>(r['NO']||'').toString().toUpperCase()==='PLAN'||(r['CLIENTE']||'').toUpperCase()==='PLAN');
-    const planVals=planRow?MONTHS.map((_,mi)=>toN(planRow[monthKeys[mi]]||0)):[];
+    const planRow=rows.find(r=>r['COMPANY']==='계획(USD)');
+    const planVals=monthKeys.map(k=>toN(planRow?.[k]||0));
+    const clientRows=rows.filter(r=>{const c=r['COMPANY']||'';return c&&!['계획(USD)','합계','달성률(%)','YTD','-'].includes(c);});
+    const totM=MONTHS.map((_,mi)=>clientRows.reduce((s,r)=>s+toN(r[monthKeys[mi]]||0),0));
     const act=totM[m-1]||0, plan=planVals[m-1]||0;
     const rate=plan>0?Math.round(act/plan*100):0;
     document.getElementById('mMonthAct').textContent=fmtMoney(act);
@@ -780,7 +781,8 @@ async function loadMonth(monthKeyStr, forceRecompute){
     rows.forEach(r=>{
       const p=r['PEDIDO'];
       if(!p||p==='PEDIDO') return;
-      if(!map[p]) map[p]={pedido:p, estatus:r['ESTATUS'], fecha:r['FECHA_SOLICITUD'], dias:r['DIAS_DICTAMINACION'], descarga:r['DESCARGA_TERMINAL'], remark:r['REMARK']};
+      if(!map[p]) map[p]={pedido:p, estatus:r['ESTATUS'], fecha:r['FECHA_SOLICITUD'], dias:r['DIAS_DICTAMINACION'], descarga:r['DESCARGA_TERMINAL'], remark:r['REMARK'],
+        almacenaje:toN(r['ALMACENAJE']), demoras:toN(r['DEMORAS']), pagoAviso:toN(r['PAGO AVISO']), costTotal:toN(r['TOTAL'])};
     });
     const groups=Object.values(map);
     const pend=groups.filter(g=>{const s=(g.estatus||'').toUpperCase();return s==='PROCESO'||s==='PENDING'||s==='PENDIENTE';});
@@ -799,16 +801,18 @@ async function loadMonth(monthKeyStr, forceRecompute){
         const c=costMap[g.pedido]||{};
         return `<tr>
           <td>${g.pedido}</td>
-          <td><span class="badge badge-warn">${g.estatus||'-'}</span></td>
-          <td><input type="number" step="0.01" class="aviso-cost-input" data-pedido="${g.pedido}" value="${c.cost!=null?c.cost:''}" placeholder="0" style="width:90px;font-size:12px;padding:4px 6px;border:1px solid var(--border);border-radius:4px;" onchange="saveAvisoCost(this)"></td>
+          <td class="r">${g.almacenaje?fmtMoney(g.almacenaje):'-'}</td>
+          <td class="r">${g.demoras?fmtMoney(g.demoras):'-'}</td>
+          <td class="r">${g.pagoAviso?fmtMoney(g.pagoAviso):'-'}</td>
+          <td class="r" style="font-weight:600;">${g.costTotal?fmtMoney(g.costTotal):'-'}</td>
           <td><input type="text" class="aviso-note-input" data-pedido="${g.pedido}" value="${(c.note||'').replace(/"/g,'&quot;')}" placeholder="사유" style="width:100%;font-size:12px;padding:4px 6px;border:1px solid var(--border);border-radius:4px;" onchange="saveAvisoCost(this)"></td>
         </tr>`;
-      }).join(''):'<tr><td colspan="4" class="empty">이번 달 진행된 AVISO 없음</td></tr>';
-      const total=thisMonthGroups.reduce((s,g)=>s+(parseFloat((costMap[g.pedido]||{}).cost)||0),0);
+      }).join(''):'<tr><td colspan="6" class="empty">이번 달 진행된 AVISO 없음</td></tr>';
+      const total=thisMonthGroups.reduce((s,g)=>s+(g.costTotal||0),0);
       document.getElementById('mAvisoCostTable').innerHTML=`<div class="tbl-wrap"><table>
-        <thead><tr><th>계약번호</th><th>상태</th><th>비용(MXN)</th><th>비고</th></tr></thead>
+        <thead><tr><th>계약번호</th><th class="r">ALMACENAJE</th><th class="r">DEMORAS</th><th class="r">PAGO AVISO</th><th class="r">TOTAL</th><th>비고(사유)</th></tr></thead>
         <tbody>${rowsHtml}</tbody>
-        <tfoot><tr><td colspan="2" style="font-weight:600;">TOTAL</td><td id="mAvisoCostTotal" style="font-weight:600;">${fmtMoney(total)}</td><td></td></tr></tfoot>
+        <tfoot><tr><td colspan="4" style="font-weight:600;">합계</td><td id="mAvisoCostTotal" class="r" style="font-weight:600;">${fmtMoney(total)}</td><td></td></tr></tfoot>
       </table></div>`;
     }
   }catch(e){errs.push('AVISO:'+e.message);}
@@ -905,17 +909,11 @@ async function loadMonth(monthKeyStr, forceRecompute){
 async function saveAvisoCost(el){
   if(!sb || !window._mAvisoMonthKey) return;
   const pedido=el.dataset.pedido;
-  const row=el.closest('tr');
-  const cost=parseFloat(row.querySelector('.aviso-cost-input').value)||null;
-  const note=row.querySelector('.aviso-note-input').value.trim();
+  const note=el.value.trim();
   const {error}=await sb.from('aviso_month_costs').upsert({
-    month_key:window._mAvisoMonthKey, pedido, cost, note, updated_by:currentUserId(), updated_at:new Date().toISOString()
+    month_key:window._mAvisoMonthKey, pedido, note, updated_by:currentUserId(), updated_at:new Date().toISOString()
   },{onConflict:'month_key,pedido'});
-  if(error){ alert('저장 실패: '+error.message); return; }
-  const rows=[...document.querySelectorAll('.aviso-cost-input')];
-  const total=rows.reduce((s,r)=>s+(parseFloat(r.value)||0),0);
-  const totalEl=document.getElementById('mAvisoCostTotal');
-  if(totalEl) totalEl.textContent=fmtMoney(total);
+  if(error){ alert('저장 실패: '+error.message); }
 }
 
 async function saveMonthClose(){
