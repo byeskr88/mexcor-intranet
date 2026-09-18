@@ -343,11 +343,17 @@ tr:nth-child(odd) td{background:#fbfaf7;}
 
     <div class="sec">
       <div class="sec-title">📊 매출 실적 <span class="tag tag-auto">자동 · 매출 탭</span></div>
-      <div class="kpis" style="grid-template-columns:repeat(4,1fr);">
+      <div class="kpis" style="grid-template-columns:repeat(3,1fr);">
         <div class="kpi k-in"><div class="lbl">월 목표 대비</div><div class="val" id="mYtdRate">-</div></div>
         <div class="kpi k-in"><div class="lbl">월 매출 합계</div><div class="val" id="mMonthAct">-</div></div>
+      </div>
+      <div class="kpis" style="grid-template-columns:repeat(2,1fr);margin-top:8px;">
         <div class="kpi k-mty"><div class="lbl">MTY 출고</div><div class="val" id="mMtyOut">-</div></div>
         <div class="kpi k-qro"><div class="lbl">QRO 출고</div><div class="val" id="mQroOut">-</div></div>
+      </div>
+      <div class="kpis" style="grid-template-columns:repeat(2,1fr);margin-top:8px;">
+        <div class="kpi k-mty"><div class="lbl">MTY 입고</div><div class="val" id="mMtyIn">-</div></div>
+        <div class="kpi k-qro"><div class="lbl">QRO 입고</div><div class="val" id="mQroIn">-</div></div>
       </div>
       <div class="subhead">MTY 출고 상세 (이번 달)</div>
       <div id="mMtyOutTable"></div>
@@ -380,6 +386,8 @@ tr:nth-child(odd) td{background:#fbfaf7;}
       <div class="sec-title">📋 AVISO 현황 <span class="tag tag-auto">자동 · AVISO 탭</span></div>
       <div class="list-item"><span id="mAvisoSummary">-</span></div>
       <div id="mAvisoList"></div>
+      <div class="subhead">이번 달 AVISO 비용 처리</div>
+      <div id="mAvisoCostTable"></div>
     </div>
 
     <div class="sec">
@@ -657,6 +665,11 @@ async function loadMonth(monthKeyStr, forceRecompute){
     const spool=rows.filter(r=>(r[7]||'').toUpperCase().includes('SPOOL')).reduce((s,r)=>s+toN(r[8]),0);
     return {drum,spool};
   };
+  const byUnitIn=rows=>{
+    const drum=rows.filter(r=>(r[11]||'').toUpperCase().includes('DRUM')).reduce((s,r)=>s+toN(r[12]),0);
+    const spool=rows.filter(r=>(r[11]||'').toUpperCase().includes('SPOOL')).reduce((s,r)=>s+toN(r[12]),0);
+    return {drum,spool};
+  };
   const fmtParts=({drum,spool})=>{const p=[];if(drum)p.push(drum.toLocaleString()+'드럼');if(spool)p.push(spool.toLocaleString()+'스풀');return p.length?p.join(' / '):'출고 없음';};
 
   // 매출 출고
@@ -675,14 +688,17 @@ async function loadMonth(monthKeyStr, forceRecompute){
   try{
     const inM=await tsvRaw(BASE.replace('{G}',GIDS.in_mty));
     const inQ=await tsvRaw(BASE.replace('{G}',GIDS.in_qro));
+    const inRowsM=inM.data.filter(r=>r[8]&&inMonth(r[8],y,m));
+    const inRowsQ=inQ.data.filter(r=>r[8]&&inMonth(r[8],y,m));
+    document.getElementById('mMtyIn').textContent=fmtParts(byUnitIn(inRowsM));
+    document.getElementById('mQroIn').textContent=fmtParts(byUnitIn(inRowsQ));
     const inTbl=rows=>{
-      const filtered=rows.filter(r=>r[8]&&inMonth(r[8],y,m));
-      if(!filtered.length) return '<div class="empty">이번 달 입고 없음</div>';
+      if(!rows.length) return '<div class="empty">이번 달 입고 없음</div>';
       return `<div class="tbl-wrap"><table><thead><tr><th>ETW(실제 도착)</th><th>품목</th><th>단위</th><th class="r">수량</th><th>ETA(예상)</th></tr></thead>
-        <tbody>${filtered.map(r=>`<tr><td>${r[8]}</td><td>${r[10]||'-'}</td><td>${r[11]||'-'}</td><td class="r">${r[12]||'-'}</td><td style="color:var(--muted);">${r[7]||'-'}</td></tr>`).join('')}</tbody></table></div>`;
+        <tbody>${rows.map(r=>`<tr><td>${r[8]}</td><td>${r[10]||'-'}</td><td>${r[11]||'-'}</td><td class="r">${r[12]||'-'}</td><td style="color:var(--muted);">${r[7]||'-'}</td></tr>`).join('')}</tbody></table></div>`;
     };
-    document.getElementById('mMtyInTable').innerHTML=inTbl(inM.data);
-    document.getElementById('mQroInTable').innerHTML=inTbl(inQ.data);
+    document.getElementById('mMtyInTable').innerHTML=inTbl(inRowsM);
+    document.getElementById('mQroInTable').innerHTML=inTbl(inRowsQ);
     window._mInboundMty=inM.data; window._mInboundQro=inQ.data;
   }catch(e){errs.push('입고:'+e.message);}
 
@@ -768,47 +784,106 @@ async function loadMonth(monthKeyStr, forceRecompute){
     });
     const groups=Object.values(map);
     const pend=groups.filter(g=>{const s=(g.estatus||'').toUpperCase();return s==='PROCESO'||s==='PENDING'||s==='PENDIENTE';});
-    document.getElementById('mAvisoSummary').innerHTML=`전체 ${groups.length}건 중 <span class="badge ${pend.length>0?'badge-warn':'badge-ok'}">${pend.length}건 미결</span>`;
+    const thisMonthGroups=groups.filter(g=>inMonth(g.fecha,y,m));
+    document.getElementById('mAvisoSummary').innerHTML=`이번 달 ${thisMonthGroups.length}건 진행 · 전체 ${groups.length}건 중 <span class="badge ${pend.length>0?'badge-warn':'badge-ok'}">${pend.length}건 미결</span>`;
     document.getElementById('mAvisoList').innerHTML=pend.length?`<div class="tbl-wrap"><table>
       <thead><tr><th>계약번호</th><th>상태</th><th>신청일</th><th class="r">심사일수</th><th>하차터미널</th><th>비고</th></tr></thead>
       <tbody>${pend.map(g=>`<tr><td>${g.pedido}</td><td><span class="badge badge-warn">${g.estatus||'-'}</span></td><td>${g.fecha||'-'}</td><td class="r">${g.dias||'-'}</td><td>${g.descarga||'-'}</td><td>${g.remark||'-'}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">미결 없음</div>';
+
+    if(sb){
+      let costMap={};
+      const {data:costs}=await sb.from('aviso_month_costs').select('*').eq('month_key',monthKeyStr);
+      (costs||[]).forEach(c=>costMap[c.pedido]=c);
+      window._mAvisoMonthKey=monthKeyStr;
+      const rowsHtml=thisMonthGroups.length?thisMonthGroups.map(g=>{
+        const c=costMap[g.pedido]||{};
+        return `<tr>
+          <td>${g.pedido}</td>
+          <td><span class="badge badge-warn">${g.estatus||'-'}</span></td>
+          <td><input type="number" step="0.01" class="aviso-cost-input" data-pedido="${g.pedido}" value="${c.cost!=null?c.cost:''}" placeholder="0" style="width:90px;font-size:12px;padding:4px 6px;border:1px solid var(--border);border-radius:4px;" onchange="saveAvisoCost(this)"></td>
+          <td><input type="text" class="aviso-note-input" data-pedido="${g.pedido}" value="${(c.note||'').replace(/"/g,'&quot;')}" placeholder="사유" style="width:100%;font-size:12px;padding:4px 6px;border:1px solid var(--border);border-radius:4px;" onchange="saveAvisoCost(this)"></td>
+        </tr>`;
+      }).join(''):'<tr><td colspan="4" class="empty">이번 달 진행된 AVISO 없음</td></tr>';
+      const total=thisMonthGroups.reduce((s,g)=>s+(parseFloat((costMap[g.pedido]||{}).cost)||0),0);
+      document.getElementById('mAvisoCostTable').innerHTML=`<div class="tbl-wrap"><table>
+        <thead><tr><th>계약번호</th><th>상태</th><th>비용(MXN)</th><th>비고</th></tr></thead>
+        <tbody>${rowsHtml}</tbody>
+        <tfoot><tr><td colspan="2" style="font-weight:600;">TOTAL</td><td id="mAvisoCostTotal" style="font-weight:600;">${fmtMoney(total)}</td><td></td></tr></tfoot>
+      </table></div>`;
+    }
   }catch(e){errs.push('AVISO:'+e.message);}
 
-  // CRM (이번 달)
+  // CRM (이번 달, 업체별 그룹)
   try{
     if(sb){
       const {data:accs}=await sb.from('accounts').select('*');
       const {data:logs}=await sb.from('contact_logs').select('*').order('created_at',{ascending:false});
       const accMap={}; (accs||[]).forEach(a=>accMap[a.id]=a);
       const thisMonthLogs=(logs||[]).filter(l=>inMonth(l.created_at,y,m));
-      const item=l=>{
-        const acc=accMap[l.account_id];
-        const d=new Date(l.created_at);
-        return `<div class="contact-item">
-          <div class="ci-top"><span>${acc?acc.name:'(삭제된 거래처)'}</span><span style="color:var(--muted);font-weight:400;">${d.getMonth()+1}/${d.getDate()} · ${window.mexcorDisplayName(l.logged_by||'')}</span></div>
-          <div class="ci-content">${l.content}</div>
-        </div>`;
+      const groupByAccount=list=>{
+        const g={};
+        list.forEach(l=>{
+          const acc=accMap[l.account_id];
+          const name=acc?acc.name:'(삭제된 거래처)';
+          (g[name]=g[name]||[]).push(l);
+        });
+        return Object.entries(g).sort((a,b)=>b[1].length-a[1].length);
       };
+      const groupHtml=(groups,idPrefix)=>groups.length?groups.map(([name,items],i)=>{
+        const gid=idPrefix+'-'+i;
+        const d0=new Date(items[0].created_at);
+        const latestLine=`<div class="nc-latest"><span class="nc-latest-date">${d0.getMonth()+1}/${d0.getDate()}</span><span>${items[0].content}</span></div>`;
+        const rest=items.slice(1);
+        const moreHtml=rest.length?`
+          <div class="nc-more-toggle" onclick="toggleGroupHistory('${gid}')">지난 컨택 ${rest.length}건 더보기 ⌄</div>
+          <div class="nc-history" id="${gid}" style="display:none;">${rest.map(l=>{
+            const d=new Date(l.created_at);
+            return `<div class="nc-hist-item"><span class="nc-latest-date">${d.getMonth()+1}/${d.getDate()}</span><span>${l.content}</span></div>`;
+          }).join('')}</div>`:'';
+        return `<div class="note-card" style="cursor:default;">
+          <div class="nc-top"><span class="nc-title">${name}</span><span class="badge badge-info">${items.length}건</span></div>
+          ${latestLine}${moreHtml}
+        </div>`;
+      }).join(''):'<div class="empty">이번 달 기록 없음</div>';
       const existing=thisMonthLogs.filter(l=>accMap[l.account_id]?.stage==='active');
       const newBiz=thisMonthLogs.filter(l=>{const st=accMap[l.account_id]?.stage;return st&&st!=='active'&&st!=='cancelled';});
-      document.getElementById('mCrmContactExisting').innerHTML=existing.length?existing.map(item).join(''):'<div class="empty">이번 달 기록 없음</div>';
-      document.getElementById('mCrmContactNew').innerHTML=newBiz.length?newBiz.map(item).join(''):'<div class="empty">이번 달 기록 없음</div>';
+      document.getElementById('mCrmContactExisting').innerHTML=groupHtml(groupByAccount(existing),'crmE');
+      document.getElementById('mCrmContactNew').innerHTML=groupHtml(groupByAccount(newBiz),'crmN');
     }
   }catch(e){errs.push('CRM:'+e.message);}
 
-  // 이슈 타임라인 (그 달의 확정된 주간보고들에서 수집)
+  // 이슈 타임라인 (그 달의 확정된 주간보고들에서 수집, 제목별 그룹)
   try{
     if(sb){
       const monStart=new Date(y,m-1,1), monEnd=new Date(y,m,0);
       const {data:snaps}=await sb.from('weekly_report_snapshots').select('week_key').gte('week_key',monStart.toISOString().slice(0,10)).lte('week_key',monEnd.toISOString().slice(0,10));
       const weekKeys=(snaps||[]).map(s=>s.week_key);
       if(weekKeys.length){
-        const {data:issues}=await sb.from('weekly_report_issues').select('*').in('week_key',weekKeys).order('week_key',{ascending:true});
-        document.getElementById('mIssueTimeline').innerHTML=(issues||[]).length?issues.map(it=>{
-          const wd=new Date(it.week_key+'T00:00:00');
-          return `<div class="tl-row" style="display:flex;gap:10px;padding:6px 0;border-bottom:1px dashed var(--border);font-size:13px;">
-            <span style="color:var(--hint);font-size:11px;min-width:60px;">${wd.getMonth()+1}/${wd.getDate()}주</span>
-            <span>${it.section==='issue'?'📌':'🗂️'} ${it.title||it.content||''}</span>
+        const {data:issueRows}=await sb.from('weekly_report_issues').select('*').in('week_key',weekKeys).order('week_key',{ascending:false});
+        const g={};
+        (issueRows||[]).forEach(it=>{
+          const key=(it.title&&it.title.trim())||it.content||'(제목 없음)';
+          (g[key]=g[key]||{icon:it.section==='issue'?'📌':'🗂️',items:[]}).items.push(it);
+        });
+        const groups=Object.entries(g).sort((a,b)=>{
+          const aw=new Date(a[1].items[0].week_key), bw=new Date(b[1].items[0].week_key);
+          return bw-aw;
+        });
+        document.getElementById('mIssueTimeline').innerHTML=groups.length?groups.map(([title,grp],i)=>{
+          const gid='iss-'+i;
+          const latest=grp.items[0];
+          const wd0=new Date(latest.week_key+'T00:00:00');
+          const latestLine=`<div class="nc-latest"><span class="nc-latest-date">${wd0.getMonth()+1}/${wd0.getDate()}</span><span>${latest.content||''}</span></div>`;
+          const rest=grp.items.slice(1);
+          const moreHtml=rest.length?`
+            <div class="nc-more-toggle" onclick="toggleGroupHistory('${gid}')">지난 주차 기록 ${rest.length}건 더보기 ⌄</div>
+            <div class="nc-history" id="${gid}" style="display:none;">${rest.map(it=>{
+              const wd=new Date(it.week_key+'T00:00:00');
+              return `<div class="nc-hist-item"><span class="nc-latest-date">${wd.getMonth()+1}/${wd.getDate()}</span><span>${it.content||''}</span></div>`;
+            }).join('')}</div>`:'';
+          return `<div class="note-card" style="cursor:default;">
+            <div class="nc-top"><span class="nc-title">${grp.icon} ${title}</span><span class="badge ${STATUS_COLOR[latest.status]||'badge-warn'}">${latest.status||'-'}</span></div>
+            ${latestLine}${moreHtml}
           </div>`;
         }).join(''):'<div class="empty">이번 달 확정된 주간보고 이슈 없음</div>';
       }else{
@@ -825,6 +900,22 @@ async function loadMonth(monthKeyStr, forceRecompute){
     document.getElementById('statusBox').className='status-bar ok';
     document.getElementById('statusBox').textContent='✓ 전체 데이터 연동 성공';
   }
+}
+
+async function saveAvisoCost(el){
+  if(!sb || !window._mAvisoMonthKey) return;
+  const pedido=el.dataset.pedido;
+  const row=el.closest('tr');
+  const cost=parseFloat(row.querySelector('.aviso-cost-input').value)||null;
+  const note=row.querySelector('.aviso-note-input').value.trim();
+  const {error}=await sb.from('aviso_month_costs').upsert({
+    month_key:window._mAvisoMonthKey, pedido, cost, note, updated_by:currentUserId(), updated_at:new Date().toISOString()
+  },{onConflict:'month_key,pedido'});
+  if(error){ alert('저장 실패: '+error.message); return; }
+  const rows=[...document.querySelectorAll('.aviso-cost-input')];
+  const total=rows.reduce((s,r)=>s+(parseFloat(r.value)||0),0);
+  const totalEl=document.getElementById('mAvisoCostTotal');
+  if(totalEl) totalEl.textContent=fmtMoney(total);
 }
 
 async function saveMonthClose(){
@@ -1400,6 +1491,10 @@ function noteCardHtml(section, it){
 }
 function toggleCardHistory(id){
   const el=document.getElementById('hist-'+id);
+  if(el) el.style.display=el.style.display==='none'?'flex':'none';
+}
+function toggleGroupHistory(id){
+  const el=document.getElementById(id);
   if(el) el.style.display=el.style.display==='none'?'flex':'none';
 }
 function escapeHtmlNote(s){
