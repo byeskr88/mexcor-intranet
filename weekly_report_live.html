@@ -627,6 +627,8 @@ function navMonth(delta){
   loadMonth(monthKeyOf(base));
 }
 
+function normItem(s){return String(s||'').toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9]/g,'');}
+
 function invStatusBadge(moh){
   if(moh===null||moh===undefined||isNaN(moh)) return '<span class="badge badge-ok">정상</span>';
   if(moh<3) return `<span class="badge badge-danger">재주문 ${moh.toFixed(1)}</span>`;
@@ -722,8 +724,8 @@ async function loadMonth(monthKeyStr, forceRecompute){
   try{
     const fcData=await tsvRaw(BASE.replace('{G}',GIDS.fc_inv));
     const fcMap={};
-    fcData.data.forEach(r=>{if(r[1])fcMap[r[1].toLowerCase().replace(/\s+/g,'')]=toN(r[3]);});
-    const getFC=item=>fcMap[(item||'').toLowerCase().replace(/\s+/g,'')]||0;
+    fcData.data.forEach(r=>{if(r[1])fcMap[normItem(r[1])]=toN(r[3]);});
+    const getFC=item=>fcMap[normItem(item)]||0;
     const mtyInv=await tsvRaw(BASE.replace('{G}',GIDS.inv_mty));
     const qroInv=await tsvRaw(BASE.replace('{G}',GIDS.inv_qro));
     const mkList=(rowsData,loc)=>rowsData.filter(r=>r[2]&&r[2].trim())
@@ -1144,9 +1146,9 @@ async function load(targetWeekKey, forceRecompute){
   let fcMap={};
   try{
     const fcData=await tsvRaw(BASE.replace('{G}',GIDS.fc_inv));
-    fcData.data.forEach(r=>{if(r[1])fcMap[r[1].toLowerCase().replace(/\s+/g,'')]=toN(r[3]);});
+    fcData.data.forEach(r=>{if(r[1])fcMap[normItem(r[1])]=toN(r[3]);});
   }catch(e){errs.push('FORECAST:'+e.message);}
-  const getFC=item=>fcMap[(item||'').toLowerCase().replace(/\s+/g,'')]||0;
+  const getFC=item=>fcMap[normItem(item)]||0;
 
   try{
     const mtyInv=await tsvRaw(BASE.replace('{G}',GIDS.inv_mty));
