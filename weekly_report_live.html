@@ -1409,21 +1409,13 @@ const STATUS_COLOR={'진행중':'badge-warn','협의중':'badge-info','완료':'
 let issues=[], projects=[];
 async function loadIssues(wk){
   if(!sb) return;
-  const targetWk=wk||currentViewWeekKey||weekKey();
-  let {data} = await sb.from('weekly_report_issues').select('*').eq('week_key',targetWk).eq('section','issue').order('created_at',{ascending:true});
-  if(!data||data.length===0){
-    data = await carryOverFromPrevWeek(targetWk, 'issue');
-  }
+  const {data} = await sb.from('weekly_report_issues').select('*').eq('section','issue').order('created_at',{ascending:true});
   issues=await attachUpdates(data||[]);
   renderCards('issue', issues, 'issueRows');
 }
 async function loadProjects(wk){
   if(!sb) return;
-  const targetWk=wk||currentViewWeekKey||weekKey();
-  let {data} = await sb.from('weekly_report_issues').select('*').eq('week_key',targetWk).eq('section','project').order('created_at',{ascending:true});
-  if(!data||data.length===0){
-    data = await carryOverFromPrevWeek(targetWk, 'project');
-  }
+  const {data} = await sb.from('weekly_report_issues').select('*').eq('section','project').order('created_at',{ascending:true});
   projects=await attachUpdates(data||[]);
   renderCards('project', projects, 'projectRows');
 }
@@ -1441,30 +1433,6 @@ function timelineEntries(it){
   const entries=(it.updates||[]).map(u=>({content:u.content, who:u.created_by, at:u.created_at}));
   if(it.content) entries.push({content:it.content, who:it.created_by, at:it.created_at});
   return entries;
-}
-
-async function carryOverFromPrevWeek(targetWk, section){
-  // 현재 주차에 아직 카드가 하나도 없을 때만, 지난주 내용을 딱 한 번 그대로 복사한다.
-  // 그 이후엔 절대 자동으로 다시 건드리지 않는다 (반복 실행 시 계속 새로 채워 넣는 걸 방지).
-  try{
-    const prevWk=new Date(targetWk+'T00:00:00'); prevWk.setDate(prevWk.getDate()-7);
-    const prevKey=prevWk.toISOString().slice(0,10);
-    const {data:prevData}=await sb.from('weekly_report_issues').select('*').eq('week_key',prevKey).eq('section',section).order('created_at',{ascending:true});
-    if(!prevData||prevData.length===0) return [];
-    const prevWithUpdates=await attachUpdates(prevData);
-    const who=currentUserId();
-    const inserts=prevWithUpdates.map(p=>{
-      const entries=timelineEntries(p);
-      const latest=entries[0];
-      return {
-        week_key:targetWk, section, title:p.title, status:p.status, content:latest?latest.content:'',
-        created_by:who, created_at:new Date().toISOString()
-      };
-    });
-    const {data:inserted,error}=await sb.from('weekly_report_issues').insert(inserts).select('*');
-    if(error){ console.error('이월 실패:',error.message); return []; }
-    return inserted||[];
-  }catch(e){ console.error('이월 실패:',e.message); return []; }
 }
 
 function noteCardHtml(section, it){
@@ -1527,7 +1495,6 @@ function expandCard(section, id){
       </div>
       ${histHtml}
       <textarea class="ne-content" rows="2" placeholder="새 업데이트 추가 (선택)"></textarea>
-      <div class="nc-more-toggle" style="margin:-2px 0 4px;" onclick="pullPrevWeekLatest('${section}','${id}')">⬅ 지난주 최신 내용 가져오기</div>
       <div class="ne-btns">
         <button class="ne-save" onclick="saveCard('${section}','${id}',this)">저장</button>
         <button class="ne-del" onclick="deleteCard('${section}','${id}')">삭제</button>
@@ -1535,27 +1502,6 @@ function expandCard(section, id){
       </div>
     </div>`;
 }
-async function pullPrevWeekLatest(section, id){
-  if(!sb) return;
-  const list=section==='issue'?issues:projects;
-  const it=list.find(x=>x.id===id);
-  if(!it || !it.title || !it.title.trim()){ alert('제목이 있어야 지난주 내용을 찾을 수 있어요.'); return; }
-  const card=document.querySelector(`.note-card[data-id="${id}"]`);
-  if(!card) return;
-  const wk=currentViewWeekKey||weekKey();
-  const prevWk=new Date(wk+'T00:00:00'); prevWk.setDate(prevWk.getDate()-7);
-  const prevKey=prevWk.toISOString().slice(0,10);
-  const {data:prevData}=await sb.from('weekly_report_issues').select('*').eq('week_key',prevKey).eq('section',section);
-  const match=(prevData||[]).find(p=>(p.title||'').trim()===it.title.trim());
-  if(!match){ alert('지난주에서 같은 제목의 카드를 못 찾았어요.'); return; }
-  const [withUpdates]=await attachUpdates([match]);
-  const entries=timelineEntries(withUpdates);
-  const latest=entries[0];
-  if(!latest){ alert('지난주 카드에 내용이 없어요.'); return; }
-  const textarea=card.querySelector('.ne-content');
-  if(textarea) textarea.value=latest.content;
-}
-
 function cancelExpand(section, id){
   renderCards(section, section==='issue'?issues:projects, section==='issue'?'issueRows':'projectRows');
 }
