@@ -233,6 +233,7 @@ tr:nth-child(odd) td{background:#fbfaf7;}
       <div class="cmt-panel" id="cmtPanel-issue_note"></div>
       <div class="issue-rows" id="issueRows"></div>
       <span class="issue-add" onclick="addIssueRow()">+ 항목 추가</span>
+      <span class="issue-add" style="margin-left:10px;color:var(--danger-text,#791F1F);" onclick="toggleBulkDelete('issue')" id="bulkBtn-issue">선택 삭제</span>
       <div class="save-note" id="issueSaveNote"></div>
     </div>
 
@@ -315,6 +316,7 @@ tr:nth-child(odd) td{background:#fbfaf7;}
         <div class="cmt-panel" id="cmtPanel-project_note"></div>
         <div class="issue-rows" id="projectRows"></div>
         <span class="issue-add" onclick="addProjectRow()">+ 프로젝트 추가</span>
+        <span class="issue-add" style="margin-left:10px;color:var(--danger-text,#791F1F);" onclick="toggleBulkDelete('project')" id="bulkBtn-project">선택 삭제</span>
         <div class="save-note" id="projectSaveNote"></div>
       </div>
     </div>
@@ -1435,6 +1437,49 @@ function timelineEntries(it){
   return entries;
 }
 
+let bulkMode={issue:false, project:false};
+let bulkSelected={issue:new Set(), project:new Set()};
+
+function toggleBulkDelete(section){
+  if(bulkMode[section]){
+    // 삭제 실행
+    const ids=[...bulkSelected[section]];
+    if(ids.length===0){
+      bulkMode[section]=false;
+      renderCards(section, section==='issue'?issues:projects, section==='issue'?'issueRows':'projectRows');
+      updateBulkBtn(section);
+      return;
+    }
+    if(!confirm(`선택한 ${ids.length}개 카드를 삭제할까요? 되돌릴 수 없습니다.`)) return;
+    bulkDeleteConfirmed(section, ids);
+  }else{
+    bulkMode[section]=true;
+    bulkSelected[section]=new Set();
+    renderCards(section, section==='issue'?issues:projects, section==='issue'?'issueRows':'projectRows');
+    updateBulkBtn(section);
+  }
+}
+function updateBulkBtn(section){
+  const btn=document.getElementById('bulkBtn-'+section);
+  if(!btn) return;
+  if(!bulkMode[section]){ btn.textContent='선택 삭제'; return; }
+  const n=bulkSelected[section].size;
+  btn.textContent=n>0?`삭제 실행 (${n}개 선택됨)`:'선택 삭제 취소';
+}
+function toggleBulkCheck(section, id, checked){
+  if(checked) bulkSelected[section].add(id); else bulkSelected[section].delete(id);
+  updateBulkBtn(section);
+}
+async function bulkDeleteConfirmed(section, ids){
+  if(!sb) return;
+  const {error}=await sb.from('weekly_report_issues').delete().in('id',ids);
+  if(error){ alert('삭제 실패: '+error.message); return; }
+  bulkMode[section]=false;
+  bulkSelected[section]=new Set();
+  updateBulkBtn(section);
+  if(section==='issue') await loadIssues(); else await loadProjects();
+}
+
 function noteCardHtml(section, it){
   const statusCls=STATUS_COLOR[it.status]||'badge-warn';
   const entries=timelineEntries(it);
@@ -1448,6 +1493,20 @@ function noteCardHtml(section, it){
     <div class="nc-more-toggle" onclick="event.stopPropagation();toggleCardHistory('${it.id}')">지난 업데이트 ${older.length}개 더보기 ⌄</div>
     <div class="nc-history" id="hist-${it.id}" style="display:none;">${older.map(e=>`<div class="nc-hist-item"><span class="nc-latest-date">${dateStr(e)}</span><span>${escapeHtmlNote(e.content)}</span></div>`).join('')}</div>`:'';
   const who=window.mexcorDisplayName(latest?(latest.who||''):(it.created_by||''));
+  if(bulkMode[section]){
+    const checked=bulkSelected[section].has(it.id);
+    return `<div class="note-card" style="cursor:pointer;${checked?'outline:2px solid var(--danger,#A32D2D);':''}" onclick="const cb=this.querySelector('input');cb.checked=!cb.checked;toggleBulkCheck('${section}','${it.id}',cb.checked);this.style.outline=cb.checked?'2px solid var(--danger,#A32D2D)':'';">
+      <div class="nc-top">
+        <label style="display:flex;align-items:center;gap:6px;" onclick="event.stopPropagation();">
+          <input type="checkbox" ${checked?'checked':''} onchange="toggleBulkCheck('${section}','${it.id}',this.checked);this.closest('.note-card').style.outline=this.checked?'2px solid var(--danger,#A32D2D)':'';">
+          <span class="nc-title">${escapeHtmlNote(it.title)||'<span style="color:var(--muted);">(제목 없음)</span>'}</span>
+        </label>
+        <span class="badge ${statusCls}">${it.status||'진행중'}</span>
+      </div>
+      ${latestHtml}
+      <p class="nc-meta">${who}</p>
+    </div>`;
+  }
   return `<div class="note-card" data-id="${it.id}" onclick="if(!event.target.closest('.note-edit-area')&&!event.target.closest('.nc-more-toggle'))expandCard('${section}','${it.id}')">
     <div class="nc-top">
       <span class="nc-title">${escapeHtmlNote(it.title)||'<span style="color:var(--muted);">(제목 없음)</span>'}</span>
