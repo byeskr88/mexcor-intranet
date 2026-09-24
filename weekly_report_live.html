@@ -1411,7 +1411,9 @@ async function loadIssues(wk){
   if(!sb) return;
   const targetWk=wk||currentViewWeekKey||weekKey();
   let {data} = await sb.from('weekly_report_issues').select('*').eq('week_key',targetWk).eq('section','issue').order('created_at',{ascending:true});
-  data = await syncMissingFromPrevWeek(targetWk, 'issue', data||[]);
+  if(!data||data.length===0){
+    data = await carryOverFromPrevWeek(targetWk, 'issue');
+  }
   issues=await attachUpdates(data||[]);
   renderCards('issue', issues, 'issueRows');
 }
@@ -1419,7 +1421,9 @@ async function loadProjects(wk){
   if(!sb) return;
   const targetWk=wk||currentViewWeekKey||weekKey();
   let {data} = await sb.from('weekly_report_issues').select('*').eq('week_key',targetWk).eq('section','project').order('created_at',{ascending:true});
-  data = await syncMissingFromPrevWeek(targetWk, 'project', data||[]);
+  if(!data||data.length===0){
+    data = await carryOverFromPrevWeek(targetWk, 'project');
+  }
   projects=await attachUpdates(data||[]);
   renderCards('project', projects, 'projectRows');
 }
@@ -1439,20 +1443,17 @@ function timelineEntries(it){
   return entries;
 }
 
-async function syncMissingFromPrevWeek(targetWk, section, currentData){
-  // 지난 주엔 있는데 이번 주엔 없는 카드(제목 기준)만 자동으로 채워 넣는다 — 이미 있는 카드는 건드리지 않음
-  if(!sb) return currentData;
+async function carryOverFromPrevWeek(targetWk, section){
+  // 현재 주차에 아직 카드가 하나도 없을 때만, 지난주 내용을 딱 한 번 그대로 복사한다.
+  // 그 이후엔 절대 자동으로 다시 건드리지 않는다 (반복 실행 시 계속 새로 채워 넣는 걸 방지).
   try{
     const prevWk=new Date(targetWk+'T00:00:00'); prevWk.setDate(prevWk.getDate()-7);
     const prevKey=prevWk.toISOString().slice(0,10);
     const {data:prevData}=await sb.from('weekly_report_issues').select('*').eq('week_key',prevKey).eq('section',section).order('created_at',{ascending:true});
-    if(!prevData||prevData.length===0) return currentData;
-    const currentTitles=new Set(currentData.map(it=>(it.title||'').trim()).filter(Boolean));
-    const missing=prevData.filter(p=>{const t=(p.title||'').trim(); return t && !currentTitles.has(t);});
-    if(!missing.length) return currentData;
-    const missingWithUpdates=await attachUpdates(missing);
+    if(!prevData||prevData.length===0) return [];
+    const prevWithUpdates=await attachUpdates(prevData);
     const who=currentUserId();
-    const inserts=missingWithUpdates.map(p=>{
+    const inserts=prevWithUpdates.map(p=>{
       const entries=timelineEntries(p);
       const latest=entries[0];
       return {
@@ -1461,9 +1462,9 @@ async function syncMissingFromPrevWeek(targetWk, section, currentData){
       };
     });
     const {data:inserted,error}=await sb.from('weekly_report_issues').insert(inserts).select('*');
-    if(error){ console.error('이월 실패:',error.message); return currentData; }
-    return [...currentData, ...(inserted||[])];
-  }catch(e){ console.error('이월 실패:',e.message); return currentData; }
+    if(error){ console.error('이월 실패:',error.message); return []; }
+    return inserted||[];
+  }catch(e){ console.error('이월 실패:',e.message); return []; }
 }
 
 function noteCardHtml(section, it){
