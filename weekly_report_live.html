@@ -1121,9 +1121,10 @@ async function load(targetWeekKey, forceRecompute){
   // ===== 재고 (MTY + QRO 전체) =====
   function invTable(items){
     return `<div class="tbl-wrap"><table>
-      <thead><tr><th>품목</th><th>거래처</th><th class="r">재고</th><th class="r">FORECAST</th><th>상태</th><th>비고</th></tr></thead>
+      <thead><tr><th>품목</th><th>거래처</th><th class="r">재고</th><th class="r">발주수량</th><th class="r">FORECAST</th><th>상태</th><th>비고</th></tr></thead>
       <tbody>${items.map(r=>`<tr>
         <td>${r.item}</td><td>${r.client||'-'}</td><td class="r">${r.stock.toLocaleString()}</td>
+        <td class="r">${r.open||'-'}</td>
         <td class="r">${r.fc||'-'}</td><td>${invStatusBadge(r.fc>0?r.stock/r.fc:null)}</td>
         <td style="color:var(--muted);">${r.note||'-'}</td>
       </tr>`).join('')}</tbody>
@@ -1154,7 +1155,7 @@ async function load(targetWeekKey, forceRecompute){
 
   try{
     const mtyInv=await tsvRaw(BASE.replace('{G}',GIDS.inv_mty));
-    const mtyItems=mtyInv.data.filter(r=>r[2]&&r[2].trim()).map(r=>({item:r[2],client:r[4],stock:toN(r[5]),fc:getFC(r[2]),note:r[9]}));
+    const mtyItems=mtyInv.data.filter(r=>r[2]&&r[2].trim()).map(r=>({item:r[2],client:r[4],stock:toN(r[5]),open:toN(r[6]),fc:getFC(r[2]),note:r[9]}));
     window._mtyInvItems=mtyItems;
     populateClientFilter('mty', mtyItems);
     renderInvFiltered('mty');
@@ -1168,7 +1169,7 @@ async function load(targetWeekKey, forceRecompute){
 
   try{
     const qroInv=await tsvRaw(BASE.replace('{G}',GIDS.inv_qro));
-    const qroItems=qroInv.data.filter(r=>r[2]&&r[2].trim()).map(r=>({item:r[2],client:r[4],stock:toN(r[5]),fc:getFC(r[2]),note:r[9]}));
+    const qroItems=qroInv.data.filter(r=>r[2]&&r[2].trim()).map(r=>({item:r[2],client:r[4],stock:toN(r[5]),open:toN(r[6]),fc:getFC(r[2]),note:r[9]}));
     window._qroInvItems=qroItems;
     populateClientFilter('qro', qroItems);
     renderInvFiltered('qro');
