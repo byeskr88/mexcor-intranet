@@ -605,16 +605,26 @@ function switchView(v){
   const wBtn=document.getElementById('viewWeekBtn'), mBtn=document.getElementById('viewMonthBtn');
   const wNav=document.getElementById('weekNavGroup'), mNav=document.getElementById('monthNavGroup');
   const main=document.getElementById('main'), mMain=document.getElementById('monthMain');
+  const weekLabelEl=document.getElementById('weekLabel');
+  const draftBadgeEl=document.getElementById('draftBadge');
   if(v==='week'){
     wBtn.classList.add('active'); mBtn.classList.remove('active');
     wNav.style.display=''; mNav.style.display='none';
     document.getElementById('pageTitle').textContent='주간보고';
+    if(weekLabelEl) weekLabelEl.style.display='';
+    if(draftBadgeEl && draftBadgeEl.dataset.hadContent) draftBadgeEl.style.display='';
     if(main.innerHTML.trim()) main.style.display='block';
     mMain.style.display='none';
   }else{
     mBtn.classList.add('active'); wBtn.classList.remove('active');
     wNav.style.display='none'; mNav.style.display='';
     document.getElementById('pageTitle').textContent='월간 마감';
+    // 주간보고 화면의 라벨/배지가 월간 화면에 그대로 겹쳐 보이는 문제 방지
+    if(weekLabelEl) weekLabelEl.style.display='none';
+    if(draftBadgeEl){
+      if(draftBadgeEl.style.display!=='none') draftBadgeEl.dataset.hadContent='1';
+      draftBadgeEl.style.display='none';
+    }
     main.style.display='none';
     mMain.style.display='block';
     if(!currentViewMonthKey){
@@ -674,7 +684,7 @@ async function loadMonth(monthKeyStr, forceRecompute){
     const spool=rows.filter(r=>(r[11]||'').toUpperCase().includes('SPOOL')).reduce((s,r)=>s+toN(r[12]),0);
     return {drum,spool};
   };
-  const fmtParts=({drum,spool})=>{const p=[];if(drum)p.push(drum.toLocaleString()+'드럼');if(spool)p.push(spool.toLocaleString()+'스풀');return p.length?p.join(' / '):'출고 없음';};
+  const fmtParts=({drum,spool},emptyLabel)=>{const p=[];if(drum)p.push(drum.toLocaleString()+'드럼');if(spool)p.push(spool.toLocaleString()+'스풀');return p.length?p.join(' / '):(emptyLabel||'출고 없음');};
 
   // 매출 출고
   try{
@@ -694,8 +704,8 @@ async function loadMonth(monthKeyStr, forceRecompute){
     const inQ=await tsvRaw(BASE.replace('{G}',GIDS.in_qro));
     const inRowsM=inM.data.filter(r=>r[8]&&inMonth(r[8],y,m));
     const inRowsQ=inQ.data.filter(r=>r[8]&&inMonth(r[8],y,m));
-    document.getElementById('mMtyIn').textContent=fmtParts(byUnitIn(inRowsM));
-    document.getElementById('mQroIn').textContent=fmtParts(byUnitIn(inRowsQ));
+    document.getElementById('mMtyIn').textContent=fmtParts(byUnitIn(inRowsM),'입고 없음');
+    document.getElementById('mQroIn').textContent=fmtParts(byUnitIn(inRowsQ),'입고 없음');
     const inTbl=rows=>{
       if(!rows.length) return '<div class="empty">이번 달 입고 없음</div>';
       return `<div class="tbl-wrap"><table><thead><tr><th>ETW(실제 도착)</th><th>품목</th><th>단위</th><th class="r">수량</th><th>ETA(예상)</th></tr></thead>
