@@ -38,7 +38,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 .pipeline-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
 .pipeline-title{font-size:11px;font-weight:600;color:var(--hint);text-transform:uppercase;letter-spacing:.05em;}
 .pipeline-total{font-size:13px;font-weight:500;}
-.pipeline-bars{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}
+.pipeline-bars{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;}
 .pb-col{display:flex;flex-direction:column;gap:4px;}
 .pb-label{font-size:10px;color:var(--muted);}
 .pb-track{height:6px;background:var(--s2);border-radius:3px;overflow:hidden;}
@@ -143,6 +143,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 
 /* 컬럼 단계 색상 */
 .col-active .col-name{color:var(--ok-text);}
+.col-lead .col-name{color:var(--blue-text,#0C447C);}
 .col-prospect .col-name{color:var(--muted);}
 .col-proposal .col-name{color:var(--purple-text);}
 .col-negotiation .col-name{color:var(--warn-text);}
@@ -334,10 +335,10 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 </div>
 
 <!-- 오른쪽 사이드바 -->
-<div id="rightSidebar" style="width:560px;flex-shrink:0;border-left:0.5px solid var(--border);background:var(--surface);height:calc(100vh - 200px);padding:10px;overflow-y:auto;position:sticky;top:200px;">
+<div id="rightSidebar" style="width:400px;flex-shrink:0;border-left:0.5px solid var(--border);background:var(--surface);height:auto;max-height:calc(100vh - 200px);padding:10px;overflow-y:auto;position:sticky;top:200px;">
 
   <!-- 2x2 그리드: 공지|캘린더 / 이번주액션|퀵메모 -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:8px;height:100%;">
+  <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:180px 180px;gap:8px;">
 
     <!-- 왼쪽 위: 공지·지시사항 -->
     <div class="sb-sec" style="display:flex;flex-direction:column;overflow:hidden;">
@@ -415,6 +416,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
       <div class="dp-section-title" data-ko="단계 · 우선순위" data-es="Etapa · Prioridad">단계 · 우선순위</div>
       <div class="stage-row">
         <select class="stage-select" id="dpStageSelect" onchange="changeStage(this.value)">
+          <option value="lead" data-ko="신규영업" data-es="Nuevo contacto">신규영업</option>
           <option value="prospect" data-ko="잠재고객" data-es="Prospecto">잠재고객</option>
           <option value="proposal" data-ko="제안" data-es="Propuesta">제안</option>
           <option value="negotiation" data-ko="협상중" data-es="Negociación">협상중</option>
@@ -479,7 +481,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
     </div>
     <div class="form-grid">
       <div class="form-row"><label data-ko="단계" data-es="Etapa">단계</label>
-        <select id="nStage"><option value="prospect">Prospect</option><option value="proposal">Proposal</option><option value="active">Active</option></select>
+        <select id="nStage"><option value="lead">Lead (신규영업)</option><option value="prospect">Prospect</option><option value="proposal">Proposal</option><option value="active">Active</option></select>
       </div>
       <div class="form-row"><label data-ko="우선순위" data-es="Prioridad">우선순위</label>
         <select id="nPriority"><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select>
@@ -526,6 +528,7 @@ async function sbWrite(promise){
 }
 
 const STAGES=[
+  {id:'lead',label:'Lead',labelKo:'신규영업',labelEs:'Nuevo contacto',col:'col-lead',color:'var(--blue)'},
   {id:'prospect',label:'Prospect',labelKo:'잠재고객',labelEs:'Prospecto',col:'col-prospect',color:'var(--s2)'},
   {id:'proposal',label:'Proposal',labelKo:'제안',labelEs:'Propuesta',col:'col-proposal',color:'var(--purple)'},
   {id:'negotiation',label:'Negotiation',labelKo:'협상중',labelEs:'Negociación',col:'col-negotiation',color:'var(--warn)'},
@@ -792,7 +795,7 @@ function renderCrmList(){
 function updateStats(){
   document.getElementById('statTotal').textContent=accounts.length;
   document.getElementById('statActive').textContent=accounts.filter(a=>a.stage==='active').length;
-  document.getElementById('statPipe').textContent=accounts.filter(a=>['prospect','proposal','negotiation'].includes(a.stage)).length;
+  document.getElementById('statPipe').textContent=accounts.filter(a=>['lead','prospect','proposal','negotiation'].includes(a.stage)).length;
   const fu=accounts.filter(a=>{const d=lastContactDays(a.id);return a.stage!=='won'&&a.stage!=='cancelled'&&(d===null||d>30);}).length;
   document.getElementById('statFollowup').textContent=fu;
   window._mexcorSetStatus?.('crm', fu>0?'warn':'ok',
@@ -874,7 +877,7 @@ async function openDetail(id){
   document.getElementById('dpAvatar').textContent=initials;
   document.getElementById('dpName').textContent=a.name;
   document.getElementById('dpSub').textContent=(a.industry||'-')+' · '+(a.location||'-');
-  document.getElementById('dpStageSelect').value=a.stage||'prospect';
+  document.getElementById('dpStageSelect').value=a.stage||'lead';
   document.getElementById('dpPriority').value=a.priority||'medium';
   document.getElementById('dpStageSelect').disabled=!canEdit;
   document.getElementById('dpPriority').disabled=!canEdit;
@@ -950,7 +953,7 @@ async function changeStage(v){
   if(!selectedId) return;
   const a=accounts.find(x=>x.id===selectedId);
   if(v==='cancelled'){
-    document.getElementById('dpStageSelect').value=a.stage||'prospect';
+    document.getElementById('dpStageSelect').value=a.stage||'lead';
     openCancelModal(selectedId);
     return;
   }
