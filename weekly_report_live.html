@@ -537,7 +537,7 @@ async function autoSaveMetricsDraft(wk, m){
 async function saveReport(){
   if(!sb || !currentViewWeekKey){ alert('저장할 수 없어요 (연결 확인 필요)'); return; }
   const targetKey=currentViewWeekKey;
-  const html=document.getElementById('main').innerHTML;
+  const html=window.i18nKoHtml?window.i18nKoHtml(document.getElementById('main')):document.getElementById('main').innerHTML;
   const who=currentUserId();
   try{
     const {data:existing}=await sb.from('weekly_report_snapshots').select('week_key,created_by').eq('week_key',targetKey).maybeSingle();
@@ -559,7 +559,9 @@ function currentUserId(){
 
 
 function renderSalesChart(chartPlan, chartAct, curM){
-  const MONTHS=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  window._lastChartArgs=[chartPlan, chartAct, curM];
+  const _t=s=>window.i18nStr?window.i18nStr(s):s;
+  const MONTHS=Array.from({length:12},(_,i)=>window.i18nMonthShort?window.i18nMonthShort(i):(i+1)+'월');
   const canvas=document.getElementById('salesChart');
   if(!canvas || typeof Chart==='undefined') return;
   const barLabelPlugin={
@@ -585,8 +587,8 @@ function renderSalesChart(chartPlan, chartAct, curM){
   window.salesChartInst=new Chart(canvas,{
     type:'bar',
     data:{labels:MONTHS.slice(0,curM), datasets:[
-      {label:'목표', data:chartPlan, backgroundColor:'#D3D1C7'},
-      {label:'실적', data:chartAct, backgroundColor:'#2a78d6'}
+      {label:_t('목표'), data:chartPlan, backgroundColor:'#D3D1C7'},
+      {label:_t('실적'), data:chartAct, backgroundColor:'#2a78d6'}
     ]},
     plugins:[barLabelPlugin],
     options:{responsive:true,maintainAspectRatio:false,
@@ -935,7 +937,7 @@ async function saveMonthClose(){
   const targetKey=currentViewMonthKey;
   const noteEl=document.getElementById('mMonthlyNote');
   if(noteEl) noteEl.textContent=noteEl.value;
-  const html=document.getElementById('monthMain').innerHTML;
+  const html=window.i18nKoHtml?window.i18nKoHtml(document.getElementById('monthMain')):document.getElementById('monthMain').innerHTML;
   const who=currentUserId();
   try{
     const {data:existing}=await sb.from('monthly_close_snapshots').select('month_key,created_by').eq('month_key',targetKey).maybeSingle();
@@ -1726,6 +1728,288 @@ function _start(){
 }
 if(window._mexcorUser!==undefined){ _start(); }
 else { document.addEventListener('mexcorAuthReady', _start); }
+</script>
+<script>
+/* ============================================================
+   주간보고 번역 (KO ↔ ES)
+   1) 고정 문구: 사전 + DOM 번역기 (무료, 즉시)
+   2) 직접 작성한 글(카드/코멘트/CRM 로그): Supabase Edge Function 'translate' (Claude) + DB 캐시
+   ============================================================ */
+(function(){
+const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const L=()=>localStorage.getItem('mexcor_lang')||'ko';
+const HAN=/[가-힣]/;
+
+// ---------- 1. 사전 ----------
+const DICT={
+ '주간보고':'Reporte Semanal','월간 마감':'Cierre Mensual','주간':'Semanal','월간':'Mensual',
+ '주간보고 — MEXCOR Workspace':'Reporte Semanal — MEXCOR Workspace',
+ '불러오는 중...':'Cargando...','데이터 불러오는 중...':'Cargando datos...','주차 선택':'Elegir semana','월 선택':'Elegir mes',
+ '이 주차 저장':'Guardar esta semana','이 달 마감 저장':'Guardar cierre del mes','PDF 다운로드':'Descargar PDF',
+ '이전 주':'Semana anterior','다음 주':'Semana siguiente','이전 달':'Mes anterior','다음 달':'Mes siguiente',
+ '지난 보고서 목록':'Reportes anteriores','닫기 ✕':'Cerrar ✕','저장된 보고서가 없어요':'No hay reportes guardados',
+ '전체 데이터 연동 성공':'Todos los datos sincronizados','일부 데이터 연동 실패:':'Falló la sincronización de algunos datos:',
+ '작성중 · 아직 저장 안 됨':'En edición · aún sin guardar','작성중':'En edición','확정됨':'Confirmado','다시 계산':'Recalcular',
+ '(현재 보는 중)':'(viendo ahora)','현재 보는 중':'viendo ahora',
+ '자동 · 저장된 스냅샷 기반':'Auto · según snapshots guardados','가장 시급 · 자동 감지':'Lo más urgente · detección automática',
+ '자동':'Auto','직접 작성':'Manual',
+ '매출 탭':'pestaña Ventas','AR 탭':'pestaña AR','재고 탭':'pestaña Inventario','AVISO 탭':'pestaña AVISO','신규프로젝트 탭':'pestaña Nuevos Proyectos',
+ '입고 일정':'calendario de entradas','주간보고 이슈/프로젝트 카드':'tarjetas de temas/proyectos del reporte semanal',
+ '금주 주요 이슈 / 특이사항':'Temas clave / novedades de la semana','진행 예정 신규 프로젝트':'Nuevos proyectos en preparación',
+ '+ 항목 추가':'+ Agregar ítem','+ 프로젝트 추가':'+ Agregar proyecto','선택 삭제':'Eliminar selección','선택 삭제 취소':'Cancelar selección',
+ '이번 주 매출실적':'Ventas de esta semana','이번 주 실적':'Resultado de la semana','이번 달 누적 실적':'Acumulado del mes',
+ 'YTD 달성률':'Cumplimiento YTD','영업활동 & 컨택 로그':'Actividad comercial y contactos','영업활동 & CRM':'Actividad comercial y CRM',
+ '기존 거래처':'Clientes actuales','신규 영업':'Prospección nueva','AVISO 현황':'Estado de AVISO','방습제 현황':'Estado de desecantes',
+ '재고 현황 — MTY':'Inventario — MTY','재고 현황 — QRO':'Inventario — QRO','전체 거래처':'Todos los clientes','미지정':'Sin asignar',
+ '전체 품목':'Total de ítems','재주문 필요':'Reorden necesario','재고 자산가치':'Valor del inventario',
+ '이번 주 판매 내역':'Ventas de esta semana (detalle)','이번 주 판매 없음':'Sin ventas esta semana',
+ 'AR 미수금 현황':'Cuentas por cobrar (AR)','AR 미수금':'Cuentas por cobrar (AR)','USD 미수금':'CxC USD','MXN 미수금':'CxC MXN',
+ '전체 미결 건수':'Total pendientes','60일 초과 연체':'Atraso >60 días','이번 주 입금액':'Cobros de esta semana','이번 달 입금액':'Cobros del mes',
+ '연체 구간별 현황':'Atrasos por rango','이번 주 입금 내역':'Cobros de esta semana (detalle)',
+ '매출 실적':'Ventas','월 목표 대비':'vs. meta mensual','월 매출 합계':'Ventas del mes','이번 달 돌아보기':'Resumen del mes',
+ '재고 — 긴급 재주문 필요 품목':'Inventario — ítems con reorden urgente','이번 달 AVISO 비용 처리':'Costos de AVISO del mes',
+ '대표님 총평':'Comentario del Director','이번 달에 대한 코멘트를 입력하세요':'Escribe un comentario sobre este mes',
+ '날짜':'Fecha','거래처':'Cliente','품목':'Ítem','단위':'Unidad','수량':'Cantidad','재고':'Stock','발주수량':'Cant. pedida','상태':'Estado','비고':'Notas',
+ '지점':'Sucursal','단가':'Precio unit.','월FORECAST':'Forecast/mes','월 FORECAST':'Forecast/mes','금액':'Monto','통화':'Moneda','인보이스':'Factura',
+ '결제만기일':'Vencimiento','연체일수':'Días de atraso','입금일':'Fecha de cobro','계약번호':'Nº de contrato','신청일':'Fecha de solicitud',
+ '심사일수':'Días de dictamen','하차터미널':'Terminal de descarga','합계':'Total','비고(사유)':'Notas (motivo)','사유':'Motivo',
+ 'ETW(실제 도착)':'ETW (llegada real)','ETA(예상)':'ETA (estimada)','ETW(실제)':'ETW (real)',
+ '정상':'Normal','주의':'Atención','재주문':'Reorden','미결':'Pendiente','미만기':'No vencido',
+ '30일이내':'≤30 días','30~60일':'30–60 días','60일초과':'>60 días',
+ '진행중':'En curso','협의중':'En negociación','완료':'Completado','보류':'En pausa',
+ '출고 없음':'Sin salidas','입고 없음':'Sin entradas','이번 주 출고 없음':'Sin salidas esta semana','이번 달 출고 없음':'Sin salidas este mes','이번 달 입고 없음':'Sin entradas este mes',
+ '이번 주 기록 없음':'Sin registros esta semana','이번 달 기록 없음':'Sin registros este mes','이번 주 입금 기록 없음':'Sin cobros esta semana',
+ '미결 없음':'Sin pendientes','긴급 재주문 품목 없음':'Sin ítems de reorden urgente','이번 달 진행된 AVISO 없음':'Sin AVISO este mes',
+ '이번 달 확정된 주간보고 없음':'Sin reportes semanales confirmados este mes','이번 달 확정된 주간보고 이슈 없음':'Sin temas confirmados este mes',
+ '내용 없음':'Sin contenido','(제목 없음)':'(sin título)','(삭제된 거래처)':'(cliente eliminado)',
+ '아직 작성된 내용이 없어요. + 항목 추가를 눌러주세요.':'Aún no hay contenido. Pulsa “+ Agregar ítem”.',
+ '아직 코멘트가 없어요.':'Aún no hay comentarios.','코멘트 입력 후 등록':'Escribe un comentario y envíalo','등록':'Enviar',
+ '해결':'Resolver','재오픈':'Reabrir','삭제':'Eliminar','저장':'Guardar','취소':'Cancelar','제목':'Título','새 업데이트 추가 (선택)':'Agregar actualización (opcional)',
+ '이 항목을 삭제할까요?':'¿Eliminar este ítem?','이 코멘트를 삭제할까요?':'¿Eliminar este comentario?','월 마감이 저장되었습니다.':'El cierre mensual fue guardado.',
+ '저장할 수 없어요 (연결 확인 필요)':'No se puede guardar (revisa la conexión)',
+ '저장 실패:':'Error al guardar:','삭제 실패:':'Error al eliminar:','처리 실패:':'Error al procesar:','코멘트 등록 실패:':'Error al enviar el comentario:','업데이트 추가 실패:':'Error al agregar la actualización:',
+ '목표':'Meta','실적':'Resultado','달성률(%)':'Cumplimiento (%)',
+ '이번 달':'este mes','이번 주':'esta semana','지난 컨택':'contactos anteriores','다음 액션:':'Próxima acción:',
+ '선택한':'Los','재고 재주문 건수 (MTY+QRO)':'Reórdenes de inventario (MTY+QRO)','AR USD 미수금':'CxC USD (AR)',
+ '이번 달 돌아보기 ':'Resumen del mes ',
+ // 문장 조각
+ '전체 품목 ':'Total de ítems ','확인 필요':'Revisar','주의 필요':'Atención','긴급 재주문 필요':'reorden urgente','재주문 필요':'reorden necesario',
+ '30일 이상 컨택 없음':'sin contacto en 30+ días','팔로업 필요':'Seguimiento necesario','방습제 재주문 필요':'Reorden de desecantes necesario',
+ '방습제':'Desecantes','미수금':'CxC','연체':'atraso','발생':'registrado(s)','전주대비':' vs sem. anterior ','출고':'Salidas','입고':'Entradas',
+ '이번 달 AVISO':'AVISO de este mes','드럼':'tambores','스풀':'carretes','개':'uds',
+ '확정된 값 표시 중':'mostrando valores confirmados','다시 계산 중...':'recalculando...','확정됨 ·':'Confirmado ·','마지막 저장:':'Último guardado:',
+ '진행':'en curso','전체':'total','상세':'detalle','기록':'registros','업데이트':'actualizaciones','더보기':'ver más'
+};
+const KEYS_BY_LEN=Object.keys(DICT).filter(k=>k.length>=2 && HAN.test(k)).sort((a,b)=>b.length-a.length);
+
+const mes=n=>MES[(+n-1)%12];
+const RULES=[
+ [/AR 60일 초과 연체 (\d+)건 발생/g,(m,a)=>`AR: ${a} factura(s) con atraso >60 días`],
+ [/CRM 팔로업 필요 (\d+)건 — 30일 이상 컨택 없음/g,(m,a)=>`CRM: seguimiento necesario en ${a} cuenta(s) — sin contacto en 30+ días`],
+ [/AVISO 미결 (\d+)건 — 확인 필요/g,(m,a)=>`AVISO: ${a} pendientes — revisar`],
+ [/(\d{4})년 (\d{1,2})월 (\d)주차/g,(m,y,mo,w)=>`Semana ${w} de ${mes(mo)} ${y}`],
+ [/(\d{1,2})월 (\d)주차/g,(m,mo,w)=>`Sem. ${w} de ${mes(mo)}`],
+ [/(\d{4})년 (\d{1,2})월/g,(m,y,mo)=>`${mes(mo)} ${y}`],
+ [/(\d{4})년/g,(m,y)=>y],
+ [/(MTY|QRO) 출고 상세 \(이번 (주|달)\)/g,(m,l,t)=>`Detalle de salidas ${l} (${t==='주'?'esta semana':'este mes'})`],
+ [/(MTY|QRO) 입고 상세 \(이번 달\)/g,(m,l)=>`Detalle de entradas ${l} (este mes)`],
+ [/(MTY|QRO) 출고 \(이번 주\)/g,(m,l)=>`Salidas ${l} (esta semana)`],
+ [/입고 상세 \(이번 달\)/g,()=>'Detalle de entradas (este mes)'],
+ [/입고 상세 \(ETW 기준\)/g,()=>'Detalle de entradas (por ETW)'],
+ [/출고 상세 \(이번 달\)/g,()=>'Detalle de salidas (este mes)'],
+ [/(MTY|QRO) (출고|입고)(?!\s*상세)/g,(m,l,t)=>`${t==='출고'?'Salidas':'Entradas'} ${l}`],
+ [/전체 (\d+)건 중 (\d+)건 미결/g,(m,a,b)=>`${b} pendientes de ${a} en total`],
+ [/이번 달 (\d+)건 진행 · 전체 (\d+)건 중/g,(m,a,b)=>`${a} en curso este mes · total ${b}:`],
+ [/전체 (\d+)건 중/g,(m,a)=>`Total ${a}:`],
+ [/(\d+)건 미결/g,(m,a)=>`${a} pendientes`],
+ [/(\d+)건 · \$/g,(m,a)=>`${a} · $`],
+ [/(\d+)건 — 확인 필요/g,(m,a)=>`${a} — revisar`],
+ [/(\d+)건 — 30일 이상 컨택 없음/g,(m,a)=>`${a} — sin contacto en 30+ días`],
+ [/재고 ([\d.]+)개월분 — (긴급 )?재주문 필요/g,(m,a,u)=>`stock para ${a} meses — ${u?'reorden urgente':'reorden necesario'}`],
+ [/(\d+)일 초과 연체 상세/g,(m,a)=>`Detalle de atrasos >${a} días`],
+ [/(\d+)일 초과 연체 없음/g,(m,a)=>`Sin atrasos >${a} días`],
+ [/(\d+)일 초과 연체/g,(m,a)=>`Atraso >${a} días`],
+ [/지난 컨택 (\d+)건 더보기/g,(m,a)=>`Ver ${a} contacto(s) anterior(es)`],
+ [/지난 주차 기록 (\d+)건 더보기/g,(m,a)=>`Ver ${a} registro(s) de semanas anteriores`],
+ [/지난 업데이트 (\d+)개 더보기/g,(m,a)=>`Ver ${a} actualización(es) anterior(es)`],
+ [/삭제 실행 \((\d+)개 선택됨\)/g,(m,a)=>`Eliminar (${a} seleccionados)`],
+ [/선택한 (\d+)개 카드를 삭제할까요\? 되돌릴 수 없습니다\./g,(m,a)=>`¿Eliminar las ${a} tarjetas seleccionadas? No se puede deshacer.`],
+ [/(\d+)개월분/g,(m,a)=>`${a} meses de stock`],
+ [/▲전주대비(\d+)%/g,(m,a)=>`▲ ${a}% vs sem. anterior`],
+ [/▼전주대비(\d+)%/g,(m,a)=>`▼ ${a}% vs sem. anterior`],
+ [/(\d+)건/g,(m,a)=>a]
+];
+
+function trStr(s){
+  s=String(s==null?'':s);
+  if(!HAN.test(s)) return s;
+  const lead=s.match(/^\s*/)[0], trail=s.match(/\s*$/)[0], core=s.trim();
+  if(DICT[core]) return lead+DICT[core]+trail;
+  let out=core;
+  for(const [re,fn] of RULES){ out=out.replace(re,fn); }
+  if(HAN.test(out)){ for(const k of KEYS_BY_LEN){ if(out.includes(k)) out=out.split(k).join(DICT[k]); } }
+  return lead+out+trail;
+}
+window.i18nStr=s=>L()==='es'?trStr(s):String(s);
+window.i18nMonthShort=i=>L()==='es'?MES[i]:(i+1)+'월';
+
+// ---------- 2. DOM 번역기 ----------
+// 직접 작성한 글(번역 대상)을 담는 말단 요소
+const UGC_PARTS=['#issueRows','#projectRows','#mIssueTimeline'].flatMap(r=>[`${r} .nc-title`,`${r} .nc-latest > span:last-child`,`${r} .nc-hist-item > span:last-child`]);
+const UGC_SEL=[...UGC_PARTS,'.cmt-text','.ci-content',
+  '#mCrmContactExisting .nc-latest > span:last-child','#mCrmContactExisting .nc-hist-item > span:last-child',
+  '#mCrmContactNew .nc-latest > span:last-child','#mCrmContactNew .nc-hist-item > span:last-child'].join(',');
+const isUgcLeaf=el=>!!el && el.matches && el.matches(UGC_SEL);
+
+const TXT=new WeakMap();       // textNode -> {orig, shown}
+const ATTRS=['placeholder','title'];
+const ATTR_ST=new WeakMap();   // element -> {attr:{orig,shown}}
+let busy=false;
+
+function eachText(root,fn){
+  const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode(n){
+    const p=n.parentElement; if(!p) return NodeFilter.FILTER_REJECT;
+    const t=p.tagName; if(t==='SCRIPT'||t==='STYLE'||t==='TEXTAREA'||t==='NOSCRIPT') return NodeFilter.FILTER_REJECT;
+    if(isUgcLeaf(p)) return NodeFilter.FILTER_REJECT;
+    return NodeFilter.FILTER_ACCEPT; }});
+  let n; while((n=w.nextNode())) fn(n);
+}
+function applyText(root){
+  const es=L()==='es';
+  eachText(root,n=>{
+    const st=TXT.get(n);
+    const orig=(st && n.data===st.shown)?st.orig:n.data;
+    if(es){
+      const t=trStr(orig);
+      if(t!==orig){ if(n.data!==t) n.data=t; TXT.set(n,{orig,shown:t}); }
+      else TXT.delete(n);
+    }else if(st && n.data===st.shown){ n.data=st.orig; TXT.delete(n); }
+  });
+}
+function applyAttrs(root){
+  const es=L()==='es';
+  root.querySelectorAll('[placeholder],[title]').forEach(el=>{
+    if(el.classList.contains('ugc-tr')) return;
+    const m=ATTR_ST.get(el)||{};
+    ATTRS.forEach(a=>{
+      if(!el.hasAttribute(a)) return;
+      const cur=el.getAttribute(a), st=m[a];
+      const orig=(st && cur===st.shown)?st.orig:cur;
+      if(es){ const t=trStr(orig); if(t!==orig){ el.setAttribute(a,t); m[a]={orig,shown:t}; } else delete m[a]; }
+      else if(st && cur===st.shown){ el.setAttribute(a,st.orig); delete m[a]; }
+    });
+    ATTR_ST.set(el,m);
+  });
+}
+let titleOrig=null;
+function applyTitle(){
+  if(titleOrig===null || (document.title!==titleOrig && document.title!==trStr(titleOrig))) titleOrig=document.title;
+  const want=L()==='es'?trStr(titleOrig):titleOrig;
+  if(document.title!==want) document.title=want;
+}
+function applyStatic(){
+  busy=true;
+  try{ applyText(document.body); applyAttrs(document.body); applyTitle(); }finally{ setTimeout(()=>{busy=false;},0); }
+}
+
+// ---------- 3. 직접 작성한 글 자동번역 (Edge Function) ----------
+const UGC_CACHE=new Map();     // lang+'\u0000'+text -> translated
+const UGC_PENDING=new Set();
+let ugcFailed=false;
+const needsTr=(text,lang)=>{
+  const t=(text||'').trim(); if(!t) return false;
+  if(lang==='es') return HAN.test(t);
+  return !HAN.test(t) && /[A-Za-zÁÉÍÓÚáéíóúñÑ]{3,}/.test(t);
+};
+function showUgc(el,orig,lang){
+  const tr=UGC_CACHE.get(lang+'\u0000'+orig);
+  if(tr && tr!==orig){
+    if(el.textContent!==tr) el.textContent=tr;
+    el.dataset.ugcOrig=orig; el.dataset.ugcShown=tr;
+    el.classList.add('ugc-tr'); el.setAttribute('title',(lang==='es'?'Original: ':'원문: ')+orig);
+  }
+}
+function restoreUgc(el){
+  if(el.dataset.ugcOrig!==undefined){
+    if(el.textContent===el.dataset.ugcShown) el.textContent=el.dataset.ugcOrig;
+    delete el.dataset.ugcOrig; delete el.dataset.ugcShown;
+    el.classList.remove('ugc-tr'); el.removeAttribute('title');
+  }
+}
+async function fetchTranslations(texts,lang){
+  const sb=window._mexcorSb; if(!sb||!sb.functions) throw new Error('no client');
+  const {data,error}=await sb.functions.invoke('translate',{body:{texts,target:lang}});
+  if(error) throw error;
+  return (data&&data.translations)||[];
+}
+const UGC_TRANSLATE=false; // 직접 작성한 글 자동번역 사용 안 함 (true로 바꾸면 Edge Function 번역 활성화)
+async function ugcPass(){
+  if(!UGC_TRANSLATE){ document.querySelectorAll('.ugc-tr').forEach(restoreUgc); return; }
+  const lang=L();
+  const els=[...document.querySelectorAll(UGC_SEL)];
+  const need=new Map();   // text -> true
+  els.forEach(el=>{
+    const orig=(el.dataset.ugcOrig!==undefined && el.textContent===el.dataset.ugcShown)?el.dataset.ugcOrig:el.textContent;
+    if(!needsTr(orig,lang)){ restoreUgc(el); return; }
+    const key=lang+'\u0000'+orig;
+    if(UGC_CACHE.has(key)){ showUgc(el,orig,lang); }
+    else if(!UGC_PENDING.has(key)) need.set(orig,true);
+  });
+  if(!need.size || ugcFailed) return;
+  const texts=[...need.keys()];
+  texts.forEach(t=>UGC_PENDING.add(lang+'\u0000'+t));
+  try{
+    for(let i=0;i<texts.length;i+=40){
+      const chunk=texts.slice(i,i+40);
+      const out=await fetchTranslations(chunk,lang);
+      chunk.forEach((t,j)=>UGC_CACHE.set(lang+'\u0000'+t,(out[j]||t)));
+    }
+  }catch(e){
+    console.warn('번역 함수 호출 실패 (translate Edge Function 배포 확인):',e&&e.message||e);
+    ugcFailed=true; setTimeout(()=>{ugcFailed=false;},60000);
+  }finally{
+    texts.forEach(t=>UGC_PENDING.delete(lang+'\u0000'+t));
+  }
+  if(L()===lang) ugcPass();
+}
+
+// ---------- 4. 실행 / 전환 / 저장 시 원문 복원 ----------
+let tmr=null;
+function schedule(){
+  clearTimeout(tmr);
+  tmr=setTimeout(()=>{ applyStatic(); ugcPass(); },60);
+}
+function revertAll(root){
+  busy=true;
+  eachText(root,n=>{ const st=TXT.get(n); if(st&&n.data===st.shown){ n.data=st.orig; TXT.delete(n); } });
+  root.querySelectorAll('.ugc-tr').forEach(restoreUgc);
+  root.querySelectorAll('[placeholder],[title]').forEach(el=>{
+    const m=ATTR_ST.get(el)||{};
+    ATTRS.forEach(a=>{ const st=m[a]; if(st&&el.getAttribute(a)===st.shown){ el.setAttribute(a,st.orig); delete m[a]; } });
+  });
+}
+// 확정/마감 저장 시 스냅샷 HTML에 스페인어가 섞이지 않도록 한국어 원문 상태에서 읽음
+window.i18nKoHtml=function(el){
+  revertAll(el);
+  const h=el.innerHTML;
+  applyStatic(); schedule();
+  return h;
+};
+const _alert=window.alert.bind(window), _confirm=window.confirm.bind(window);
+window.alert=m=>_alert(L()==='es'?trStr(String(m)):m);
+window.confirm=m=>_confirm(L()==='es'?trStr(String(m)):m);
+
+new MutationObserver(()=>{ if(!busy) schedule(); }).observe(document.body,{childList:true,subtree:true,characterData:true});
+document.addEventListener('mexcorLangChange',()=>{
+  schedule();
+  if(window._lastChartArgs && typeof renderSalesChart==='function') renderSalesChart(...window._lastChartArgs);
+});
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',schedule); else schedule();
+
+const css=document.createElement('style');
+css.textContent='.ugc-tr{border-bottom:1px dotted var(--hint,#8a8880);cursor:help;}';
+document.head.appendChild(css);
+})();
 </script>
 </body>
 </html>
