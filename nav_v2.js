@@ -4,7 +4,7 @@ document.documentElement.style.visibility = 'hidden';
 const SB_URL='https://oezergrrqcinclorwvnk.supabase.co';
 const SB_KEY='sb_publishable_1eqTksIg-IetXykOBHf0rg_19ourTmF';
 
-const MEXCOR_USER_NAMES={ceo1:'Mr Jang',pres:'Mr Oh',dire:'Mr Yoo',subd:'Jorge',asst:'Nastassja',auxm:'Brenda',acct:'Chris'};
+const MEXCOR_USER_NAMES={ceo1:'Mr Jang',pres:'Mr Oh',dire:'Mr Yoo',subd:'Jorge',asst:'Nastassja',auxm:'Brenda',acct:'Chris',acct1:'Jesus'};
 window.mexcorDisplayName=function(id){ return MEXCOR_USER_NAMES[id] || id; };
 
 function _mexcorLoadSDK(){
