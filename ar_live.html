@@ -52,15 +52,24 @@
   .row-30~60일 td{background:#fff3e0;}
   .row-60일초과 td{background:#fff0f0;}
   .row-pagado td{background:#f9fafb;color:var(--text-secondary);}
-  .row-dday td{background:#fff8e1;}
+  .row-dday td{background:#fff6e0;}
+  .row-pend td{background:#fffbf0;}
+  .row-overdue-mild td{background:#fff2ea;}
+  .row-overdue td{background:#ffe3e0;}
+  .row-critical td{background:#ffc9c4;}
   .badge{font-size:11px;padding:2px 8px;border-radius:var(--radius);display:inline-block;font-weight:500;}
   .badge-pagado{background:var(--success-bg);color:var(--success-text);}
   .badge-pendiente{background:var(--warning-bg);color:var(--warning-text);}
   .badge-overdue{background:var(--danger-bg);color:var(--danger-text);}
+  .badge-approaching{background:#ffe9b8;color:#8a5a00;}
+  .badge-overdue-mild{background:#ffd9cc;color:#a34a1f;}
+  .badge-critical{background:var(--danger-text);color:#fff;}
   .num{text-align:right;}
   .overdue-red{color:var(--danger-text);font-weight:500;}
   .overdue-warn{color:var(--warning-text);font-weight:500;}
-  .overdue-dday{color:#1565C0;font-weight:500;}
+  .overdue-dday{color:#8a5a00;font-weight:500;}
+  .overdue-mild{color:#a34a1f;font-weight:500;}
+  .overdue-critical{color:#fff;background:var(--danger-text);padding:1px 6px;border-radius:4px;font-weight:500;}
   .overdue-ok{color:var(--text-secondary);}
 
   .expand-btn{background:none;border:none;cursor:pointer;font-size:12px;color:var(--text-secondary);padding:0 4px;transition:transform .15s;display:inline-block;}
@@ -246,27 +255,36 @@ function fmtMoney(v){
   return '$'+n.toLocaleString('en-US');
 }
 
+// AP 탭과 동일: 시트의 BUCKET 값이 아니라 연체일수(OVERDUE_DAYS)로 직접 계산 (양수=이미 지남, 음수=남음)
 function getRowClass(status, bucket, days){
   if(status==='PAGADO') return 'row-pagado';
-  if(bucket==='60일초과') return 'row-60일초과';
-  if(bucket==='30~60일') return 'row-30~60일';
-  if(bucket==='30일이내') return 'row-30일이내';
   const d = parseInt(days);
-  if(d>=-3&&d<=0) return 'row-dday';
-  return 'row-미만기';
+  if(isNaN(d)) return 'row-pend';
+  if(d>60) return 'row-critical';
+  if(d>30) return 'row-overdue';
+  if(d>0) return 'row-overdue-mild';
+  if(d>=-3) return 'row-dday';
+  return 'row-pend';
 }
 
-function getBadgeClass(status, bucket){
+function getBadgeClass(status, bucket, days){
   if(status==='PAGADO') return 'badge-pagado';
-  if(bucket==='60일초과'||bucket==='30~60일') return 'badge-overdue';
+  const d = parseInt(days);
+  if(isNaN(d)) return 'badge-pendiente';
+  if(d>60) return 'badge-critical';
+  if(d>30) return 'badge-overdue';
+  if(d>0) return 'badge-overdue-mild';
+  if(d>=-3) return 'badge-approaching';
   return 'badge-pendiente';
 }
 
 function getOverdueClass(bucket, days){
-  if(bucket==='60일초과') return 'overdue-red';
-  if(bucket==='30~60일'||bucket==='30일이내') return 'overdue-warn';
   const d = parseInt(days);
-  if(d>=-3&&d<=0) return 'overdue-dday';
+  if(isNaN(d)) return 'overdue-ok';
+  if(d>60) return 'overdue-critical';
+  if(d>30) return 'overdue-red';
+  if(d>0) return 'overdue-mild';
+  if(d>=-3) return 'overdue-dday';
   return 'overdue-ok';
 }
 
@@ -402,7 +420,7 @@ function renderTable(rows){
       <td>${fmt(r['PAYMENT_PLAN_DATE'])}</td>
       <td>${fmt(r['ACTUAL_PAYMENT_DATE']||r['ACTUAL PAYMENT DATE'])}</td>
       <td class="${getOverdueClass(bucket,days)}">${getOverdueDisplay(days)}</td>
-      <td><span class="badge ${getBadgeClass(status,bucket)}">${fmt(status)}</span></td>
+      <td><span class="badge ${getBadgeClass(status,bucket,days)}">${fmt(status)}</span></td>
       <td style="font-size:11px;color:var(--text-secondary);">${fmt(r['NOTE'])}</td>
     </tr>
     <tr class="expand-row" id="${eid}">
