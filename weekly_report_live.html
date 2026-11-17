@@ -303,7 +303,7 @@ tr:nth-child(odd) td{background:#fbfaf7;}
       <div class="kpis" style="grid-template-columns:repeat(3,1fr);" id="desiccantKpis">
         <div class="kpi k-in"><div class="lbl">전체 품목</div><div class="val" id="dscTotal">-</div></div>
         <div class="kpi k-rate"><div class="lbl">재주문 필요</div><div class="val" id="dscReorder">-</div></div>
-        <div class="kpi k-mty"><div class="lbl">재고 자산가치</div><div class="val" id="dscValue">-</div></div>
+        <div class="kpi k-mty"><div class="lbl">재고 자산가치 (USD 환산, 환율 18)</div><div class="val" id="dscValue">-</div></div>
       </div>
       <div id="desiccantTable"></div>
       <div class="subhead">이번 주 판매 내역</div>
@@ -1260,6 +1260,7 @@ async function load(targetWeekKey, forceRecompute){
   }catch(e){errs.push('CRM:'+e.message);}
 
   // ===== 방습제 =====
+  const DSC_FX_MXN_PER_USD=18; // 재고 자산가치 USD 환산용 임시 환율 (MXN/USD)
   try{
     const summary=await tsvObjSmart(DESICCANT_SUMMARY,'ITEM');
     const inRows=await tsvObjSmart(DESICCANT_IN,'ITEM');
@@ -1274,7 +1275,8 @@ async function load(targetWeekKey, forceRecompute){
       const forecast=toN(r['월 FORECAST']||r['FORECAST/월']||r['FORECAST']||r['REORDER POINT']);
       const moh=forecast>0?stock/forecast:null;
       const price=toN((r['PRICE']||'').split(/USD|MXN/)[0]);
-      return {name, price:r['PRICE']||'-', stock, forecast, moh, value:stock*price, clientes:r['CLIENTES']||'-'};
+      const isMXN=/MXN/i.test(r['PRICE']||'');
+      return {name, price:r['PRICE']||'-', stock, forecast, moh, value:(stock*price)/(isMXN?DSC_FX_MXN_PER_USD:1), clientes:r['CLIENTES']||'-'};
     });
     document.getElementById('dscTotal').textContent=items.length;
     const reorders=items.filter(it=>it.moh!==null&&it.moh<3);
